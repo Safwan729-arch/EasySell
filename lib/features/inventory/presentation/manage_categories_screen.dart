@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/theme.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/category_repository.dart';
 import '../domain/category.dart';
@@ -64,26 +65,38 @@ class _ManageCategoriesScreenState
   Future<void> _delete(Category category, int usageCount) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete category?'),
-        content: Text(
-          usageCount == 0
-              ? '"${category.name}" will be removed.'
-              : '"${category.name}" will be removed. $usageCount '
-                    '${usageCount == 1 ? 'product' : 'products'} will become '
-                    'uncategorized (not deleted).',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+      builder: (ctx) {
+        final colors = Theme.of(ctx).extension<AppColors>()!;
+        return AlertDialog(
+          title: const Text('Delete category?'),
+          content: Text(
+            usageCount == 0
+                ? '"${category.name}" will be removed.'
+                : '"${category.name}" will be removed. $usageCount '
+                      '${usageCount == 1 ? 'product' : 'products'} will become '
+                      'uncategorized (not deleted).',
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+          // Natural-width actions: the theme forces FilledButton to a full-width
+          // minimumSize, which otherwise makes "Delete" dwarf "Cancel".
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                backgroundColor: colors.negative,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true) return;
 

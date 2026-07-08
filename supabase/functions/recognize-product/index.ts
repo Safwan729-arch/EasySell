@@ -59,6 +59,14 @@ async function recognize(imageB64: string, candidates: Candidate[]) {
       }],
     }),
   });
+  // A non-2xx from the gateway (bad key -> 401, rate limit -> 429, outage ->
+  // 5xx) does NOT throw on its own; without this check res.json() would parse
+  // the error body, find no choices, and fall through to a misleading
+  // status:"none" 200. Throw so the caller's catch returns a 502 instead.
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`gateway ${res.status}: ${detail.slice(0, 300)}`);
+  }
   const json = await res.json();
   return extractJson(json?.choices?.[0]?.message?.content ?? "{}");
 }

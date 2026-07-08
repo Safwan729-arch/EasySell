@@ -180,9 +180,6 @@ class _CartLineCard extends ConsumerWidget {
 
   double get _step => stepForUnit(line.product.unit);
 
-  String _fmtQty(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
-
   void _remove(WidgetRef ref) {
     AppHaptics.tap();
     ref.read(cartControllerProvider.notifier).remove(line.product.id);
@@ -269,7 +266,7 @@ class _CartLineCard extends ConsumerWidget {
             Row(
               children: [
                 _QtyStepper(
-                  label: '${_fmtQty(line.quantity)} ${product.unitLabel}',
+                  label: '${Qty.format(line.quantity)} ${product.unitLabel}',
                   onDecrement: canDecrement
                       ? () {
                           AppHaptics.tap();

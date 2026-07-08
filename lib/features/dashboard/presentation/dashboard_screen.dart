@@ -505,7 +505,7 @@ class _TopPerformer extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${_units(top.units)} sold · ${Money.format(top.revenue, currencyCode: currency)} revenue',
+                          '${Qty.format(top.units)} sold · ${Money.format(top.revenue, currencyCode: currency)} revenue',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -538,8 +538,6 @@ class _TopPerformer extends ConsumerWidget {
     );
   }
 
-  static String _units(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 }
 
 class _LowStockCard extends StatelessWidget {

@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ai_shopkeeper/shared/extensions/format.dart';
 
 void main() {
+  group('Qty.format (trailing-zero trimming — the one shared quantity helper)', () {
+    test('whole numbers drop the decimal', () {
+      expect(Qty.format(12), '12');
+      expect(Qty.format(0), '0');
+      expect(Qty.format(4.0), '4');
+    });
+
+    test('fractional values keep only the needed digits', () {
+      expect(Qty.format(2.5), '2.5');
+      expect(Qty.format(0.5), '0.5');
+      expect(Qty.format(1.25), '1.25');
+    });
+  });
+
   group('Money.compact (Conservative, threshold 100,000)', () {
     test('below threshold shows full digits, no cents', () {
       expect(Money.compact(430), r'$430');

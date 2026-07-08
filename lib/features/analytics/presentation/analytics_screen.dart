@@ -422,8 +422,6 @@ class _WinsBody extends StatelessWidget {
     };
   }
 
-  static String _units(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
   @override
   Widget build(BuildContext context) {
@@ -457,7 +455,7 @@ class _WinsBody extends StatelessWidget {
             child: _LeaderRow(
               rank: i + 1,
               name: top[i].name,
-              units: '${_units(top[i].units)} units',
+              units: '${Qty.format(top[i].units)} units',
               revenue: Money.compact(top[i].revenue, currencyCode: currency),
               fraction: leaderUnits <= 0 ? 0 : top[i].units / leaderUnits,
             ),

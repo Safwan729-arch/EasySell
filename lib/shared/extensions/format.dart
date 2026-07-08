@@ -1,5 +1,18 @@
 import 'package:intl/intl.dart';
 
+/// Quantity/count formatting: drops a trailing ".0" and any trailing zeros so
+/// counts read cleanly ("12", "2.5") whatever the unit. The single home for
+/// this — [Money] handles currency, [Qty] handles bare counts. [Product.trimNum]
+/// delegates here, as do the quantity steppers and stat rows.
+class Qty {
+  const Qty._();
+
+  static String format(num v) {
+    final d = v.toDouble();
+    return d == d.roundToDouble() ? d.toStringAsFixed(0) : d.toString();
+  }
+}
+
 /// Money/number formatting helpers shared across screens.
 class Money {
   const Money._();

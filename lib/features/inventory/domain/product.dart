@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../shared/extensions/format.dart';
+
 part 'product.freezed.dart';
 part 'product.g.dart';
 
@@ -113,11 +115,9 @@ abstract class Product with _$Product {
   String get reorderLabel =>
       reorderThreshold <= 0 ? '' : '${trimNum(reorderThreshold)} ${unit.label}';
 
-  /// Drops a trailing ".0" / trailing zeros for clean display.
-  static String trimNum(double v) {
-    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
-    return v.toString();
-  }
+  /// Drops a trailing ".0" / trailing zeros for clean display. Thin alias for
+  /// [Qty.format], kept for existing call sites that already say `trimNum`.
+  static String trimNum(double v) => Qty.format(v);
 
   /// Column payload for INSERT/UPDATE. `id`/`created_at`/`updated_at` are
   /// DB-managed and intentionally omitted. The deprecated free-text `category`

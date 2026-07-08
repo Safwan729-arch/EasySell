@@ -66,8 +66,6 @@ class _RestockConfirmationSheetState
     _qty = widget.initialQuantity.clamp(_step, double.infinity).toDouble();
   }
 
-  String _fmtQty(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
   Future<void> _confirm() async {
     setState(() => _error = null);
@@ -156,7 +154,7 @@ class _RestockConfirmationSheetState
                   SizedBox(
                     width: 88,
                     child: Text(
-                      '${_fmtQty(_qty)} ${_product.unitLabel}',
+                      '${Qty.format(_qty)} ${_product.unitLabel}',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleLarge,
                     ),

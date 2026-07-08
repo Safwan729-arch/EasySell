@@ -47,9 +47,6 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
     _qty = remaining <= 0 ? 0 : _step.clamp(0, remaining).toDouble();
   }
 
-  String _fmtQty(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
-
   void _add() {
     ref.read(cartControllerProvider.notifier).addOrIncrement(widget.product, _qty);
     AppHaptics.success();
@@ -119,7 +116,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
                   SizedBox(
                     width: 88,
                     child: Text(
-                      '${_fmtQty(_qty)} ${product.unitLabel}',
+                      '${Qty.format(_qty)} ${product.unitLabel}',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleLarge,
                     ),

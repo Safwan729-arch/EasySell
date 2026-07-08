@@ -317,11 +317,6 @@ class _ReceiptRow {
   /// rendered as a muted "+N" badge next to [leadName].
   int get extraCount => receipt.lineCount - 1;
 
-  /// Flat label for sorting/fallback: "Loose rice" or "Loose rice +1". The tile
-  /// renders [leadName]/[extraCount] directly so it can style the badge.
-  String get displayName =>
-      extraCount > 0 ? '$leadName +$extraCount' : leadName;
-
   /// Lower-cased sort key for the Item column: singles and receipts alike sort
   /// by their lead product name, so an A→Z sort reads as one intuitive list
   /// instead of clustering every receipt at the end.
