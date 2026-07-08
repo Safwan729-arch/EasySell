@@ -1,0 +1,902 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../../core/error/failure.dart';
+import '../../../core/widgets/calendar_day_button.dart';
+import '../../../core/widgets/skeleton.dart';
+import '../../../shared/extensions/format.dart';
+import '../../../shared/providers/branch_scroll_provider.dart';
+import '../../../shared/providers/refresh_provider.dart';
+import '../../auth/data/auth_repository.dart';
+import '../../inventory/domain/product.dart';
+import '../../inventory/presentation/inventory_controller.dart';
+import '../data/transaction_repository.dart';
+import '../domain/transaction.dart';
+import 'sales_providers.dart';
+
+/// One row in Sales History: either a single ungrouped sale or every line
+/// from one cart checkout, grouped by `sale_group_id`. Transactions with no
+/// group id (manual/voice/single-scan sales, and every pre-cart historical
+/// row) become their own singleton receipt, keyed by their own transaction id
+/// so they never merge with another ungrouped sale.
+class SaleReceipt {
+  const SaleReceipt({required this.id, required this.lines});
+
+  final String id;
+  final List<Transaction> lines;
+
+  DateTime? get createdAt => lines.first.createdAt;
+  double get totalRevenue => lines.fold<double>(0, (sum, t) => sum + t.revenue);
+  int get lineCount => lines.length;
+}
+
+/// Groups [sales] into receipts by `saleGroupId`, preserving each receipt's
+/// first-seen order in [sales].
+List<SaleReceipt> groupSalesIntoReceipts(List<Transaction> sales) {
+  final byGroup = <String, List<Transaction>>{};
+  final order = <String>[];
+  for (final t in sales) {
+    final key = t.saleGroupId ?? 'single-${t.id}';
+    if (!byGroup.containsKey(key)) order.add(key);
+    byGroup.putIfAbsent(key, () => []).add(t);
+  }
+  return [for (final key in order) SaleReceipt(id: key, lines: byGroup[key]!)];
+}
+
+/// Recent SALE transactions for the current shop, newest first. Re-fetches when
+/// a sale/restock bumps [dataRefreshProvider].
+final recentSalesProvider = FutureProvider.autoDispose<List<Transaction>>((
+  ref,
+) async {
+  ref.watch(dataRefreshProvider);
+  final shopId = ref.watch(myShopProvider).value?.id;
+  if (shopId == null) return const [];
+  final result = await ref
+      .read(transactionRepositoryProvider)
+      .recentSales(shopId: shopId);
+  return result.when(success: (list) => list, failure: (f) => throw f);
+});
+
+/// How far back the table reaches. Filtered client-side over the fetched sales.
+enum _Scope { today, week }
+
+/// Which column the table is sorted by.
+enum _SortKey { time, item, qty, amount }
+
+/// Sales history as a dense, sortable table (Time · Item · Qty · Amount). Search
+/// narrows by product name; the Today/Week/All control scopes the window; tapping
+/// a column header sorts by it (tap again to flip direction). Built for the job
+/// of *finding a specific sale*, primarily by amount.
+class HistoryScreen extends ConsumerStatefulWidget {
+  const HistoryScreen({super.key});
+
+  @override
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+  Timer? _debounce;
+
+  _Scope _scope = _Scope.today;
+  DateTime? _selectedDay;
+  _SortKey _sortKey = _SortKey.time;
+  bool _ascending = false; // newest-first by default
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Re-filters ~250ms after the last keystroke so a fast typist doesn't trigger
+  /// a rebuild per character. The clear button bypasses this for an instant reset.
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) setState(() => _query = value);
+    });
+  }
+
+  /// Sensible initial direction per column: text sorts A→Z, everything numeric
+  /// or time-based sorts high→low (newest / biggest / most first).
+  bool _defaultAscending(_SortKey key) => key == _SortKey.item;
+
+  void _onSort(_SortKey key) {
+    setState(() {
+      if (_sortKey == key) {
+        _ascending = !_ascending;
+      } else {
+        _sortKey = key;
+        _ascending = _defaultAscending(key);
+      }
+    });
+  }
+
+  bool _inScope(DateTime? createdAt) {
+    if (_selectedDay != null) return true; // day-mode: list is already the day
+    final now = DateTime.now();
+    final local = (createdAt ?? now).toLocal();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    return switch (_scope) {
+      _Scope.today => !local.isBefore(startOfToday),
+      // Rolling 7 days (today plus the previous six).
+      _Scope.week => !local.isBefore(
+        startOfToday.subtract(const Duration(days: 6)),
+      ),
+    };
+  }
+
+  List<_ReceiptRow> _visibleRows(
+    List<Transaction> all,
+    Map<String, String> names,
+  ) {
+    final q = _query.trim().toLowerCase();
+    final rows = <_ReceiptRow>[];
+    for (final receipt in groupSalesIntoReceipts(all)) {
+      if (!_inScope(receipt.createdAt)) continue;
+      final row = _ReceiptRow(receipt: receipt, names: names);
+      if (!row.matches(q)) continue;
+      rows.add(row);
+    }
+    rows.sort((a, b) {
+      final cmp = switch (_sortKey) {
+        _SortKey.time => (a.receipt.createdAt ?? _epoch).compareTo(
+          b.receipt.createdAt ?? _epoch,
+        ),
+        _SortKey.item => a.sortName.compareTo(b.sortName),
+        _SortKey.qty => a.qtyValue.compareTo(b.qtyValue),
+        _SortKey.amount => a.receipt.totalRevenue.compareTo(b.receipt.totalRevenue),
+      };
+      return _ascending ? cmp : -cmp;
+    });
+    return rows;
+  }
+
+  static final _epoch = DateTime.fromMillisecondsSinceEpoch(0);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final day = _selectedDay;
+    final salesAsync = day == null
+        ? ref.watch(recentSalesProvider)
+        : ref.watch(salesForDayProvider(day));
+    final firstDate = ref.watch(earliestSaleDateProvider).value;
+    final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
+    final products =
+        ref.watch(productsStreamProvider).value ?? const <Product>[];
+    final nameById = {for (final p in products) p.id: p.name};
+
+    void refreshActive() {
+      if (_selectedDay == null) {
+        ref.invalidate(recentSalesProvider);
+      } else {
+        ref.invalidate(salesForDayProvider(_selectedDay!));
+      }
+    }
+
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: salesAsync.when(
+          loading: () => const _HistorySkeleton(),
+          error: (e, _) => _ErrorState(
+            message: e is Failure
+                ? e.message
+                : 'Could not load sales history. Pull to retry.',
+            onRetry: refreshActive,
+          ),
+          data: (all) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  child: Text(
+                    'Sales history',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Search sales',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _query.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _debounce?.cancel();
+                                _searchController.clear();
+                                setState(() => _query = '');
+                              },
+                            ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ScopeSelector(
+                              scope: _scope,
+                              dayActive: day != null,
+                              onChanged: (s) => setState(() {
+                                _scope = s;
+                                _selectedDay = null;
+                              }),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          CalendarDayButton(
+                            selectedDay: day,
+                            firstDate: firstDate,
+                            onPick: (picked) =>
+                                setState(() => _selectedDay = picked),
+                          ),
+                        ],
+                      ),
+                      if (day != null) ...[
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: DayFilterChip(
+                            label: DateFormat('EEE, d MMM y').format(day),
+                            onClear: () => setState(() => _selectedDay = null),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: all.isEmpty
+                      ? _EmptyState(
+                          message: day == null
+                              ? 'No sales recorded yet.'
+                              : 'No sales on ${DateFormat('EEE, d MMM y').format(day)}.',
+                          showHint: day == null,
+                        )
+                      : _SalesTable(
+                          rows: _visibleRows(all, nameById),
+                          sortKey: _sortKey,
+                          ascending: _ascending,
+                          currency: currency,
+                          onSort: _onSort,
+                          onRefresh: () async => refreshActive(),
+                          scrollController: ref.watch(
+                            branchScrollControllerProvider(3),
+                          ),
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// A receipt paired with its resolved product name(s), ready to render and
+/// sort. Single-line receipts behave exactly like the pre-cart per-sale rows;
+/// multi-line receipts (cart checkouts) summarize as "N items".
+class _ReceiptRow {
+  _ReceiptRow({required this.receipt, required this.names});
+
+  final SaleReceipt receipt;
+  final Map<String, String> names; // productId -> name, for every line
+
+  bool get isSingle => receipt.lineCount == 1;
+
+  String get displayName {
+    if (isSingle) {
+      final name = names[receipt.lines.single.productId] ?? '';
+      return name.isEmpty ? 'Sale' : name;
+    }
+    return '${receipt.lineCount} items';
+  }
+
+  /// Lower-cased sort key. Grouped receipts sort after named single sales
+  /// (prefixed so they cluster together, ordered by their own display name).
+  String get sortName {
+    if (!isSingle) return '~~ $displayName'.toLowerCase();
+    final name = (names[receipt.lines.single.productId] ?? '').toLowerCase();
+    return name.isEmpty ? '~' : name;
+  }
+
+  /// Sort/display value for the Qty column: the actual quantity for a single
+  /// sale, or the line count for a grouped checkout (mixed units can't sum
+  /// meaningfully, so item count is the closest comparable proxy).
+  double get qtyValue =>
+      isSingle ? receipt.lines.single.quantity : receipt.lineCount.toDouble();
+
+  String get qtyLabel {
+    if (!isSingle) return '${receipt.lineCount}';
+    final qty = receipt.lines.single.quantity;
+    return qty == qty.roundToDouble() ? qty.toStringAsFixed(0) : qty.toString();
+  }
+
+  /// True if any line's product name contains [query] (or [query] is empty).
+  bool matches(String query) {
+    if (query.isEmpty) return true;
+    for (final t in receipt.lines) {
+      if ((names[t.productId] ?? '').toLowerCase().contains(query)) return true;
+    }
+    return false;
+  }
+}
+
+/// Today / Week connected segmented control. When [dayActive] is true a specific
+/// calendar day is selected, so neither segment is highlighted.
+class _ScopeSelector extends StatelessWidget {
+  const _ScopeSelector({
+    required this.scope,
+    required this.dayActive,
+    required this.onChanged,
+  });
+
+  final _Scope scope;
+  final bool dayActive;
+  final ValueChanged<_Scope> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color ?? scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          for (final s in _Scope.values)
+            Expanded(
+              child: _ScopeTab(
+                label: switch (s) {
+                  _Scope.today => 'Today',
+                  _Scope.week => 'Week',
+                },
+                selected: !dayActive && s == scope,
+                onTap: () => onChanged(s),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScopeTab extends StatelessWidget {
+  const _ScopeTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? scheme.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The bordered card that holds a fixed header row over a scrolling list of
+/// receipts. The header stays put while rows scroll under it.
+class _SalesTable extends StatelessWidget {
+  const _SalesTable({
+    required this.rows,
+    required this.sortKey,
+    required this.ascending,
+    required this.currency,
+    required this.onSort,
+    required this.onRefresh,
+    required this.scrollController,
+  });
+
+  final List<_ReceiptRow> rows;
+  final _SortKey sortKey;
+  final bool ascending;
+  final String currency;
+  final void Function(_SortKey) onSort;
+  final Future<void> Function() onRefresh;
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: theme.cardTheme.color ?? scheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Column(
+          children: [
+            _HeaderRow(
+              sortKey: sortKey,
+              ascending: ascending,
+              onSort: onSort,
+            ),
+            Divider(height: 1, color: scheme.outlineVariant),
+            Expanded(
+              child: rows.isEmpty
+                  ? const _NoMatch()
+                  : RefreshIndicator(
+                      onRefresh: onRefresh,
+                      child: ListView.separated(
+                        controller: scrollController,
+                        // Bottom padding clears the floating bottom nav.
+                        padding: const EdgeInsets.only(bottom: 96),
+                        itemCount: rows.length,
+                        separatorBuilder: (_, _) =>
+                            Divider(height: 1, color: scheme.outlineVariant),
+                        itemBuilder: (context, i) => _ReceiptTile(
+                          key: ValueKey(rows[i].receipt.id),
+                          row: rows[i],
+                          currency: currency,
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Shared column widths so the header and every data row line up exactly.
+const double _timeW = 58;
+const double _qtyW = 40;
+const double _amtW = 88;
+
+class _HeaderRow extends StatelessWidget {
+  const _HeaderRow({
+    required this.sortKey,
+    required this.ascending,
+    required this.onSort,
+  });
+
+  final _SortKey sortKey;
+  final bool ascending;
+  final void Function(_SortKey) onSort;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Row(
+        children: [
+          _HeaderCell(
+            label: 'Time',
+            width: _timeW,
+            align: TextAlign.left,
+            active: sortKey == _SortKey.time,
+            ascending: ascending,
+            onTap: () => onSort(_SortKey.time),
+          ),
+          _HeaderCell(
+            label: 'Item',
+            active: sortKey == _SortKey.item,
+            ascending: ascending,
+            onTap: () => onSort(_SortKey.item),
+          ),
+          _HeaderCell(
+            label: 'Qty',
+            width: _qtyW,
+            align: TextAlign.center,
+            active: sortKey == _SortKey.qty,
+            ascending: ascending,
+            onTap: () => onSort(_SortKey.qty),
+          ),
+          _HeaderCell(
+            label: 'Amount',
+            width: _amtW,
+            align: TextAlign.right,
+            accent: true,
+            active: sortKey == _SortKey.amount,
+            ascending: ascending,
+            onTap: () => onSort(_SortKey.amount),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  const _HeaderCell({
+    required this.label,
+    required this.active,
+    required this.ascending,
+    required this.onTap,
+    this.width,
+    this.align = TextAlign.left,
+    this.accent = false,
+  });
+
+  final String label;
+  final bool active;
+  final bool ascending;
+  final VoidCallback onTap;
+  final double? width;
+  final TextAlign align;
+
+  /// The Amount column is tinted brand-blue to signal it's the primary
+  /// find-by-value affordance, even when it isn't the active sort.
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final color = accent || active
+        ? scheme.primary
+        : scheme.onSurfaceVariant;
+    final isRight = align == TextAlign.right;
+    final isCenter = align == TextAlign.center;
+
+    final cell = InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        child: Row(
+          mainAxisAlignment: isRight
+              ? MainAxisAlignment.end
+              : isCenter
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                textAlign: align,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+            if (active)
+              Icon(
+                ascending ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 13,
+                color: color,
+              ),
+          ],
+        ),
+      ),
+    );
+
+    return width == null ? Expanded(child: cell) : SizedBox(width: width, child: cell);
+  }
+}
+
+/// One receipt: a summary row (Time · Item(s) · Qty · Amount), expandable into
+/// its individual lines when it came from a multi-item cart checkout.
+class _ReceiptTile extends StatefulWidget {
+  const _ReceiptTile({super.key, required this.row, required this.currency});
+
+  final _ReceiptRow row;
+  final String currency;
+
+  @override
+  State<_ReceiptTile> createState() => _ReceiptTileState();
+}
+
+class _ReceiptTileState extends State<_ReceiptTile> {
+  bool _expanded = false;
+
+  String _time(DateTime? d) {
+    final t = (d ?? DateTime.now()).toLocal();
+    final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
+    final m = t.minute.toString().padLeft(2, '0');
+    final ampm = t.hour < 12 ? 'AM' : 'PM';
+    return '$h:$m$ampm';
+  }
+
+  String _lineQty(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final row = widget.row;
+    final canExpand = !row.isSingle;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: canExpand ? () => setState(() => _expanded = !_expanded) : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: _timeW,
+                  child: Text(
+                    _time(row.receipt.createdAt),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            row.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (canExpand) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            _expanded ? Icons.expand_less : Icons.expand_more,
+                            size: 16,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: _qtyW,
+                  child: Text(
+                    row.qtyLabel,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: _amtW,
+                  child: Text(
+                    Money.compact(row.receipt.totalRevenue, currencyCode: widget.currency),
+                    textAlign: TextAlign.right,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          for (final line in row.receipt.lines)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Row(
+                children: [
+                  const SizedBox(width: _timeW),
+                  Expanded(
+                    child: Text(
+                      (row.names[line.productId]?.isNotEmpty ?? false)
+                          ? row.names[line.productId]!
+                          : 'Sale',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: _qtyW,
+                    child: Text(
+                      _lineQty(line.quantity),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: _amtW,
+                    child: Text(
+                      Money.compact(line.revenue, currencyCode: widget.currency),
+                      textAlign: TextAlign.right,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+      ],
+    );
+  }
+}
+
+/// Shown inside the table when a search/scope yields no rows (but sales exist).
+class _NoMatch extends StatelessWidget {
+  const _NoMatch();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 40,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No sales match your search.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HistorySkeleton extends StatelessWidget {
+  const _HistorySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Skeleton(width: 180, height: 28),
+          const SizedBox(height: 16),
+          const Skeleton(width: double.infinity, height: 52, radius: 12),
+          const SizedBox(height: 12),
+          const Skeleton(width: double.infinity, height: 44, radius: 12),
+          const SizedBox(height: 16),
+          for (var i = 0; i < 8; i++) ...[
+            const Skeleton(width: double.infinity, height: 40, radius: 8),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.message, this.showHint = true});
+
+  final String message;
+
+  /// The "Add to cart from Items…" hint only makes sense when the shop has no
+  /// sales at all — it's hidden when a specific (empty) day is selected.
+  final bool showHint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 56,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 12),
+          Text(message, textAlign: TextAlign.center),
+          if (showHint) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Record a sale from Items → tap a product → Add to cart, or use the cart bar to checkout.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 56,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(message, textAlign: TextAlign.center),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.tonal(onPressed: onRetry, child: const Text('Retry')),
+        ],
+      ),
+    );
+  }
+}

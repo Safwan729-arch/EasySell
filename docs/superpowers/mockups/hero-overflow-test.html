@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Revenue hero — big-number stress test</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{--brand:#2563EB;--bg:#EEF2F7;--ink:#0F172A;--ink-muted:#8A94A6;--border:#E7EBF1; font-feature-settings:"tnum" 1;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;background:#dfe5ee;color:var(--ink);padding:30px;}
+  h1{font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;}
+  .lead{color:#54607a;font-size:13px;line-height:1.6;max-width:720px;margin-bottom:24px;}
+  .grid{display:flex;gap:24px;flex-wrap:wrap;}
+  .col{width:330px;}
+  .cap{font-size:12px;font-weight:700;color:#54607a;margin-bottom:8px;}
+  .cap b{color:var(--ink);}
+  .raw{font-size:11px;color:var(--ink-muted);margin-top:8px;line-height:1.5;}
+  .raw code{background:#fff;border:1px solid var(--border);border-radius:5px;padding:1px 5px;color:#334;}
+
+  .hero{background:var(--brand);color:#fff;border-radius:18px;padding:16px;position:relative;overflow:hidden;}
+  .hero::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;background:rgba(255,255,255,.08);border-radius:50%;}
+  .label{font-size:11px;color:rgba(255,255,255,.75);font-weight:500;}
+  .val{font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1.05;white-space:nowrap;}
+  .delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.18);margin-top:8px;}
+  .split{display:flex;gap:14px;margin-top:14px;position:relative;z-index:1;}
+  .split>div{flex:1 1 0;min-width:0;}
+  .split .label{color:rgba(255,255,255,.7);}
+  .split .v{font-size:16px;font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+</style>
+</head>
+<body>
+  <h1>Revenue hero — big-number stress test</h1>
+  <p class="lead">Same hero card, three data scenarios, with the fix applied: values ≥ 10,000 switch to compact form (K / M), each column is equal-width and clips to one line, and the headline scales down before it would ever overflow. No RenderFlex stripes, no clipped headline.</p>
+
+  <div class="grid">
+
+    <div class="col">
+      <div class="cap">Scenario 1 · <b>Normal day (USD)</b></div>
+      <div class="hero">
+        <div class="label">Revenue · Today</div>
+        <div class="val">$1,284</div>
+        <span class="delta">▲ 12% vs yesterday</span>
+        <div class="split">
+          <div><div class="label">Profit</div><div class="v">$430</div></div>
+          <div><div class="label">Margin</div><div class="v">33.5%</div></div>
+          <div><div class="label">Items sold</div><div class="v">86</div></div>
+        </div>
+      </div>
+      <div class="raw">Under the threshold → full digits, exactly like your approved mock.</div>
+    </div>
+
+    <div class="col">
+      <div class="cap">Scenario 2 · <b>Busy month (USD)</b></div>
+      <div class="hero">
+        <div class="label">Revenue · Month</div>
+        <div class="val">$1.28M</div>
+        <span class="delta">▲ 9% vs last month</span>
+        <div class="split">
+          <div><div class="label">Profit</div><div class="v">$452K</div></div>
+          <div><div class="label">Margin</div><div class="v">35.2%</div></div>
+          <div><div class="label">Items sold</div><div class="v">12.5K</div></div>
+        </div>
+      </div>
+      <div class="raw">Raw: <code>$1,284,500</code> · <code>$452,000</code> · <code>12,480</code> → compacted. Fits cleanly.</div>
+    </div>
+
+    <div class="col">
+      <div class="cap">Scenario 3 · <b>High-denomination currency (IDR)</b></div>
+      <div class="hero">
+        <div class="label">Revenue · Month</div>
+        <div class="val">Rp 19.3M</div>
+        <span class="delta">▲ 14% vs last month</span>
+        <div class="split">
+          <div><div class="label">Profit</div><div class="v">Rp 6.4M</div></div>
+          <div><div class="label">Margin</div><div class="v">33.4%</div></div>
+          <div><div class="label">Items sold</div><div class="v">8.2K</div></div>
+        </div>
+      </div>
+      <div class="raw">Raw: <code>Rp 19,260,000</code> · <code>Rp 6,440,000</code> → without compacting, this row would overflow on every phone.</div>
+    </div>
+
+  </div>
+</body>
+</html>

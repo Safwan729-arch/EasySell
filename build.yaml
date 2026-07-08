@@ -1,0 +1,10 @@
+# Global codegen config.
+# json_serializable maps Dart camelCase fields to Supabase snake_case columns,
+# so domain models don't need per-field @JsonKey annotations.
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          field_rename: snake
+          explicit_to_json: true

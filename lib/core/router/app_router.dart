@@ -1,0 +1,239 @@
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../config/motion.dart';
+
+import '../../features/analytics/presentation/analytics_screen.dart';
+import '../../features/auth/data/auth_repository.dart';
+import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/profile_setup_screen.dart';
+import '../../features/cart/presentation/cart_screen.dart';
+import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/insights/presentation/insights_screen.dart';
+import '../../features/inventory/domain/product.dart';
+import '../../features/inventory/presentation/archived_products_screen.dart';
+import '../../features/inventory/presentation/inventory_list_screen.dart';
+import '../../features/inventory/presentation/manage_categories_screen.dart';
+import '../../features/inventory/presentation/product_detail_screen.dart';
+import '../../features/inventory/presentation/product_form_screen.dart';
+import '../../features/onboarding/presentation/welcome_screen.dart';
+import '../../features/scan/presentation/scan_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/shell/presentation/main_shell.dart';
+import '../../features/transactions/presentation/history_screen.dart';
+import '../../features/trends/presentation/trend_screen.dart';
+import '../../shared/providers/onboarding_provider.dart';
+import '../../shared/providers/supabase_provider.dart';
+
+/// Centralized route path constants — reference these instead of raw strings.
+class AppRoutes {
+  const AppRoutes._();
+
+  static const String welcome = '/welcome';
+  static const String login = '/login';
+  static const String profileSetup = '/profile-setup';
+  static const String dashboard = '/';
+  static const String inventory = '/inventory';
+  static const String analytics = '/analytics';
+  static const String history = '/history';
+  static const String insights = '/insights';
+  static const String trends = '/trends';
+  static const String settings = '/settings';
+  static const String categories = '/categories';
+  static const String archivedProducts = '/archived-products';
+}
+
+final _rootKey = GlobalKey<NavigatorState>();
+
+/// Wraps a screen in a shared slide-and-fade page transition. Forward navigation
+/// eases the new screen in from a short rightward offset while fading; back
+/// navigation reverses it. Honours reduced-motion by skipping the movement.
+/// Pass [slide] false for top-level destinations (auth/onboarding) that should
+/// just crossfade rather than imply spatial depth.
+CustomTransitionPage<void> _transitionPage(Widget child, {bool slide = true}) {
+  return CustomTransitionPage<void>(
+    child: child,
+    transitionDuration: AppMotion.page,
+    reverseTransitionDuration: AppMotion.exit,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (AppMotion.reduced(context)) return child;
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: AppMotion.easeOut,
+        reverseCurve: AppMotion.easeInOut,
+      );
+      final fade = FadeTransition(opacity: curved, child: child);
+      if (!slide) return fade;
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.06, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: fade,
+      );
+    },
+  );
+}
+
+/// The app router: a [StatefulShellRoute] hosts the four bottom-nav destinations
+/// (Home / Items / Reports / History); auth, onboarding, product detail/forms
+/// and the settings sub-pages render full-screen on the root navigator.
+///
+/// Redirects: first launch → /welcome; signed out → /login; signed in with no
+/// shop → /profile-setup; otherwise the app. Refreshes on auth, shop, and
+/// onboarding changes.
+final goRouterProvider = Provider<GoRouter>((ref) {
+  final refresh = ValueNotifier<int>(0);
+  ref.onDispose(refresh.dispose);
+  ref.listen(authStateChangesProvider, (_, _) => refresh.value++);
+  ref.listen(myShopProvider, (_, _) => refresh.value++);
+  ref.listen(onboardingSeenProvider, (_, _) => refresh.value++);
+
+  return GoRouter(
+    navigatorKey: _rootKey,
+    initialLocation: AppRoutes.dashboard,
+    refreshListenable: refresh,
+    redirect: (context, state) {
+      final loggedIn =
+          ref.read(supabaseClientProvider).auth.currentUser != null;
+      final seenOnboarding = ref.read(onboardingSeenProvider);
+      final loc = state.matchedLocation;
+
+      // First-launch onboarding (pre-auth).
+      if (!loggedIn && !seenOnboarding) {
+        return loc == AppRoutes.welcome ? null : AppRoutes.welcome;
+      }
+      // Signed out (onboarding already seen) → login.
+      if (!loggedIn) {
+        return loc == AppRoutes.login ? null : AppRoutes.login;
+      }
+
+      // Signed in: gate on whether a shop exists.
+      final preAuthLoc = loc == AppRoutes.welcome || loc == AppRoutes.login;
+      return ref
+          .read(myShopProvider)
+          .maybeWhen(
+            data: (shop) {
+              final atSetup = loc == AppRoutes.profileSetup;
+              if (shop == null) return atSetup ? null : AppRoutes.profileSetup;
+              if (atSetup || preAuthLoc) return AppRoutes.dashboard;
+              return null;
+            },
+            orElse: () => preAuthLoc ? AppRoutes.dashboard : null,
+          );
+    },
+    routes: [
+      GoRoute(
+        path: AppRoutes.welcome,
+        pageBuilder: (_, _) =>
+            _transitionPage(const WelcomeScreen(), slide: false),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        pageBuilder: (_, _) =>
+            _transitionPage(const LoginScreen(), slide: false),
+      ),
+      GoRoute(
+        path: AppRoutes.profileSetup,
+        pageBuilder: (_, _) =>
+            _transitionPage(const ProfileSetupScreen(), slide: false),
+      ),
+
+      // Bottom-nav shell.
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, navigationShell) =>
+            MainShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.dashboard,
+                builder: (_, _) => const DashboardScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.inventory,
+                builder: (_, _) => const InventoryListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.analytics,
+                builder: (_, _) => const AnalyticsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.history,
+                builder: (_, _) => const HistoryScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // Full-screen routes (root navigator — no bottom bar).
+      GoRoute(
+        path: '/inventory/new',
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const ProductFormScreen()),
+      ),
+      GoRoute(
+        path: '/cart',
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const CartScreen()),
+      ),
+      GoRoute(
+        path: '/scan',
+        builder: (context, state) => const ScanScreen(),
+      ),
+      GoRoute(
+        path: '/inventory/:id',
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, state) => _transitionPage(
+          ProductDetailScreen(productId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/inventory/:id/edit',
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, state) => _transitionPage(
+          ProductFormScreen(product: state.extra as Product?),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.insights,
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const InsightsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.trends,
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const TrendScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const SettingsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.categories,
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const ManageCategoriesScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.archivedProducts,
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const ArchivedProductsScreen()),
+      ),
+    ],
+  );
+});

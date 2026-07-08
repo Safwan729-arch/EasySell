@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tap revenue card → exact breakdown sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --brand:#2563EB;--positive:#16A34A;--negative:#DC2626;--warning:#EA580C;
+    --bg:#EEF2F7;--card:#FFFFFF;--card-raised:#F1F4F8;--border:#E7EBF1;
+    --ink:#0F172A;--ink-muted:#8A94A6;--r-card:18px; font-feature-settings:"tnum" 1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;background:#dfe5ee;color:var(--ink);padding:30px 26px 70px;}
+  h1{font-size:21px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;}
+  .lead{color:#54607a;font-size:13px;line-height:1.6;max-width:760px;margin-bottom:24px;}
+  .lead code{background:#fff;border:1px solid var(--border);border-radius:5px;padding:1px 5px;}
+  .deck{display:flex;gap:48px;align-items:flex-start;flex-wrap:wrap;}
+  .col{width:340px;}
+  .col h2{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .step{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:999px;margin-bottom:12px;background:rgba(37,99,235,.12);color:var(--brand);}
+  .notes{font-size:12px;color:#54607a;line-height:1.55;margin-top:14px;}
+  .notes li{margin:0 0 6px 16px;}
+  .notes b{color:var(--ink);}
+
+  .phone{width:340px;background:var(--bg);border-radius:34px;padding:10px;box-shadow:0 16px 40px rgba(20,32,60,.18);border:1px solid #d6dde8;}
+  .screen{background:var(--bg);border-radius:26px;overflow:hidden;position:relative;height:680px;}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:10px 18px 4px;font-size:12px;font-weight:600;}
+  .content{padding:6px 14px 0;height:calc(680px - 96px);overflow:hidden;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-card);}
+  .pad{padding:14px;}
+  .muted{color:var(--ink-muted);}
+  .label{font-size:11px;color:var(--ink-muted);font-weight:500;}
+  .pos{color:var(--positive);}.neg{color:var(--negative);}
+  .avatar{width:42px;height:42px;border-radius:12px;background:var(--card-raised);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--brand);font-size:16px;}
+
+  .greet{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 12px;}
+  .greet .hi{font-size:13px;font-weight:700;}
+  .greet .date{font-size:11px;color:var(--ink-muted);margin-top:1px;}
+  .ico{width:38px;height:38px;border-radius:999px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+
+  .pills{display:flex;gap:7px;background:var(--card-raised);border-radius:999px;padding:4px;margin:0 4px 14px;}
+  .pills .p{flex:1;text-align:center;font-size:12px;font-weight:600;padding:7px 0;border-radius:999px;color:var(--ink-muted);}
+  .pills .p.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,32,60,.08);}
+
+  .hero{background:var(--brand);color:#fff;border-radius:var(--r-card);padding:16px;position:relative;overflow:hidden;}
+  .hero::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;background:rgba(255,255,255,.08);border-radius:50%;}
+  .hero.tappable{outline:2px solid rgba(37,99,235,.0);box-shadow:0 0 0 3px rgba(37,99,235,.35),0 12px 26px rgba(37,99,235,.28);}
+  .hero .label{color:rgba(255,255,255,.75);}
+  .val{font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1.05;white-space:nowrap;}
+  .delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.18);margin-top:8px;}
+  .split{display:flex;gap:14px;margin-top:14px;position:relative;z-index:1;}
+  .split>div{flex:1 1 0;min-width:0;}
+  .split .label{color:rgba(255,255,255,.7);}
+  .split .v{font-size:16px;font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* tap affordance */
+  .expand{position:absolute;top:14px;right:14px;z-index:2;display:flex;align-items:center;gap:5px;
+    background:rgba(255,255,255,.16);border-radius:999px;padding:4px 9px 4px 10px;font-size:10.5px;font-weight:700;color:#fff;}
+  .expand svg{width:13px;height:13px;}
+  .taphint{position:absolute;z-index:30;font-size:11px;font-weight:700;color:#fff;background:var(--brand);
+    padding:4px 9px;border-radius:8px;box-shadow:0 4px 12px rgba(37,99,235,.4);}
+  .taphint::after{content:"";position:absolute;left:24px;bottom:-5px;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid var(--brand);}
+  .finger{position:absolute;z-index:31;font-size:30px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25));}
+
+  .secttl{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-muted);margin:18px 4px 9px;display:flex;justify-content:space-between;align-items:center;}
+  .secttl .best{color:var(--positive);font-weight:700;font-size:11px;text-transform:none;letter-spacing:0;}
+  .bars{display:flex;align-items:flex-end;gap:8px;height:90px;}
+  .bars .b{flex:1;border-radius:6px 6px 3px 3px;background:linear-gradient(var(--brand),#7aa6f5);}
+  .bars .b.dim{background:linear-gradient(#c7d6f3,#dde7f8);}
+  .blabels{display:flex;gap:8px;margin-top:6px;}
+  .blabels span{flex:1;text-align:center;font-size:10px;color:var(--ink-muted);}
+
+  /* scrim + bottom sheet */
+  .scrim{position:absolute;inset:0;background:rgba(8,15,30,.42);z-index:10;}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:11;background:var(--card);
+    border-radius:24px 24px 0 0;padding:8px 18px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.25);}
+  .grip{width:38px;height:4px;border-radius:999px;background:#d2d9e4;margin:6px auto 14px;}
+  .sheet h3{font-size:16px;font-weight:800;letter-spacing:-.2px;}
+  .sheet .sub{font-size:11.5px;color:var(--ink-muted);margin-top:1px;margin-bottom:6px;}
+  .brow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid var(--border);}
+  .brow .k{font-size:13px;color:var(--ink-muted);font-weight:500;}
+  .brow .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .brow.big .v{font-size:19px;font-weight:800;}
+  .brow.profit .v{color:var(--positive);}
+  .reportbtn{margin-top:16px;width:100%;height:46px;border-radius:14px;background:var(--card-raised);color:var(--brand);
+    font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--border);}
+  .reportbtn svg{width:16px;height:16px;}
+
+  .nav{position:absolute;left:0;right:0;bottom:0;height:64px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;}
+  .nav .n{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--ink-muted);}
+  .nav .n.on{color:var(--brand);font-weight:700;}
+  .nav .n svg{width:21px;height:21px;}
+</style>
+</head>
+<body>
+  <h1>Tap the revenue card → exact breakdown</h1>
+  <p class="lead">When the period is big enough to compact (here a month: hero shows <code>$1.28M</code>), tapping the blue card opens a bottom sheet with <b>every figure in full precision</b> — revenue, cost, profit, margin, items, orders, average. Same sheet works for Today/Week/Month; it just mirrors the selected pill.</p>
+
+  <div class="deck">
+
+    <!-- STATE 1: tappable hero -->
+    <div class="col">
+      <h2>1 · The card invites a tap</h2>
+      <span class="step">Resting state</span>
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+        <div class="content">
+          <div class="greet"><div><div class="hi">Kalo Store</div><div class="date">Fri, 26 Jun</div></div>
+            <div style="display:flex;gap:8px"><div class="ico">🔔</div><div class="ico">⚙️</div></div></div>
+          <div class="pills"><div class="p">Today</div><div class="p">Week</div><div class="p on">Month</div></div>
+          <div class="hero tappable" style="margin-top:30px">
+            <div class="expand">EXACT
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M8 21H5a2 2 0 01-2-2v-3M16 21h3a2 2 0 002-2v-3"/></svg>
+            </div>
+            <div class="label">Revenue · Month</div>
+            <div class="val">$1.28M</div>
+            <span class="delta">▲ 9% vs last month</span>
+            <div class="split">
+              <div><div class="label">Profit</div><div class="v">$452K</div></div>
+              <div><div class="label">Margin</div><div class="v">35.2%</div></div>
+              <div><div class="label">Items sold</div><div class="v">12.5K</div></div>
+            </div>
+          </div>
+          <div class="taphint" style="top:60px;left:60px">Tap for exact figures</div>
+          <span class="finger" style="top:150px;left:150px">👆</span>
+          <div class="secttl"><span>Sales · last 7 days</span><span class="best">Wed best</span></div>
+          <div class="card pad">
+            <div class="bars"><div class="b" style="height:40%"></div><div class="b" style="height:62%"></div><div class="b" style="height:100%"></div><div class="b dim" style="height:55%"></div><div class="b dim" style="height:74%"></div><div class="b dim" style="height:48%"></div><div class="b dim" style="height:66%"></div></div>
+            <div class="blabels"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="n on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Home</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Items</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reports</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>A small <b>"EXACT ⤢" chip</b> top-right signals the card is tappable — no clutter on the numbers themselves.</li>
+        <li>Whole card is the tap target (plus the chip), with a light haptic on press.</li>
+      </ul>
+    </div>
+
+    <!-- STATE 2: breakdown sheet -->
+    <div class="col">
+      <h2>2 · Exact breakdown slides up</h2>
+      <span class="step">After tap</span>
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+        <div class="content">
+          <div class="greet"><div><div class="hi">Kalo Store</div><div class="date">Fri, 26 Jun</div></div>
+            <div style="display:flex;gap:8px"><div class="ico">🔔</div><div class="ico">⚙️</div></div></div>
+          <div class="pills"><div class="p">Today</div><div class="p">Week</div><div class="p on">Month</div></div>
+          <div class="hero" style="margin-top:30px">
+            <div class="label">Revenue · Month</div>
+            <div class="val">$1.28M</div>
+            <span class="delta">▲ 9% vs last month</span>
+            <div class="split">
+              <div><div class="label">Profit</div><div class="v">$452K</div></div>
+              <div><div class="label">Margin</div><div class="v">35.2%</div></div>
+              <div><div class="label">Items sold</div><div class="v">12.5K</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- scrim + sheet -->
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grip"></div>
+          <h3>Month breakdown</h3>
+          <div class="sub">1–26 Jun · exact figures</div>
+          <div class="brow big"><span class="k">Revenue</span><span class="v">$1,284,500.00</span></div>
+          <div class="brow"><span class="k">Cost of goods</span><span class="v">$832,320.00</span></div>
+          <div class="brow big profit"><span class="k">Gross profit</span><span class="v">$452,180.00</span></div>
+          <div class="brow"><span class="k">Margin</span><span class="v">35.2%</span></div>
+          <div class="brow"><span class="k">Items sold</span><span class="v">12,480</span></div>
+          <div class="brow"><span class="k">Orders</span><span class="v">1,842</span></div>
+          <div class="brow"><span class="k">Avg order value</span><span class="v">$697.34</span></div>
+          <div class="reportbtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            View full report
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Every value in <b>full precision with cents</b> — the exact answer the compact card hid.</li>
+        <li>Adds figures too detailed for the card: <b>cost of goods, orders, average order value</b>.</li>
+        <li>Swipe down / tap scrim to dismiss; <b>"View full report"</b> jumps to the Reports tab for deeper analysis.</li>
+        <li>Reuses your existing <code>showModalBottomSheet</code> pattern — consistent with restock/confirmation sheets.</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

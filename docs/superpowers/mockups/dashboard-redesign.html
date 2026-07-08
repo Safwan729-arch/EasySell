@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Redesign — Visual Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ---- App design tokens (from theme.dart, light palette) ---- */
+  :root{
+    --brand:#2563EB; --brand-deep:#1D4ED8;
+    --positive:#16A34A; --negative:#DC2626; --warning:#EA580C;
+    --bg:#EEF2F7; --card:#FFFFFF; --card-raised:#F1F4F8; --border:#E7EBF1;
+    --ink:#0F172A; --ink-muted:#8A94A6;
+    --r-card:18px; --r-btn:14px; --r-pill:999px;
+    font-feature-settings:"tnum" 1;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter',system-ui,sans-serif; background:#dfe5ee; color:var(--ink);
+    padding:32px 24px 80px; -webkit-font-smoothing:antialiased;
+  }
+  h1{font-size:22px; font-weight:800; letter-spacing:-0.4px; margin-bottom:4px;}
+  .sub{color:#5b677e;}
+  .lead{color:#54607a; font-size:13.5px; max-width:760px; line-height:1.6; margin-bottom:6px;}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; margin:14px 0 26px; font-size:12px; color:#54607a;}
+  .legend b{color:var(--brand);}
+
+  .deck{display:flex; gap:34px; align-items:flex-start; overflow-x:auto; padding-bottom:20px;}
+  .col{flex:0 0 auto; width:340px;}
+  .col h2{font-size:15px; font-weight:800; letter-spacing:-0.2px; margin-bottom:2px;}
+  .col .tag{display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; padding:3px 8px; border-radius:999px; margin-bottom:10px;}
+  .tag.rec{background:rgba(37,99,235,.12); color:var(--brand);}
+  .tag.alt{background:#e7ebf1; color:#5b677e;}
+  .notes{font-size:12px; color:#54607a; line-height:1.55; margin-top:14px;}
+  .notes li{margin:0 0 6px 16px;}
+  .notes b{color:var(--ink);}
+
+  /* ---- Phone frame ---- */
+  .phone{width:340px; background:var(--bg); border-radius:34px; padding:10px;
+    box-shadow:0 16px 40px rgba(20,32,60,.18); border:1px solid #d6dde8;}
+  .screen{background:var(--bg); border-radius:26px; overflow:hidden; position:relative; height:680px;}
+  .statusbar{display:flex; justify-content:space-between; align-items:center;
+    padding:10px 18px 4px; font-size:12px; font-weight:600; color:var(--ink);}
+  .statusbar .dots{display:flex; gap:5px; align-items:center;}
+  .content{padding:6px 14px 0; height:calc(680px - 96px); overflow-y:auto;}
+  .content::-webkit-scrollbar{width:0;}
+
+  /* ---- Shared bits ---- */
+  .row{display:flex; gap:10px;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-card);}
+  .pad{padding:14px;}
+  .muted{color:var(--ink-muted);}
+  .label{font-size:11px; color:var(--ink-muted); font-weight:500;}
+  .kpi{font-size:26px; font-weight:800; letter-spacing:-0.6px;}
+  .kpi-lg{font-size:34px; font-weight:800; letter-spacing:-1px;}
+  .pos{color:var(--positive);} .neg{color:var(--negative);} .warn{color:var(--warning);}
+  .delta{display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:700;
+    padding:2px 7px; border-radius:999px;}
+  .delta.up{background:rgba(22,163,74,.12); color:var(--positive);}
+  .avatar{width:40px; height:40px; border-radius:12px; background:var(--card-raised);
+    display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--brand); font-size:15px;}
+
+  /* greeting */
+  .greet{display:flex; align-items:center; justify-content:space-between; padding:10px 4px 12px;}
+  .greet .hi{font-size:13px; font-weight:700;}
+  .greet .date{font-size:11px; color:var(--ink-muted); margin-top:1px;}
+  .ico{width:38px; height:38px; border-radius:999px; background:var(--card);
+    border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--ink);}
+
+  /* pills */
+  .pills{display:flex; gap:7px; background:var(--card-raised); border-radius:999px; padding:4px; margin:0 4px 14px;}
+  .pills .p{flex:1; text-align:center; font-size:12px; font-weight:600; padding:7px 0; border-radius:999px; color:var(--ink-muted);}
+  .pills .p.on{background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(20,32,60,.08);}
+
+  /* hero */
+  .hero{background:var(--brand); color:#fff; border-radius:var(--r-card); padding:16px; position:relative; overflow:hidden;}
+  .hero::after{content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px;
+    background:rgba(255,255,255,.08); border-radius:50%;}
+  .hero .label{color:rgba(255,255,255,.75);}
+  .hero .kpi-lg{color:#fff;}
+  .hero .split{display:flex; gap:20px; margin-top:14px; position:relative; z-index:1;}
+  .hero .split .label{color:rgba(255,255,255,.7);}
+  .hero .split .v{font-size:16px; font-weight:800; margin-top:2px;}
+
+  /* quick sell strip */
+  .secttl{font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+    color:var(--ink-muted); margin:18px 4px 9px; display:flex; justify-content:space-between; align-items:center;}
+  .secttl .link{color:var(--brand); font-weight:700; font-size:11px; text-transform:none; letter-spacing:0;}
+  .qstrip{display:flex; gap:9px; overflow-x:auto; padding:0 4px 2px;}
+  .qchip{flex:0 0 auto; width:78px; background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:10px 8px; text-align:center;}
+  .qchip .av{width:34px; height:34px; border-radius:10px; background:var(--card-raised); color:var(--brand);
+    display:flex; align-items:center; justify-content:center; font-weight:700; margin:0 auto 7px;}
+  .qchip .nm{font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .qchip .pr{font-size:10px; color:var(--ink-muted); margin-top:1px;}
+  .qchip.add{display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-style:dashed; color:var(--brand); font-weight:700; font-size:11px;}
+  .qchip.add .plus{font-size:20px; line-height:1; margin-bottom:4px;}
+
+  /* metric chips */
+  .mrow{display:flex; gap:10px; margin-top:4px;}
+  .mcell{flex:1;}
+  .mcell .kpi{font-size:22px;}
+  .mcell .sub{font-size:11px; color:var(--ink-muted); margin-top:3px;}
+
+  /* chart */
+  .bars{display:flex; align-items:flex-end; gap:8px; height:96px; margin-top:14px;}
+  .bars .b{flex:1; border-radius:6px 6px 3px 3px; background:linear-gradient(var(--brand),#7aa6f5);}
+  .bars .b.dim{background:linear-gradient(#c7d6f3,#dde7f8);}
+  .blabels{display:flex; gap:8px; margin-top:6px;}
+  .blabels span{flex:1; text-align:center; font-size:10px; color:var(--ink-muted);}
+
+  /* list rows */
+  .lrow{display:flex; align-items:center; gap:11px; padding:9px 0;}
+  .lrow + .lrow{border-top:1px solid var(--border);}
+  .lrow .nm{font-size:13px; font-weight:600;}
+  .lrow .meta{font-size:11px; margin-top:1px;}
+  .btn-sm{border:1px solid var(--border); color:var(--brand); font-weight:700; font-size:12px;
+    padding:7px 13px; border-radius:11px; background:var(--card); white-space:nowrap;}
+  .btn-warn{border-color:rgba(234,88,12,.35); color:var(--warning);}
+  .pillstat{font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px;}
+  .pillstat.out{background:rgba(220,38,38,.12); color:var(--negative);}
+  .pillstat.low{background:rgba(234,88,12,.12); color:var(--warning);}
+
+  /* bottom nav */
+  .nav{position:absolute; left:0; right:0; bottom:0; height:64px; background:var(--card);
+    border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-around;
+    box-shadow:0 -4px 16px rgba(0,0,0,.05);}
+  .nav .n{display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; font-weight:600; color:var(--ink-muted);}
+  .nav .n.on{color:var(--brand); font-weight:700;}
+  .nav .n svg{width:21px; height:21px;}
+  .sellbtn{width:54px; height:54px; border-radius:18px; background:var(--brand); color:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    box-shadow:0 8px 18px rgba(37,99,235,.4); margin-top:-22px; font-size:9px; font-weight:800;}
+  .sellbtn svg{width:22px; height:22px;}
+
+  /* FAB */
+  .fab{position:absolute; right:16px; bottom:80px; height:50px; border-radius:16px; background:var(--brand);
+    color:#fff; display:flex; align-items:center; gap:8px; padding:0 18px; font-weight:800; font-size:14px;
+    box-shadow:0 10px 22px rgba(37,99,235,.4);}
+  .fab svg{width:20px; height:20px;}
+
+  /* quick actions grid (variant C) */
+  .qa{display:flex; gap:10px; margin:2px 0 4px;}
+  .qa .a{flex:1; background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:12px 6px; text-align:center;}
+  .qa .a .ic{width:38px; height:38px; border-radius:12px; margin:0 auto 7px; display:flex; align-items:center; justify-content:center;}
+  .qa .a .ic.b{background:rgba(37,99,235,.12); color:var(--brand);}
+  .qa .a .ic.g{background:rgba(22,163,74,.12); color:var(--positive);}
+  .qa .a .ic.o{background:rgba(234,88,12,.12); color:var(--warning);}
+  .qa .a .ic.p{background:var(--card-raised); color:var(--ink);}
+  .qa .a .t{font-size:11px; font-weight:600;}
+  .qa .a svg{width:19px; height:19px;}
+
+  .anno{font-size:11px; color:#fff; background:var(--brand); display:inline-block;
+    border-radius:6px; padding:2px 6px; font-weight:700; position:absolute; z-index:5;}
+</style>
+</head>
+<body>
+  <h1>Dashboard Redesign — Visual Companion</h1>
+  <p class="lead">Three concrete directions for the Home tab, drawn with your real design tokens (royal-blue #2563EB, Inter, hairline cards, the gray-blue canvas). They differ mainly in <b>how aggressively the "record a sale" action is surfaced</b> and <b>what wins the top of the screen</b>. Numbers are placeholder. Pick one as the base — we can mix elements.</p>
+  <div class="legend">
+    <span>🔵 <b>A · Sell-first</b> (recommended): home doubles as a quick-sell launcher</span>
+    <span>⚪ <b>B · KPI-hero</b>: monitoring-led, sale via corner FAB</span>
+    <span>⚪ <b>C · Action-grid</b>: 4 big actions + live till feel</span>
+  </div>
+
+  <div class="deck">
+
+    <!-- ============ VARIANT A : SELL-FIRST ============ -->
+    <div class="col">
+      <h2>A · Sell-first</h2>
+      <span class="tag rec">Recommended</span>
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>9:41</span><div class="dots">📶 🔋</div></div>
+        <div class="content">
+          <!-- demoted greeting -->
+          <div class="greet">
+            <div><div class="hi">Kalo Store</div><div class="date">Fri, 26 Jun</div></div>
+            <div style="display:flex;gap:8px">
+              <div class="ico">🔔</div><div class="ico">⚙️</div>
+            </div>
+          </div>
+          <div class="pills">
+            <div class="p on">Today</div><div class="p">Week</div><div class="p">Month</div>
+          </div>
+          <!-- revenue hero with profit inline -->
+          <div class="hero">
+            <div class="label">Revenue · Today</div>
+            <div class="kpi-lg">$1,284</div>
+            <div style="margin-top:8px"><span class="delta up" style="background:rgba(255,255,255,.18);color:#fff">▲ 12% vs yesterday</span></div>
+            <div class="split">
+              <div><div class="label">Profit</div><div class="v">$430</div></div>
+              <div><div class="label">Margin</div><div class="v">33.5%</div></div>
+              <div><div class="label">Items sold</div><div class="v">86</div></div>
+            </div>
+          </div>
+          <!-- QUICK SELL -->
+          <div class="secttl"><span>Quick sell</span><span class="link">All items ›</span></div>
+          <div class="qstrip">
+            <div class="qchip"><div class="av">P</div><div class="nm">Pepsi 500ml</div><div class="pr">$0.80</div></div>
+            <div class="qchip"><div class="av">B</div><div class="nm">Bread</div><div class="pr">$1.20</div></div>
+            <div class="qchip"><div class="av">M</div><div class="nm">Milk 1L</div><div class="pr">$1.50</div></div>
+            <div class="qchip add"><div class="plus">+</div>New sale</div>
+          </div>
+          <!-- stock alerts merged -->
+          <div class="secttl"><span>Needs attention</span><span class="link">Inventory ›</span></div>
+          <div class="card pad">
+            <div class="lrow">
+              <div class="avatar">S</div>
+              <div style="flex:1"><div class="nm">Sugar 1kg</div><div class="meta neg">Out of stock</div></div>
+              <span class="pillstat out">0 left</span>
+            </div>
+            <div class="lrow">
+              <div class="avatar">R</div>
+              <div style="flex:1"><div class="nm">Rice 5kg</div><div class="meta warn">Low · reorder soon</div></div>
+              <button class="btn-sm btn-warn">Restock</button>
+            </div>
+            <div class="lrow">
+              <div class="avatar">E</div>
+              <div style="flex:1"><div class="nm">Eggs (tray)</div><div class="meta warn">Low · 4 left</div></div>
+              <button class="btn-sm btn-warn">Restock</button>
+            </div>
+          </div>
+          <!-- chart, now correctly scoped -->
+          <div class="secttl"><span>Sales · last 7 days</span><span class="link" style="color:var(--positive)">Wed best</span></div>
+          <div class="card pad">
+            <div class="bars">
+              <div class="b" style="height:40%"></div><div class="b" style="height:62%"></div>
+              <div class="b" style="height:100%"></div><div class="b dim" style="height:55%"></div>
+              <div class="b dim" style="height:74%"></div><div class="b dim" style="height:48%"></div>
+              <div class="b dim" style="height:66%"></div>
+            </div>
+            <div class="blabels"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+        <!-- nav with center SELL -->
+        <div class="nav">
+          <div class="n on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Home</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Items</div>
+          <div class="sellbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>SELL</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reports</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Sale = 1 tap.</b> Center SELL opens the sheet; the Quick-sell strip sells a frequent item in 2 taps.</li>
+        <li>Greeting shrinks to a thin line; <b>Today's Revenue hero</b> wins the top with profit/margin/items folded in — one glance, four KPIs.</li>
+        <li>Low-stock count card is gone; merged into one <b>"Needs attention"</b> list that ranks out-of-stock above low.</li>
+        <li>Chart relabelled <b>"last 7 days"</b> so it stops contradicting the period pills.</li>
+      </ul>
+    </div>
+
+    <!-- ============ VARIANT B : KPI-HERO ============ -->
+    <div class="col">
+      <h2>B · KPI-hero</h2>
+      <span class="tag alt">Monitoring-led</span>
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>9:41</span><div class="dots">📶 🔋</div></div>
+        <div class="content">
+          <div class="greet">
+            <div><div class="hi">Hi, Safi 👋</div><div class="date">Kalo Store · Fri, 26 Jun</div></div>
+            <div style="display:flex;gap:8px"><div class="ico">🔔</div><div class="ico">⚙️</div></div>
+          </div>
+          <div class="pills"><div class="p on">Today</div><div class="p">Week</div><div class="p">Month</div></div>
+          <!-- 2x2 grid, refined -->
+          <div class="row" style="margin-bottom:10px">
+            <div class="card pad mcell">
+              <div class="label">Revenue</div><div class="kpi">$1,284</div>
+              <div style="margin-top:6px"><span class="delta up">▲ 12%</span></div>
+            </div>
+            <div class="card pad mcell">
+              <div class="label">Profit</div><div class="kpi pos">$430</div>
+              <div class="sub">33.5% margin</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="card pad mcell">
+              <div class="label">Items sold</div><div class="kpi">86</div>
+              <div class="sub">$14.9 avg</div>
+            </div>
+            <div class="card pad mcell">
+              <div class="label">Stock alerts</div><div class="kpi warn">5</div>
+              <div class="sub"><span class="neg">2 out</span> · 3 low</div>
+            </div>
+          </div>
+          <div class="secttl"><span>Sales · last 7 days</span><span class="link" style="color:var(--positive)">$6,940</span></div>
+          <div class="card pad">
+            <div class="bars">
+              <div class="b" style="height:40%"></div><div class="b" style="height:62%"></div>
+              <div class="b" style="height:100%"></div><div class="b dim" style="height:55%"></div>
+              <div class="b dim" style="height:74%"></div><div class="b dim" style="height:48%"></div>
+              <div class="b dim" style="height:66%"></div>
+            </div>
+            <div class="blabels"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          </div>
+          <div class="secttl"><span>Top performer</span></div>
+          <div class="card pad">
+            <div class="lrow" style="padding:2px 0">
+              <div class="avatar">P</div>
+              <div style="flex:1"><div class="nm">Pepsi 500ml</div><div class="meta muted">142 sold · $114 revenue</div></div>
+              <span class="pillstat" style="background:rgba(37,99,235,.12);color:var(--brand)">MVP</span>
+            </div>
+          </div>
+          <div class="secttl"><span>Low stock</span><span class="link">View all ›</span></div>
+          <div class="card pad">
+            <div class="lrow" style="padding:6px 0">
+              <div class="avatar">R</div>
+              <div style="flex:1"><div class="nm">Rice 5kg</div><div class="meta neg">2 left · reorder</div></div>
+              <button class="btn-sm">Restock</button>
+            </div>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+        <!-- FAB -->
+        <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Sell</div>
+        <div class="nav">
+          <div class="n on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Home</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Items</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reports</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Closest to <b>today's layout</b> — lowest build effort. Keeps the 2×2 grid but fixes the labels.</li>
+        <li>Greeting stays but demoted to one line; the grid is the visual lead.</li>
+        <li><b>"Stock alerts"</b> cell now splits out-of-stock vs low instead of a flat count.</li>
+        <li>Sale via a <b>corner "Sell" FAB</b> — discoverable, thumb-reachable, but 1 extra glance vs A.</li>
+      </ul>
+    </div>
+
+    <!-- ============ VARIANT C : ACTION-GRID ============ -->
+    <div class="col">
+      <h2>C · Action-grid</h2>
+      <span class="tag alt">Live-till feel</span>
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>9:41</span><div class="dots">📶 🔋</div></div>
+        <div class="content">
+          <div class="greet">
+            <div><div class="hi">Kalo Store</div><div class="date">Fri, 26 Jun · open</div></div>
+            <div style="display:flex;gap:8px"><div class="ico">🔔</div><div class="ico">⚙️</div></div>
+          </div>
+          <!-- compact KPI hero -->
+          <div class="hero" style="padding:14px 16px">
+            <div class="label">Today's revenue</div>
+            <div class="kpi-lg" style="font-size:30px">$1,284</div>
+            <div class="split" style="margin-top:10px">
+              <div><div class="label">Profit</div><div class="v">$430</div></div>
+              <div><div class="label">Items</div><div class="v">86</div></div>
+              <div><div class="label">Orders</div><div class="v">37</div></div>
+            </div>
+          </div>
+          <!-- 4 quick actions -->
+          <div class="secttl"><span>Quick actions</span></div>
+          <div class="qa">
+            <div class="a"><div class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></div><div class="t">Sell</div></div>
+            <div class="a"><div class="ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7h18M3 12h18M3 17h18"/></svg></div><div class="t">Restock</div></div>
+            <div class="a"><div class="ic o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg></div><div class="t">Add item</div></div>
+            <div class="a"><div class="ic p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><div class="t">Reports</div></div>
+          </div>
+          <!-- recent transactions peek -->
+          <div class="secttl"><span>Recent sales</span><span class="link">History ›</span></div>
+          <div class="card pad">
+            <div class="lrow" style="padding:7px 0">
+              <div class="avatar" style="color:var(--positive);background:rgba(22,163,74,.1)">↑</div>
+              <div style="flex:1"><div class="nm">Pepsi 500ml ×3</div><div class="meta muted">2 min ago · voice</div></div>
+              <div style="font-weight:800;font-size:13px">$2.40</div>
+            </div>
+            <div class="lrow" style="padding:7px 0">
+              <div class="avatar" style="color:var(--positive);background:rgba(22,163,74,.1)">↑</div>
+              <div style="flex:1"><div class="nm">Bread ×1</div><div class="meta muted">8 min ago · manual</div></div>
+              <div style="font-weight:800;font-size:13px">$1.20</div>
+            </div>
+            <div class="lrow" style="padding:7px 0">
+              <div class="avatar" style="color:var(--warning);background:rgba(234,88,12,.1)">⟳</div>
+              <div style="flex:1"><div class="nm">Rice 5kg ×10</div><div class="meta muted">22 min ago · restock</div></div>
+              <div style="font-weight:800;font-size:13px;color:var(--ink-muted)">+10</div>
+            </div>
+          </div>
+          <!-- attention strip -->
+          <div class="secttl"><span>Needs attention</span><span class="link">Inventory ›</span></div>
+          <div class="card pad">
+            <div class="lrow" style="padding:6px 0">
+              <div style="flex:1;display:flex;gap:10px;align-items:center">
+                <span class="pillstat out">2 out</span><span class="pillstat low">3 low</span>
+              </div>
+              <button class="btn-sm">Review</button>
+            </div>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+        <div class="nav">
+          <div class="n on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Home</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Items</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reports</div>
+          <div class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Treats Home as a <b>control panel</b>: compact KPI hero + a 4-up action grid (Sell / Restock / Add / Reports).</li>
+        <li><b>Recent sales peek</b> makes the till feel live and confirms voice/image sales landed — answers "did that go through?".</li>
+        <li>Attention collapses to a single chip strip; deepest data lives one tap away.</li>
+        <li>Most surfaces to maintain — richest, but the busiest. Best if "confirm recent activity" matters as much as selling.</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

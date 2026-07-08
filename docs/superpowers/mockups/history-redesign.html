@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>History tab — redesign concepts</title>
+<style>
+  :root{
+    --bg:#070b16; --panel:#0e1626; --panel2:#131d30; --line:#1d2940;
+    --ink:#eef3fb; --sub:#92a0b8; --muted:#67748d;
+    --brand:#5b9cff; --brand-dim:#244169;
+    --pos:#34d399; --neg:#f87171; --warn:#fbbf24;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:radial-gradient(1200px 700px at 30% -10%, #122038 0%, var(--bg) 55%);
+    color:var(--ink); padding:32px 24px 64px; -webkit-font-smoothing:antialiased;
+  }
+  h1.page{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+  p.lede{color:var(--sub);font-size:14px;margin-bottom:28px;max-width:720px;line-height:1.5}
+  .rail{display:flex;gap:30px;overflow-x:auto;padding:0 24px 24px 0;align-items:flex-start}
+  .col{flex:0 0 auto;width:340px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--brand);background:var(--brand-dim);
+    padding:4px 10px;border-radius:999px;margin-bottom:6px}
+  .col h2{font-size:16px;font-weight:700;margin-bottom:2px}
+  .col .why{font-size:12.5px;color:var(--sub);line-height:1.5;margin-bottom:14px;min-height:54px}
+
+  /* phone frame */
+  .phone{width:340px;height:720px;background:var(--bg);border:1px solid var(--line);
+    border-radius:34px;padding:14px 12px;box-shadow:0 30px 60px -20px #000a, inset 0 0 0 6px #0b1322;
+    display:flex;flex-direction:column;overflow:hidden;position:relative}
+  .status{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);
+    padding:2px 8px 8px}
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;border-radius:22px}
+  .screen::-webkit-scrollbar{width:0}
+  .navbar{display:flex;justify-content:space-around;padding-top:10px;border-top:1px solid var(--line);
+    margin-top:8px}
+  .navbar div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted)}
+  .navbar div.on{color:var(--brand)}
+  .navbar i{font-size:18px;font-style:normal}
+
+  h3.scr-title{font-size:22px;font-weight:800;letter-spacing:-.02em;padding:6px 6px 12px}
+  .daylabel{font-size:11px;font-weight:700;letter-spacing:.09em;color:var(--sub);
+    padding:14px 6px 8px}
+
+  /* generic row */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  .row{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:11px 12px;margin-bottom:9px}
+  .ic{width:40px;height:40px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;
+    font-size:18px;flex:0 0 auto;color:var(--sub)}
+  .grow{flex:1;min-width:0}
+  .nm{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta{font-size:12px;color:var(--sub);margin-top:2px}
+  .amt{font-size:15px;font-weight:800;text-align:right;white-space:nowrap}
+  .marg{font-size:11px;font-weight:700;color:var(--pos);text-align:right;margin-top:2px}
+
+  /* search */
+  .searchbar{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:10px 12px;margin:0 6px 10px}
+  .searchbar input{background:none;border:none;outline:none;color:var(--ink);font-size:14px;flex:1}
+  .searchbar input::placeholder{color:var(--muted)}
+  .sortchip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--brand);
+    background:var(--brand-dim);border:1px solid #2c4a73;border-radius:999px;padding:7px 12px;cursor:pointer;
+    white-space:nowrap}
+  .chips{display:flex;gap:7px;padding:0 6px 10px;flex-wrap:wrap}
+  .chip{font-size:12px;font-weight:600;color:var(--sub);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:6px 11px;cursor:pointer}
+  .chip.on{color:#04121f;background:var(--brand);border-color:var(--brand)}
+  .chip.rm{color:var(--ink);background:var(--brand-dim);border-color:#2c4a73}
+  .chip.rm::after{content:' ✕';color:var(--muted)}
+
+  .summary{display:flex;gap:10px;padding:0 6px 6px}
+  .scard{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px}
+  .scard .l{font-size:12px;color:var(--sub)}
+  .scard .v{font-size:21px;font-weight:800;margin-top:6px;letter-spacing:-.02em}
+
+  .count{font-size:12px;color:var(--muted);padding:2px 8px 10px}
+
+  /* concept 3 histogram */
+  .histo{display:flex;align-items:flex-end;gap:5px;height:88px;padding:10px 8px 6px;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;margin:0 6px 6px}
+  .bar{flex:1;background:var(--brand-dim);border-radius:5px 5px 2px 2px;cursor:pointer;transition:.15s;
+    position:relative;min-height:6px}
+  .bar.on{background:var(--brand)}
+  .bar:hover{background:#3a6ab0}
+  .axis{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);padding:0 10px 10px}
+  .tline{position:relative;padding-left:22px}
+  .tline::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tnode{position:relative;margin-bottom:9px}
+  .tnode::before{content:'';position:absolute;left:-18px;top:18px;width:9px;height:9px;border-radius:50%;
+    background:var(--brand);border:2px solid var(--bg)}
+
+  /* concept 4 receipts */
+  .receipt{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 14px 12px;
+    margin-bottom:11px;position:relative}
+  .receipt::before,.receipt::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;
+    background:var(--bg);top:50%;transform:translateY(-50%)}
+  .receipt::before{left:-8px}.receipt::after{right:-8px}
+  .rhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .rhead .rno{font-size:11px;color:var(--muted);font-weight:600}
+  .rline{display:flex;justify-content:space-between;font-size:13px;color:var(--sub);margin:3px 0}
+  .rdash{border-top:1px dashed var(--line);margin:9px 0}
+  .rtot{display:flex;justify-content:space-between;font-size:15px;font-weight:800}
+
+  /* concept 5 table */
+  .thead{display:flex;font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.04em;
+    padding:8px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+  .thead span{cursor:pointer}
+  .thead .c-amt{color:var(--brand)}
+  .trow{display:flex;align-items:center;font-size:13px;padding:11px 10px;border-bottom:1px solid #131d30}
+  .c-time{width:62px;color:var(--sub);font-size:12px;flex:0 0 auto}
+  .c-item{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .c-qty{width:34px;text-align:center;color:var(--sub);flex:0 0 auto}
+  .c-amt{width:76px;text-align:right;font-weight:800;flex:0 0 auto}
+
+  .seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:3px;margin:0 6px 12px}
+  .seg div{flex:1;text-align:center;font-size:12.5px;font-weight:700;color:var(--sub);padding:7px;
+    border-radius:9px;cursor:pointer}
+  .seg div.on{background:var(--brand);color:#04121f}
+
+  .slider-wrap{padding:6px 10px 12px}
+  .slider-wrap .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:8px}
+  input[type=range]{width:100%;accent-color:var(--brand)}
+  .sheet-title{font-size:15px;font-weight:800;padding:4px 6px 12px}
+  .filterbtn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;
+    color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:9px 13px;cursor:pointer}
+  .filterbtn .dot{width:7px;height:7px;border-radius:50%;background:var(--brand)}
+  .hdrrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 6px 12px}
+</style>
+</head>
+<body>
+  <h1 class="page">History tab — redesign concepts</h1>
+  <p class="lede">Job: <b>find a specific sale</b>, primarily <b>by amount</b>. Fake payment chips removed; rows now show real margin where useful. Five distinct layouts/interaction models — scroll the rail to compare. Search boxes, sort toggles, the amount slider and the histogram bands are interactive.</p>
+
+  <div class="rail" id="rail"></div>
+
+<script>
+/* ---- shared sample data (a grocery shop's recent sales) ---- */
+const SALES = [
+  {item:'Loose oil',     qty:5,  amt:925, marg:22, t:'8:53 AM', day:'TODAY',     src:'voice'},
+  {item:'Pepsi 500ml',   qty:8,  amt:360, marg:31, t:'8:53 AM', day:'TODAY',     src:'manual'},
+  {item:'Basmati Rice',  qty:2,  amt:550, marg:18, t:'8:12 AM', day:'TODAY',     src:'manual'},
+  {item:'Sugar 1kg',     qty:6,  amt:288, marg:12, t:'7:46 AM', day:'TODAY',     src:'image'},
+  {item:'Pepsi 500ml',   qty:12, amt:540, marg:31, t:'1:57 PM', day:'YESTERDAY', src:'voice'},
+  {item:'Atta flour 5kg',qty:1,  amt:430, marg:15, t:'12:30 PM',day:'YESTERDAY', src:'manual'},
+  {item:'Milk 1L',       qty:10, amt:700, marg:9,  t:'9:05 AM', day:'YESTERDAY', src:'manual'},
+  {item:'Tea 250g',      qty:3,  amt:285, marg:28, t:'8:40 AM', day:'YESTERDAY', src:'image'},
+  {item:'Cooking oil 5L',qty:1,  amt:1280,marg:14, t:'5:20 PM', day:'JUN 26',    src:'manual'},
+  {item:'Onions 2kg',    qty:4,  amt:160, marg:24, t:'3:10 PM', day:'JUN 26',    src:'voice'},
+  {item:'Biscuits',      qty:9,  amt:135, marg:35, t:'11:02 AM',day:'JUN 26',    src:'manual'},
+  {item:'Lentils 1kg',   qty:5,  amt:475, marg:20, t:'10:15 AM',day:'JUN 26',    src:'image'},
+];
+const cur = v => '$'+v.toLocaleString();
+const srcIcon = s => ({voice:'🎙️',image:'📷',manual:'✎'}[s]||'✎');
+
+/* ---- helpers ---- */
+function frame(tag, title, why, innerBuilder){
+  const col=document.createElement('div'); col.className='col';
+  col.innerHTML=`<span class="tag">${tag}</span><h2>${title}</h2><div class="why">${why}</div>`;
+  const phone=document.createElement('div'); phone.className='phone';
+  phone.innerHTML=`<div class="status"><span>9:08</span><span>100% 🔋</span></div>`;
+  const screen=document.createElement('div'); screen.className='screen';
+  phone.appendChild(screen);
+  phone.insertAdjacentHTML('beforeend',
+    `<div class="navbar"><div><i>🏠</i>Home</div><div><i>🧾</i>Items</div><div><i>📊</i>Reports</div><div class="on"><i>🕐</i>History</div></div>`);
+  col.appendChild(phone);
+  document.getElementById('rail').appendChild(col);
+  innerBuilder(screen);
+}
+function groupByDay(list){
+  const g={}; list.forEach(s=>{(g[s.day]=g[s.day]||[]).push(s)}); return g;
+}
+
+/* ===== Concept 1: Search-First Ledger ===== */
+frame('Concept 1','Search-First Ledger',
+ 'Closest to today, but search is promoted to the top and a one-tap <b>Amount ↓/↑</b> sort sits beside it. Day grouping stays. Margin replaces the old payment chip.',
+ (s)=>{
+  s.innerHTML=`<h3 class="scr-title">Sales history</h3>
+   <div class="searchbar"><span>🔎</span><input id="c1q" placeholder="Search sales…"></div>
+   <div class="hdrrow"><span class="count" id="c1cnt"></span><span class="sortchip" id="c1sort">Amount ↓</span></div>
+   <div id="c1list"></div>`;
+  let dir=-1;
+  const render=()=>{
+    const q=(s.querySelector('#c1q').value||'').toLowerCase();
+    let list=SALES.filter(x=>x.item.toLowerCase().includes(q));
+    if(dir) list=[...list].sort((a,b)=>dir<0?b.amt-a.amt:a.amt-b.amt);
+    s.querySelector('#c1cnt').textContent=list.length+' sales';
+    const box=s.querySelector('#c1list'); box.innerHTML='';
+    if(dir){ // flat sorted view when sorting by amount
+      list.forEach(x=>box.insertAdjacentHTML('beforeend',rowHTML(x,true)));
+    }else{
+      const g=groupByDay(list);
+      Object.keys(g).forEach(d=>{
+        box.insertAdjacentHTML('beforeend',`<div class="daylabel">${d}</div>`);
+        g[d].forEach(x=>box.insertAdjacentHTML('beforeend',rowHTML(x,true)));
+      });
+    }
+  };
+  function rowHTML(x,showMarg){return `<div class="row"><div class="ic">🧾</div>
+     <div class="grow"><div class="nm">${x.item}</div><div class="meta">${x.qty} items · ${x.t}</div></div>
+     <div><div class="amt">${cur(x.amt)}</div>${showMarg?`<div class="marg">${x.marg}% margin</div>`:''}</div></div>`;}
+  s.querySelector('#c1q').addEventListener('input',render);
+  s.querySelector('#c1sort').addEventListener('click',e=>{
+    dir = dir===-1?1:dir===1?0:-1;
+    e.target.textContent = dir===-1?'Amount ↓':dir===1?'Amount ↑':'By day';
+    render();
+  });
+  render();
+});
+
+/* ===== Concept 2: Faceted Filter Sheet ===== */
+frame('Concept 2','Faceted Filter Sheet',
+ 'Slim header + a <b>Filter</b> button opens a sheet: amount range slider, date chips, sort. Active filters become removable chips above a result count. Scales to many filters without clutter.',
+ (s)=>{
+  s.innerHTML=`<h3 class="scr-title">Sales history</h3>
+    <div class="hdrrow"><div class="searchbar" style="margin:0;flex:1"><span>🔎</span><input id="c2q" placeholder="Search…"></div>
+      <span class="filterbtn" id="c2fbtn"><span class="dot"></span>Filter</span></div>
+    <div class="chips" id="c2active"><span class="chip rm" data-k="min">over $300</span></div>
+    <div class="sheet-title" style="display:none"></div>
+    <div class="card" id="c2sheet" style="margin:0 6px 12px;display:none">
+      <div class="sheet-title" style="padding:12px 12px 4px">Filters</div>
+      <div class="slider-wrap"><div class="lab"><span>Min amount</span><span id="c2min">$300</span></div>
+        <input type="range" id="c2range" min="0" max="1300" step="50" value="300"></div>
+      <div class="chips" style="padding:0 12px 12px"><span class="chip on">Amount ↓</span><span class="chip">Newest</span><span class="chip">Oldest</span></div>
+    </div>
+    <div class="count" id="c2cnt"></div><div id="c2list"></div>`;
+  const sheet=s.querySelector('#c2sheet');
+  s.querySelector('#c2fbtn').onclick=()=>sheet.style.display=sheet.style.display==='none'?'block':'none';
+  const range=s.querySelector('#c2range');
+  const render=()=>{
+    const q=(s.querySelector('#c2q').value||'').toLowerCase();
+    const min=+range.value;
+    s.querySelector('#c2min').textContent=cur(min);
+    s.querySelector('#c2active').innerHTML = min>0?`<span class="chip rm">over ${cur(min)}</span>`:'';
+    let list=SALES.filter(x=>x.item.toLowerCase().includes(q)&&x.amt>=min).sort((a,b)=>b.amt-a.amt);
+    s.querySelector('#c2cnt').textContent=list.length+' matching sales';
+    s.querySelector('#c2list').innerHTML=list.map(x=>`<div class="row"><div class="ic">🧾</div>
+      <div class="grow"><div class="nm">${x.item}</div><div class="meta">${x.qty} items · ${x.day.toLowerCase()} · ${x.t}</div></div>
+      <div class="amt">${cur(x.amt)}</div></div>`).join('');
+  };
+  range.addEventListener('input',render);
+  s.querySelector('#c2q').addEventListener('input',render);
+  render();
+});
+
+/* ===== Concept 3: Amount Histogram + Timeline ===== */
+frame('Concept 3','Amount Histogram + Timeline',
+ 'A distribution of sales by value sits up top — tap a <b>value band</b> to filter the list to sales of that size. The most direct "find by amount" model; visual and tactile.',
+ (s)=>{
+  const bands=[ [0,150],[150,300],[300,500],[500,800],[800,1400] ];
+  const labels=['<$150','150-300','300-500','500-800','$800+'];
+  s.innerHTML=`<h3 class="scr-title">Sales history</h3>
+    <div class="histo" id="c3h"></div>
+    <div class="axis">${labels.map(l=>`<span>${l}</span>`).join('')}</div>
+    <div class="count" id="c3cnt"></div>
+    <div class="tline" id="c3list"></div>`;
+  let active=-1;
+  const counts=bands.map(b=>SALES.filter(x=>x.amt>=b[0]&&x.amt<b[1]).length);
+  const max=Math.max(...counts);
+  const h=s.querySelector('#c3h');
+  counts.forEach((c,i)=>{const b=document.createElement('div');b.className='bar';
+    b.style.height=(14+ (c/max)*70)+'px'; b.title=c+' sales';
+    b.onclick=()=>{active=active===i?-1:i; draw();}; h.appendChild(b);});
+  const draw=()=>{
+    [...h.children].forEach((b,i)=>b.classList.toggle('on',i===active));
+    let list=SALES.slice();
+    if(active>=0){const[a,z]=bands[active];list=list.filter(x=>x.amt>=a&&x.amt<z);}
+    list.sort((p,q)=>q.amt-p.amt);
+    s.querySelector('#c3cnt').textContent = active<0?'All sales — tap a bar to filter':`${list.length} sales · ${labels[active]}`;
+    s.querySelector('#c3list').innerHTML=list.map(x=>`<div class="tnode"><div class="row" style="margin:0">
+      <div class="grow"><div class="nm">${x.item}</div><div class="meta">${x.day.toLowerCase()} · ${x.t} · ${x.qty} items</div></div>
+      <div class="amt">${cur(x.amt)}</div></div></div>`).join('');
+  };
+  draw();
+});
+
+/* ===== Concept 4: Receipt Cards ===== */
+frame('Concept 4','Receipt Cards',
+ 'Each sale is a tactile receipt with a full breakdown (qty × unit, revenue, margin). Heavier per item but unambiguous when verifying one sale. Search + amount sort on top.',
+ (s)=>{
+  s.innerHTML=`<h3 class="scr-title">Sales history</h3>
+    <div class="searchbar"><span>🔎</span><input id="c4q" placeholder="Search sales…"></div>
+    <div class="hdrrow"><span class="count" id="c4cnt"></span><span class="sortchip" id="c4sort">Amount ↓</span></div>
+    <div id="c4list"></div>`;
+  let dir=-1, n=1042;
+  const render=()=>{
+    const q=(s.querySelector('#c4q').value||'').toLowerCase();
+    let list=SALES.filter(x=>x.item.toLowerCase().includes(q));
+    list=[...list].sort((a,b)=>dir<0?b.amt-a.amt:a.amt-b.amt);
+    s.querySelector('#c4cnt').textContent=list.length+' sales';
+    s.querySelector('#c4list').innerHTML=list.map((x,i)=>{
+      const unit=(x.amt/x.qty).toFixed(0);
+      return `<div class="receipt">
+        <div class="rhead"><b>${x.item}</b><span class="rno">#${n-i}</span></div>
+        <div class="rline"><span>${x.qty} × ${cur(unit)}</span><span>${srcIcon(x.src)} ${x.src}</span></div>
+        <div class="rline"><span>${x.day.toLowerCase()} · ${x.t}</span><span style="color:var(--pos)">${x.marg}% margin</span></div>
+        <div class="rdash"></div>
+        <div class="rtot"><span>Total</span><span>${cur(x.amt)}</span></div></div>`;
+    }).join('');
+  };
+  s.querySelector('#c4q').addEventListener('input',render);
+  s.querySelector('#c4sort').addEventListener('click',e=>{dir=-dir;e.target.textContent=dir<0?'Amount ↓':'Amount ↑';render();});
+  render();
+});
+
+/* ===== Concept 5: Dense Sortable Table ===== */
+frame('Concept 5','Dense Sortable Table',
+ 'Maximum scanning density — a sortable table (Time · Item · Qty · <b>Amount</b>). Tap a header to sort. Best when there are dozens of sales and you scan a column to find by value.',
+ (s)=>{
+  s.innerHTML=`<h3 class="scr-title">Sales history</h3>
+    <div class="searchbar"><span>🔎</span><input id="c5q" placeholder="Search…"></div>
+    <div class="seg" id="c5seg"><div class="on">Today</div><div>Week</div><div>All</div></div>
+    <div class="card" style="margin:0 6px;overflow:hidden">
+      <div class="thead"><span class="c-time" data-k="t">Time</span><span class="c-item" data-k="item">Item</span>
+        <span class="c-qty" data-k="qty">Qty</span><span class="c-amt" data-k="amt">Amount ↓</span></div>
+      <div id="c5body"></div></div>`;
+  let key='amt', dir=-1, scope='All';
+  const segs=s.querySelectorAll('#c5seg div');
+  segs.forEach(d=>d.onclick=()=>{segs.forEach(x=>x.classList.remove('on'));d.classList.add('on');scope=d.textContent;render();});
+  const render=()=>{
+    const q=(s.querySelector('#c5q').value||'').toLowerCase();
+    let list=SALES.filter(x=>x.item.toLowerCase().includes(q));
+    if(scope==='Today')list=list.filter(x=>x.day==='TODAY');
+    if(scope==='Week')list=list.filter(x=>['TODAY','YESTERDAY','JUN 26'].includes(x.day));
+    list=[...list].sort((a,b)=>{const va=a[key],vb=b[key];
+      if(typeof va==='string')return dir*va.localeCompare(vb);return dir*(va-vb);});
+    s.querySelector('#c5body').innerHTML=list.map(x=>`<div class="trow">
+      <span class="c-time">${x.t.replace(' ','')}</span><span class="c-item">${x.item}</span>
+      <span class="c-qty">${x.qty}</span><span class="c-amt">${cur(x.amt)}</span></div>`).join('')
+      || `<div class="trow" style="color:var(--muted);justify-content:center">No matches</div>`;
+  };
+  s.querySelectorAll('.thead span').forEach(h=>h.onclick=()=>{
+    const k=h.dataset.k; if(k===key)dir=-dir;else{key=k;dir=k==='amt'?-1:1;}
+    s.querySelectorAll('.thead span').forEach(x=>x.textContent=x.textContent.replace(/ [↓↑]/,''));
+    h.textContent+=dir<0?' ↓':' ↑'; render();
+  });
+  s.querySelector('#c5q').addEventListener('input',render);
+  render();
+});
+</script>
+</body>
+</html>
