@@ -296,7 +296,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
 /// A receipt paired with its resolved product name(s), ready to render and
 /// sort. Single-line receipts behave exactly like the pre-cart per-sale rows;
-/// multi-line receipts (cart checkouts) summarize as "N items".
+/// multi-line receipts (cart checkouts) lead with their first product name and
+/// a "+N" badge for the rest, so a receipt reads as what it contains.
 class _ReceiptRow {
   _ReceiptRow({required this.receipt, required this.names});
 
@@ -305,19 +306,27 @@ class _ReceiptRow {
 
   bool get isSingle => receipt.lineCount == 1;
 
-  String get displayName {
-    if (isSingle) {
-      final name = names[receipt.lines.single.productId] ?? '';
-      return name.isEmpty ? 'Sale' : name;
-    }
-    return '${receipt.lineCount} items';
+  /// The product name that leads the row: the sale's product for a single, or
+  /// the receipt's first line for a checkout. Empty names fall back to 'Sale'.
+  String get leadName {
+    final name = names[receipt.lines.first.productId] ?? '';
+    return name.isEmpty ? 'Sale' : name;
   }
 
-  /// Lower-cased sort key. Grouped receipts sort after named single sales
-  /// (prefixed so they cluster together, ordered by their own display name).
+  /// Additional lines a receipt bundles beyond its lead (0 for a single sale);
+  /// rendered as a muted "+N" badge next to [leadName].
+  int get extraCount => receipt.lineCount - 1;
+
+  /// Flat label for sorting/fallback: "Loose rice" or "Loose rice +1". The tile
+  /// renders [leadName]/[extraCount] directly so it can style the badge.
+  String get displayName =>
+      extraCount > 0 ? '$leadName +$extraCount' : leadName;
+
+  /// Lower-cased sort key for the Item column: singles and receipts alike sort
+  /// by their lead product name, so an A→Z sort reads as one intuitive list
+  /// instead of clustering every receipt at the end.
   String get sortName {
-    if (!isSingle) return '~~ $displayName'.toLowerCase();
-    final name = (names[receipt.lines.single.productId] ?? '').toLowerCase();
+    final name = (names[receipt.lines.first.productId] ?? '').toLowerCase();
     return name.isEmpty ? '~' : name;
   }
 
@@ -328,7 +337,9 @@ class _ReceiptRow {
       isSingle ? receipt.lines.single.quantity : receipt.lineCount.toDouble();
 
   String get qtyLabel {
-    if (!isSingle) return '${receipt.lineCount}';
+    // A receipt bundles mixed units (kg + pcs …) that can't sum meaningfully,
+    // so its Qty cell shows a dash; only a single sale shows a real quantity.
+    if (!isSingle) return '—';
     final qty = receipt.lines.single.quantity;
     return qty == qty.roundToDouble() ? qty.toStringAsFixed(0) : qty.toString();
   }
@@ -495,9 +506,11 @@ class _SalesTable extends StatelessWidget {
 }
 
 // Shared column widths so the header and every data row line up exactly.
-const double _timeW = 58;
-const double _qtyW = 40;
-const double _amtW = 88;
+// Trimmed from the original 58/40/88 to give the Item column more room so
+// product names stop truncating to "Lifebuo…".
+const double _timeW = 54;
+const double _qtyW = 34;
+const double _amtW = 78;
 
 class _HeaderRow extends StatelessWidget {
   const _HeaderRow({
@@ -657,13 +670,15 @@ class _ReceiptTileState extends State<_ReceiptTile> {
     final row = widget.row;
     final canExpand = !row.isSingle;
 
+    const tnum = [FontFeature.tabularFigures()];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
           onTap: canExpand ? () => setState(() => _expanded = !_expanded) : null,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             child: Row(
               children: [
                 SizedBox(
@@ -672,6 +687,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                     _time(row.receipt.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
+                      fontFeatures: tnum,
                     ),
                   ),
                 ),
@@ -681,12 +697,25 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                     child: Row(
                       children: [
                         Flexible(
-                          child: Text(
-                            row.displayName,
+                          child: RichText(
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+                            text: TextSpan(
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: scheme.onSurface,
+                              ),
+                              children: [
+                                TextSpan(text: row.leadName),
+                                if (row.extraCount > 0)
+                                  TextSpan(
+                                    text: '  +${row.extraCount}',
+                                    style: TextStyle(
+                                      color: scheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
@@ -709,6 +738,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
+                      fontFeatures: tnum,
                     ),
                   ),
                 ),
@@ -719,6 +749,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                     textAlign: TextAlign.right,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w800,
+                      fontFeatures: tnum,
                     ),
                   ),
                 ),
@@ -727,45 +758,74 @@ class _ReceiptTileState extends State<_ReceiptTile> {
           ),
         ),
         if (_expanded)
-          for (final line in row.receipt.lines)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-              child: Row(
-                children: [
-                  const SizedBox(width: _timeW),
-                  Expanded(
-                    child: Text(
-                      (row.names[line.productId]?.isNotEmpty ?? false)
-                          ? row.names[line.productId]!
-                          : 'Sale',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+          Container(
+            width: double.infinity,
+            color: scheme.surfaceContainer.withValues(alpha: 0.45),
+            padding: const EdgeInsets.only(top: 6, bottom: 10),
+            child: Column(
+              children: [
+                for (final line in row.receipt.lines)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 5, 12, 5),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: _timeW,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 9),
+                              child: Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: scheme.onSurfaceVariant,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            (row.names[line.productId]?.isNotEmpty ?? false)
+                                ? row.names[line.productId]!
+                                : 'Sale',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: _qtyW,
+                          child: Text(
+                            _lineQty(line.quantity),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontFeatures: tnum,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: _amtW,
+                          child: Text(
+                            Money.compact(line.revenue, currencyCode: widget.currency),
+                            textAlign: TextAlign.right,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontFeatures: tnum,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(
-                    width: _qtyW,
-                    child: Text(
-                      _lineQty(line.quantity),
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: _amtW,
-                    child: Text(
-                      Money.compact(line.revenue, currencyCode: widget.currency),
-                      textAlign: TextAlign.right,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
+          ),
       ],
     );
   }
