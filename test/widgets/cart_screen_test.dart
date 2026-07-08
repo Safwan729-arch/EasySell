@@ -99,6 +99,28 @@ void main() {
     expect(find.text('Pepsi 500ml'), findsNothing);
   });
 
+  testWidgets(
+    'Clear-cart dialog: confirm button hugs its content, not full width',
+    (tester) async {
+      usePhoneSize(tester);
+      await tester.pumpWidget(
+        _harness([CartLine(product: _p('a', name: 'Loose rice'), quantity: 1)]),
+      );
+      await tester.pumpAndSettle();
+
+      // Open the confirm dialog from the app-bar "Clear" action.
+      await tester.tap(find.widgetWithText(TextButton, 'Clear'));
+      await tester.pumpAndSettle();
+      expect(find.text('Clear cart?'), findsOneWidget);
+
+      // The destructive confirm must not stretch across the whole dialog
+      // (the theme's full-width FilledButton minimumSize is overridden).
+      final confirm = find.widgetWithText(FilledButton, 'Clear');
+      expect(confirm, findsOneWidget);
+      expect(tester.getSize(confirm).width, lessThan(200));
+    },
+  );
+
   testWidgets('an empty cart shows the empty state and no checkout bar', (
     tester,
   ) async {

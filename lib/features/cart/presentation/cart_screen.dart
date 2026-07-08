@@ -47,22 +47,35 @@ class CartScreen extends ConsumerWidget {
   Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
     final cleared = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Clear cart?'),
-        content: const Text(
-          'This removes every item from the cart. Nothing is sold.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep'),
+      builder: (ctx) {
+        final colors = Theme.of(ctx).extension<AppColors>()!;
+        return AlertDialog(
+          title: const Text('Clear cart?'),
+          content: const Text(
+            'This removes every item from the cart. Nothing is sold.',
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
+          // Natural-width actions: the theme forces FilledButton to a
+          // full-width minimumSize, which makes a dialog's confirm button
+          // dwarf the text "Keep". Reset it so both size to their content.
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Keep'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                backgroundColor: colors.negative,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Clear'),
+            ),
+          ],
+        );
+      },
     );
     if (cleared == true) {
       AppHaptics.warning();
