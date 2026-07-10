@@ -196,4 +196,142 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get dashboard_viewFullReport => 'পূর্ণ রিপোর্ট দেখুন';
+
+  @override
+  String get common_cancel => 'বাতিল';
+
+  @override
+  String get common_delete => 'মুছুন';
+
+  @override
+  String get common_edit => 'এডিট';
+
+  @override
+  String get common_retry => 'আবার চেষ্টা';
+
+  @override
+  String get common_undo => 'ফিরিয়ে আনুন';
+
+  @override
+  String get common_off => 'বন্ধ';
+
+  @override
+  String get common_addToCart => 'কার্টে যোগ';
+
+  @override
+  String get common_addedToCart => 'কার্টে যোগ হয়েছে';
+
+  @override
+  String get common_stockAdded => 'স্টক যোগ হয়েছে';
+
+  @override
+  String get common_somethingWrong => 'কিছু ভুল হয়েছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get common_searchItems => 'পণ্য খুঁজুন';
+
+  @override
+  String get common_restore => 'ফেরান';
+
+  @override
+  String get inventory_title => 'পণ্যতালিকা';
+
+  @override
+  String inventory_itemsValue(int count, String value) {
+    return '$countটি পণ্য · $value মূল্য';
+  }
+
+  @override
+  String get inventory_filterAll => 'সব';
+
+  @override
+  String get inventory_filterLowStock => 'কম স্টক';
+
+  @override
+  String inventory_inStock(String qty) {
+    return '$qty স্টকে';
+  }
+
+  @override
+  String get inventory_noProducts =>
+      'এখনো কোনো পণ্য নেই।\nশুরু করতে \"পণ্য যোগ\" চাপুন।';
+
+  @override
+  String get inventory_noMatch => 'আপনার ফিল্টারে কোনো পণ্য মেলেনি।';
+
+  @override
+  String get inventory_couldNotLoad =>
+      'পণ্যতালিকা লোড করা যায়নি। রিফ্রেশ করুন।';
+
+  @override
+  String get inventory_addProduct => 'পণ্য যোগ';
+
+  @override
+  String get inventory_scanProduct => 'পণ্য স্ক্যান';
+
+  @override
+  String get inventory_couldNotLoadProduct => 'পণ্য লোড করা যায়নি।';
+
+  @override
+  String get inventory_productGone => 'এই পণ্যটি আর নেই।';
+
+  @override
+  String get inventory_removeTitle => 'পণ্য সরাবেন?';
+
+  @override
+  String inventory_removeBody(String name) {
+    return '\"$name\" আপনার পণ্যতালিকা থেকে সরে যাবে। এর আগের বিক্রি রেকর্ডে থাকবে।';
+  }
+
+  @override
+  String inventory_removed(String name) {
+    return '\"$name\" সরানো হয়েছে';
+  }
+
+  @override
+  String get inventory_lowStock => 'কম স্টক';
+
+  @override
+  String inventory_reorderThresholdNote(String threshold) {
+    return 'রিঅর্ডার সীমার নিচে বা সমান ($threshold)।';
+  }
+
+  @override
+  String get inventory_statInStock => 'স্টকে আছে';
+
+  @override
+  String get inventory_statBuyingPrice => 'কেনা দাম';
+
+  @override
+  String get inventory_statSellingPrice => 'বিক্রি দাম';
+
+  @override
+  String get inventory_statMarginPerUnit => 'মার্জিন / একক';
+
+  @override
+  String get inventory_statInventoryValue => 'স্টকের মূল্য (খরচ)';
+
+  @override
+  String get inventory_statReorderThreshold => 'রিঅর্ডার সীমা';
+
+  @override
+  String get inventory_couldNotLoadArchived =>
+      'আর্কাইভ পণ্য লোড করা যায়নি। রিফ্রেশ করুন।';
+
+  @override
+  String inventory_restored(String name) {
+    return '\"$name\" পণ্যতালিকায় ফিরেছে।';
+  }
+
+  @override
+  String inventory_couldNotRestore(String name) {
+    return '\"$name\" ফেরানো যায়নি। আবার চেষ্টা করুন।';
+  }
+
+  @override
+  String get inventory_noArchived => 'কোনো আর্কাইভ পণ্য নেই।';
+
+  @override
+  String get inventory_archivedHint =>
+      'পণ্যতালিকা থেকে সরানো পণ্য এখানে দেখাবে।';
 }

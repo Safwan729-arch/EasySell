@@ -200,4 +200,142 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboard_viewFullReport => 'View full report';
+
+  @override
+  String get common_cancel => 'Cancel';
+
+  @override
+  String get common_delete => 'Delete';
+
+  @override
+  String get common_edit => 'Edit';
+
+  @override
+  String get common_retry => 'Retry';
+
+  @override
+  String get common_undo => 'Undo';
+
+  @override
+  String get common_off => 'Off';
+
+  @override
+  String get common_addToCart => 'Add to cart';
+
+  @override
+  String get common_addedToCart => 'Added to cart';
+
+  @override
+  String get common_stockAdded => 'Stock added';
+
+  @override
+  String get common_somethingWrong => 'Something went wrong. Please try again.';
+
+  @override
+  String get common_searchItems => 'Search items';
+
+  @override
+  String get common_restore => 'Restore';
+
+  @override
+  String get inventory_title => 'Inventory';
+
+  @override
+  String inventory_itemsValue(int count, String value) {
+    return '$count items · $value value';
+  }
+
+  @override
+  String get inventory_filterAll => 'All';
+
+  @override
+  String get inventory_filterLowStock => 'Low stock';
+
+  @override
+  String inventory_inStock(String qty) {
+    return '$qty in stock';
+  }
+
+  @override
+  String get inventory_noProducts =>
+      'No products yet.\nTap \"Add product\" to start.';
+
+  @override
+  String get inventory_noMatch => 'No products match your filters.';
+
+  @override
+  String get inventory_couldNotLoad =>
+      'Could not load inventory. Pull to retry.';
+
+  @override
+  String get inventory_addProduct => 'Add product';
+
+  @override
+  String get inventory_scanProduct => 'Scan product';
+
+  @override
+  String get inventory_couldNotLoadProduct => 'Could not load product.';
+
+  @override
+  String get inventory_productGone => 'This product no longer exists.';
+
+  @override
+  String get inventory_removeTitle => 'Remove product?';
+
+  @override
+  String inventory_removeBody(String name) {
+    return '\"$name\" will be removed from your inventory. Its past sales stay in your records.';
+  }
+
+  @override
+  String inventory_removed(String name) {
+    return '\"$name\" removed';
+  }
+
+  @override
+  String get inventory_lowStock => 'Low stock';
+
+  @override
+  String inventory_reorderThresholdNote(String threshold) {
+    return 'At or below reorder threshold ($threshold).';
+  }
+
+  @override
+  String get inventory_statInStock => 'In stock';
+
+  @override
+  String get inventory_statBuyingPrice => 'Buying price';
+
+  @override
+  String get inventory_statSellingPrice => 'Selling price';
+
+  @override
+  String get inventory_statMarginPerUnit => 'Margin / unit';
+
+  @override
+  String get inventory_statInventoryValue => 'Inventory value (cost)';
+
+  @override
+  String get inventory_statReorderThreshold => 'Reorder threshold';
+
+  @override
+  String get inventory_couldNotLoadArchived =>
+      'Could not load archived products. Pull to retry.';
+
+  @override
+  String inventory_restored(String name) {
+    return '\"$name\" restored to inventory.';
+  }
+
+  @override
+  String inventory_couldNotRestore(String name) {
+    return 'Couldn\'t restore \"$name\". Please try again.';
+  }
+
+  @override
+  String get inventory_noArchived => 'No archived products.';
+
+  @override
+  String get inventory_archivedHint =>
+      'Products you remove from inventory show up here.';
 }

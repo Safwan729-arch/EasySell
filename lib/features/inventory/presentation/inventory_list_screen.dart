@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/feature_flags.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
@@ -70,6 +71,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final productsAsync = ref.watch(productsStreamProvider);
     final categories = ref.watch(usedCategoriesProvider);
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
@@ -110,15 +112,17 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Inventory',
+                          l10n.inventory_title,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${products.length} items · '
-                          '${Money.compact(totalValue, currencyCode: currency)} value',
+                          l10n.inventory_itemsValue(
+                            products.length,
+                            Money.compact(totalValue, currencyCode: currency),
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium?.copyWith(
@@ -133,14 +137,14 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                     IconButton.filled(
                       onPressed: () => context.push('/scan'),
                       icon: const Icon(Icons.qr_code_scanner),
-                      tooltip: 'Scan product',
+                      tooltip: l10n.inventory_scanProduct,
                     ),
                     const SizedBox(width: 8),
                   ],
                   IconButton.filled(
                     onPressed: () => context.push('/inventory/new'),
                     icon: const Icon(Icons.add),
-                    tooltip: 'Add product',
+                    tooltip: l10n.inventory_addProduct,
                   ),
                 ],
               ),
@@ -151,7 +155,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                 controller: _searchController,
                 onChanged: _onSearchChanged,
                 decoration: InputDecoration(
-                  hintText: 'Search items',
+                  hintText: l10n.common_searchItems,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _query.isEmpty
                       ? null
@@ -171,7 +175,9 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
               child: SegmentPills<_InvFilter>(
                 values: filters,
                 selected: activeFilter,
-                labelOf: (f) => f.label,
+                labelOf: (f) => f.lowOnly
+                    ? l10n.inventory_filterLowStock
+                    : (f.categoryId == null ? l10n.inventory_filterAll : f.label),
                 onChanged: (f) => setState(() => _selected = f),
               ),
             ),
@@ -179,23 +185,21 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
               child: productsAsync.when(
                 loading: () => const _ListSkeleton(),
                 error: (e, _) => _ErrorState(
-                  message: e is Failure
-                      ? e.message
-                      : 'Could not load inventory. Pull to retry.',
+                  message: e is Failure ? e.message : l10n.inventory_couldNotLoad,
                   onRetry: () => ref.invalidate(productsStreamProvider),
                 ),
                 data: (products) {
                   final filtered = _filter(products, activeFilter);
                   if (products.isEmpty) {
-                    return const _EmptyState(
+                    return _EmptyState(
                       icon: Icons.inventory_2_outlined,
-                      message: 'No products yet.\nTap "Add product" to start.',
+                      message: l10n.inventory_noProducts,
                     );
                   }
                   if (filtered.isEmpty) {
-                    return const _EmptyState(
+                    return _EmptyState(
                       icon: Icons.search_off,
-                      message: 'No products match your filters.',
+                      message: l10n.inventory_noMatch,
                     );
                   }
                   return ListView.builder(
@@ -327,7 +331,7 @@ class _StockText extends StatelessWidget {
     final colors = theme.extension<AppColors>()!;
     final color = product.isLowStock ? colors.warning : colors.positive;
     return Text(
-      '${product.quantityLabel} in stock',
+      context.l10n.inventory_inStock(product.quantityLabel),
       style: theme.textTheme.labelMedium?.copyWith(
         color: color,
         fontWeight: FontWeight.w600,
@@ -398,7 +402,7 @@ class _ErrorState extends StatelessWidget {
             child: Text(message, textAlign: TextAlign.center),
           ),
           const SizedBox(height: 12),
-          FilledButton.tonal(onPressed: onRetry, child: const Text('Retry')),
+          FilledButton.tonal(onPressed: onRetry, child: Text(context.l10n.common_retry)),
         ],
       ),
     );

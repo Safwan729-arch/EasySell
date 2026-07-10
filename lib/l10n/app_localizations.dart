@@ -451,6 +451,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View full report'**
   String get dashboard_viewFullReport;
+
+  /// No description provided for @common_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get common_cancel;
+
+  /// No description provided for @common_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get common_delete;
+
+  /// No description provided for @common_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get common_edit;
+
+  /// No description provided for @common_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get common_retry;
+
+  /// No description provided for @common_undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get common_undo;
+
+  /// No description provided for @common_off.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get common_off;
+
+  /// No description provided for @common_addToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to cart'**
+  String get common_addToCart;
+
+  /// No description provided for @common_addedToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to cart'**
+  String get common_addedToCart;
+
+  /// No description provided for @common_stockAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock added'**
+  String get common_stockAdded;
+
+  /// No description provided for @common_somethingWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get common_somethingWrong;
+
+  /// No description provided for @common_searchItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Search items'**
+  String get common_searchItems;
+
+  /// No description provided for @common_restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get common_restore;
+
+  /// No description provided for @inventory_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get inventory_title;
+
+  /// No description provided for @inventory_itemsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items · {value} value'**
+  String inventory_itemsValue(int count, String value);
+
+  /// No description provided for @inventory_filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get inventory_filterAll;
+
+  /// No description provided for @inventory_filterLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get inventory_filterLowStock;
+
+  /// No description provided for @inventory_inStock.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} in stock'**
+  String inventory_inStock(String qty);
+
+  /// No description provided for @inventory_noProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'No products yet.\nTap \"Add product\" to start.'**
+  String get inventory_noProducts;
+
+  /// No description provided for @inventory_noMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No products match your filters.'**
+  String get inventory_noMatch;
+
+  /// No description provided for @inventory_couldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load inventory. Pull to retry.'**
+  String get inventory_couldNotLoad;
+
+  /// No description provided for @inventory_addProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Add product'**
+  String get inventory_addProduct;
+
+  /// No description provided for @inventory_scanProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan product'**
+  String get inventory_scanProduct;
+
+  /// No description provided for @inventory_couldNotLoadProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load product.'**
+  String get inventory_couldNotLoadProduct;
+
+  /// No description provided for @inventory_productGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This product no longer exists.'**
+  String get inventory_productGone;
+
+  /// No description provided for @inventory_removeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove product?'**
+  String get inventory_removeTitle;
+
+  /// No description provided for @inventory_removeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will be removed from your inventory. Its past sales stay in your records.'**
+  String inventory_removeBody(String name);
+
+  /// No description provided for @inventory_removed.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" removed'**
+  String inventory_removed(String name);
+
+  /// No description provided for @inventory_lowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get inventory_lowStock;
+
+  /// No description provided for @inventory_reorderThresholdNote.
+  ///
+  /// In en, this message translates to:
+  /// **'At or below reorder threshold ({threshold}).'**
+  String inventory_reorderThresholdNote(String threshold);
+
+  /// No description provided for @inventory_statInStock.
+  ///
+  /// In en, this message translates to:
+  /// **'In stock'**
+  String get inventory_statInStock;
+
+  /// No description provided for @inventory_statBuyingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Buying price'**
+  String get inventory_statBuyingPrice;
+
+  /// No description provided for @inventory_statSellingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling price'**
+  String get inventory_statSellingPrice;
+
+  /// No description provided for @inventory_statMarginPerUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin / unit'**
+  String get inventory_statMarginPerUnit;
+
+  /// No description provided for @inventory_statInventoryValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory value (cost)'**
+  String get inventory_statInventoryValue;
+
+  /// No description provided for @inventory_statReorderThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder threshold'**
+  String get inventory_statReorderThreshold;
+
+  /// No description provided for @inventory_couldNotLoadArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load archived products. Pull to retry.'**
+  String get inventory_couldNotLoadArchived;
+
+  /// No description provided for @inventory_restored.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" restored to inventory.'**
+  String inventory_restored(String name);
+
+  /// No description provided for @inventory_couldNotRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t restore \"{name}\". Please try again.'**
+  String inventory_couldNotRestore(String name);
+
+  /// No description provided for @inventory_noArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived products.'**
+  String get inventory_noArchived;
+
+  /// No description provided for @inventory_archivedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Products you remove from inventory show up here.'**
+  String get inventory_archivedHint;
 }
 
 class _AppLocalizationsDelegate
