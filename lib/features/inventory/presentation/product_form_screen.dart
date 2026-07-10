@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/motion.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/enum_labels.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/pressable.dart';
 import '../domain/product.dart';
 import 'category_picker.dart';
@@ -121,24 +123,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   // --- validation ------------------------------------------------------------
 
   String? _requiredText(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'Required' : null;
+      (v == null || v.trim().isEmpty) ? context.l10n.form_required : null;
 
   /// Stock/reorder: non-negative; whole numbers only for pieces.
   String? _quantityField(String? v, {required bool allowDecimal}) {
-    if (v == null || v.trim().isEmpty) return 'Required';
+    final l10n = context.l10n;
+    if (v == null || v.trim().isEmpty) return l10n.form_required;
     final s = v.trim();
     final n = double.tryParse(s);
-    if (n == null) return 'Enter a number';
-    if (n < 0) return 'Cannot be negative';
-    if (!allowDecimal && n != n.roundToDouble()) return 'Whole number only';
+    if (n == null) return l10n.form_enterNumber;
+    if (n < 0) return l10n.form_cannotBeNegative;
+    if (!allowDecimal && n != n.roundToDouble()) return l10n.form_wholeNumberOnly;
     return null;
   }
 
   String? _moneyField(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Required';
+    final l10n = context.l10n;
+    if (v == null || v.trim().isEmpty) return l10n.form_required;
     final n = double.tryParse(v.trim());
-    if (n == null) return 'Enter a valid amount';
-    if (n < 0) return 'Cannot be negative';
+    if (n == null) return l10n.form_enterValidAmount;
+    if (n < 0) return l10n.form_cannotBeNegative;
     return null;
   }
 
@@ -150,13 +154,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final unitType = sel.unitType;
     final unit = sel.unit;
     final isLoading = ref.watch(inventoryControllerProvider).isLoading;
+    final l10n = context.l10n;
     final perUnit = unitType == UnitType.piece ? '' : ' / ${unit.label}';
 
     ref.listen<AsyncValue<void>>(inventoryControllerProvider, (_, next) {
       if (next is AsyncError) {
         final message = switch (next.error) {
           Failure(:final message) => message,
-          _ => 'Something went wrong. Please try again.',
+          _ => l10n.common_somethingWrong,
         };
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -166,7 +171,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isNew ? 'Add product' : 'Edit product'),
+        title: Text(widget.isNew ? l10n.inventory_formAddTitle : l10n.inventory_formEditTitle),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -193,7 +198,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
                 _field(
                   _name,
-                  'Name *',
+                  l10n.inventory_formName,
                   validator: _requiredText,
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
@@ -217,13 +222,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           children: [
                             _field(
                               _brand,
-                              'Brand',
+                              l10n.inventory_formBrand,
                               textInputAction: TextInputAction.next,
                               textCapitalization: TextCapitalization.words,
                             ),
                             _field(
                               _variant,
-                              'Variant (e.g. 500ml, 1kg pack)',
+                              l10n.inventory_formVariant,
                               textInputAction: TextInputAction.next,
                               textCapitalization: TextCapitalization.words,
                             ),
@@ -263,7 +268,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     Expanded(
                       child: _field(
                         _reorder,
-                        'Reorder at',
+                        l10n.inventory_formReorderAt,
                         keyboardType: _numberKeyboard(unitType.allowsDecimal),
                         inputFormatters: _numberFormatters(
                           unitType.allowsDecimal,
@@ -285,7 +290,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     Expanded(
                       child: _field(
                         _buyingPrice,
-                        'Buying price$perUnit *',
+                        l10n.inventory_formBuyingPrice(perUnit),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -298,7 +303,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     Expanded(
                       child: _field(
                         _sellingPrice,
-                        'Selling price$perUnit *',
+                        l10n.inventory_formSellingPrice(perUnit),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -319,7 +324,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(widget.isNew ? 'Create' : 'Save changes'),
+                      : Text(widget.isNew ? l10n.inventory_formCreate : l10n.inventory_formSaveChanges),
                 ),
 
                 // Quick-fill examples that showcase the three selling modes.
@@ -414,7 +419,7 @@ class _UnitTypeSelector extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'How is this item sold?',
+              context.l10n.inventory_formHowSold,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -427,7 +432,7 @@ class _UnitTypeSelector extends StatelessWidget {
                   Expanded(
                     child: _UnitTypeCard(
                       icon: _icons[type]!,
-                      label: type.label,
+                      label: unitTypeLabel(context.l10n, type),
                       selected: type == selected,
                       onTap: () => onChanged(type),
                     ),
@@ -437,7 +442,7 @@ class _UnitTypeSelector extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              selected.hint,
+              unitTypeHint(context.l10n, selected),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -526,7 +531,9 @@ class _StockField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allowDecimal = unitType.allowsDecimal;
-    final label = unitType == UnitType.piece ? 'Stock (pieces) *' : 'Stock *';
+    final label = unitType == UnitType.piece
+        ? context.l10n.inventory_formStockPieces
+        : context.l10n.inventory_formStock;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
@@ -678,7 +685,7 @@ class _ExamplePicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Try a real example',
+          context.l10n.inventory_formTryExample,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

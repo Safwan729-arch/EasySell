@@ -338,4 +338,164 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get inventory_archivedHint =>
       'Products you remove from inventory show up here.';
+
+  @override
+  String get form_required => 'Required';
+
+  @override
+  String get form_enterNumber => 'Enter a number';
+
+  @override
+  String get form_cannotBeNegative => 'Cannot be negative';
+
+  @override
+  String get form_wholeNumberOnly => 'Whole number only';
+
+  @override
+  String get form_enterValidAmount => 'Enter a valid amount';
+
+  @override
+  String get unit_byPiece => 'By piece';
+
+  @override
+  String get unit_byWeight => 'By weight';
+
+  @override
+  String get unit_byVolume => 'By volume';
+
+  @override
+  String get unit_hintPiece =>
+      'Counted as whole pieces — soap, bottled drinks, packets.';
+
+  @override
+  String get unit_hintWeight =>
+      'Sold by weight — rice, potato, lentils, sugar.';
+
+  @override
+  String get unit_hintVolume => 'Sold by volume — loose oil, milk, kerosene.';
+
+  @override
+  String get inventory_formAddTitle => 'Add product';
+
+  @override
+  String get inventory_formEditTitle => 'Edit product';
+
+  @override
+  String get inventory_formHowSold => 'How is this item sold?';
+
+  @override
+  String get inventory_formName => 'Name *';
+
+  @override
+  String get inventory_formBrand => 'Brand';
+
+  @override
+  String get inventory_formVariant => 'Variant (e.g. 500ml, 1kg pack)';
+
+  @override
+  String get inventory_formReorderAt => 'Reorder at';
+
+  @override
+  String inventory_formBuyingPrice(String perUnit) {
+    return 'Buying price$perUnit *';
+  }
+
+  @override
+  String inventory_formSellingPrice(String perUnit) {
+    return 'Selling price$perUnit *';
+  }
+
+  @override
+  String get inventory_formCreate => 'Create';
+
+  @override
+  String get inventory_formSaveChanges => 'Save changes';
+
+  @override
+  String get inventory_formTryExample => 'Try a real example';
+
+  @override
+  String get inventory_formStockPieces => 'Stock (pieces) *';
+
+  @override
+  String get inventory_formStock => 'Stock *';
+
+  @override
+  String get common_save => 'Save';
+
+  @override
+  String get common_add => 'Add';
+
+  @override
+  String get common_rename => 'Rename';
+
+  @override
+  String get category_noShop => 'No shop found for this account.';
+
+  @override
+  String get category_renameTitle => 'Rename category';
+
+  @override
+  String get category_deleteTitle => 'Delete category?';
+
+  @override
+  String category_deleteBodyEmpty(String name) {
+    return '\"$name\" will be removed.';
+  }
+
+  @override
+  String category_deleteBodyUsed(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count products',
+      one: '1 product',
+    );
+    return '\"$name\" will be removed. $_temp0 will become uncategorized (not deleted).';
+  }
+
+  @override
+  String get category_addTooltip => 'Add category';
+
+  @override
+  String get category_couldNotLoad =>
+      'Could not load categories. Pull to retry.';
+
+  @override
+  String category_productCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count products',
+      one: '1 product',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get category_noneYet => 'No categories yet.';
+
+  @override
+  String get category_tapToAdd => 'Tap + to add one.';
+
+  @override
+  String get category_fieldLabel => 'Category';
+
+  @override
+  String get category_none => 'No category';
+
+  @override
+  String get category_addNew => 'Add new category';
+
+  @override
+  String get category_alreadyExists => 'Already exists — selected it for you';
+
+  @override
+  String get category_newTitle => 'New category';
+
+  @override
+  String get category_nameLabel => 'Category name';
+
+  @override
+  String get category_nameHint => 'e.g. Frozen items';
 }

@@ -691,6 +691,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Products you remove from inventory show up here.'**
   String get inventory_archivedHint;
+
+  /// No description provided for @form_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get form_required;
+
+  /// No description provided for @form_enterNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number'**
+  String get form_enterNumber;
+
+  /// No description provided for @form_cannotBeNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot be negative'**
+  String get form_cannotBeNegative;
+
+  /// No description provided for @form_wholeNumberOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole number only'**
+  String get form_wholeNumberOnly;
+
+  /// No description provided for @form_enterValidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount'**
+  String get form_enterValidAmount;
+
+  /// No description provided for @unit_byPiece.
+  ///
+  /// In en, this message translates to:
+  /// **'By piece'**
+  String get unit_byPiece;
+
+  /// No description provided for @unit_byWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'By weight'**
+  String get unit_byWeight;
+
+  /// No description provided for @unit_byVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'By volume'**
+  String get unit_byVolume;
+
+  /// No description provided for @unit_hintPiece.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted as whole pieces — soap, bottled drinks, packets.'**
+  String get unit_hintPiece;
+
+  /// No description provided for @unit_hintWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold by weight — rice, potato, lentils, sugar.'**
+  String get unit_hintWeight;
+
+  /// No description provided for @unit_hintVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold by volume — loose oil, milk, kerosene.'**
+  String get unit_hintVolume;
+
+  /// No description provided for @inventory_formAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add product'**
+  String get inventory_formAddTitle;
+
+  /// No description provided for @inventory_formEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit product'**
+  String get inventory_formEditTitle;
+
+  /// No description provided for @inventory_formHowSold.
+  ///
+  /// In en, this message translates to:
+  /// **'How is this item sold?'**
+  String get inventory_formHowSold;
+
+  /// No description provided for @inventory_formName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name *'**
+  String get inventory_formName;
+
+  /// No description provided for @inventory_formBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand'**
+  String get inventory_formBrand;
+
+  /// No description provided for @inventory_formVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant (e.g. 500ml, 1kg pack)'**
+  String get inventory_formVariant;
+
+  /// No description provided for @inventory_formReorderAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder at'**
+  String get inventory_formReorderAt;
+
+  /// No description provided for @inventory_formBuyingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Buying price{perUnit} *'**
+  String inventory_formBuyingPrice(String perUnit);
+
+  /// No description provided for @inventory_formSellingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling price{perUnit} *'**
+  String inventory_formSellingPrice(String perUnit);
+
+  /// No description provided for @inventory_formCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get inventory_formCreate;
+
+  /// No description provided for @inventory_formSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get inventory_formSaveChanges;
+
+  /// No description provided for @inventory_formTryExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a real example'**
+  String get inventory_formTryExample;
+
+  /// No description provided for @inventory_formStockPieces.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock (pieces) *'**
+  String get inventory_formStockPieces;
+
+  /// No description provided for @inventory_formStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock *'**
+  String get inventory_formStock;
+
+  /// No description provided for @common_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get common_save;
+
+  /// No description provided for @common_add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get common_add;
+
+  /// No description provided for @common_rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get common_rename;
+
+  /// No description provided for @category_noShop.
+  ///
+  /// In en, this message translates to:
+  /// **'No shop found for this account.'**
+  String get category_noShop;
+
+  /// No description provided for @category_renameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename category'**
+  String get category_renameTitle;
+
+  /// No description provided for @category_deleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category?'**
+  String get category_deleteTitle;
+
+  /// No description provided for @category_deleteBodyEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will be removed.'**
+  String category_deleteBodyEmpty(String name);
+
+  /// No description provided for @category_deleteBodyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will be removed. {count, plural, =1{1 product} other{{count} products}} will become uncategorized (not deleted).'**
+  String category_deleteBodyUsed(String name, int count);
+
+  /// No description provided for @category_addTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get category_addTooltip;
+
+  /// No description provided for @category_couldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load categories. Pull to retry.'**
+  String get category_couldNotLoad;
+
+  /// No description provided for @category_productCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 product} other{{count} products}}'**
+  String category_productCount(int count);
+
+  /// No description provided for @category_noneYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet.'**
+  String get category_noneYet;
+
+  /// No description provided for @category_tapToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add one.'**
+  String get category_tapToAdd;
+
+  /// No description provided for @category_fieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category_fieldLabel;
+
+  /// No description provided for @category_none.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get category_none;
+
+  /// No description provided for @category_addNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new category'**
+  String get category_addNew;
+
+  /// No description provided for @category_alreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Already exists — selected it for you'**
+  String get category_alreadyExists;
+
+  /// No description provided for @category_newTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New category'**
+  String get category_newTitle;
+
+  /// No description provided for @category_nameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get category_nameLabel;
+
+  /// No description provided for @category_nameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Frozen items'**
+  String get category_nameHint;
 }
 
 class _AppLocalizationsDelegate

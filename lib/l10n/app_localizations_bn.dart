@@ -334,4 +334,163 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get inventory_archivedHint =>
       'পণ্যতালিকা থেকে সরানো পণ্য এখানে দেখাবে।';
+
+  @override
+  String get form_required => 'আবশ্যক';
+
+  @override
+  String get form_enterNumber => 'একটি সংখ্যা দিন';
+
+  @override
+  String get form_cannotBeNegative => 'ঋণাত্মক হতে পারে না';
+
+  @override
+  String get form_wholeNumberOnly => 'শুধু পূর্ণ সংখ্যা';
+
+  @override
+  String get form_enterValidAmount => 'সঠিক পরিমাণ দিন';
+
+  @override
+  String get unit_byPiece => 'পিস হিসেবে';
+
+  @override
+  String get unit_byWeight => 'ওজন হিসেবে';
+
+  @override
+  String get unit_byVolume => 'আয়তন হিসেবে';
+
+  @override
+  String get unit_hintPiece =>
+      'পুরো পিস হিসেবে গোনা — সাবান, বোতলজাত পানীয়, প্যাকেট।';
+
+  @override
+  String get unit_hintWeight => 'ওজনে বিক্রি — চাল, আলু, ডাল, চিনি।';
+
+  @override
+  String get unit_hintVolume => 'আয়তনে বিক্রি — খোলা তেল, দুধ, কেরোসিন।';
+
+  @override
+  String get inventory_formAddTitle => 'পণ্য যোগ';
+
+  @override
+  String get inventory_formEditTitle => 'পণ্য এডিট';
+
+  @override
+  String get inventory_formHowSold => 'এই পণ্য কীভাবে বিক্রি হয়?';
+
+  @override
+  String get inventory_formName => 'নাম *';
+
+  @override
+  String get inventory_formBrand => 'ব্র্যান্ড';
+
+  @override
+  String get inventory_formVariant =>
+      'ভ্যারিয়েন্ট (যেমন ৫০০ মিলি, ১ কেজি প্যাক)';
+
+  @override
+  String get inventory_formReorderAt => 'রিঅর্ডার সীমা';
+
+  @override
+  String inventory_formBuyingPrice(String perUnit) {
+    return 'কেনা দাম$perUnit *';
+  }
+
+  @override
+  String inventory_formSellingPrice(String perUnit) {
+    return 'বিক্রি দাম$perUnit *';
+  }
+
+  @override
+  String get inventory_formCreate => 'তৈরি করুন';
+
+  @override
+  String get inventory_formSaveChanges => 'পরিবর্তন সংরক্ষণ';
+
+  @override
+  String get inventory_formTryExample => 'একটি উদাহরণ দেখুন';
+
+  @override
+  String get inventory_formStockPieces => 'স্টক (পিস) *';
+
+  @override
+  String get inventory_formStock => 'স্টক *';
+
+  @override
+  String get common_save => 'সংরক্ষণ';
+
+  @override
+  String get common_add => 'যোগ';
+
+  @override
+  String get common_rename => 'নাম বদল';
+
+  @override
+  String get category_noShop => 'এই অ্যাকাউন্টে কোনো দোকান নেই।';
+
+  @override
+  String get category_renameTitle => 'ক্যাটাগরির নাম বদল';
+
+  @override
+  String get category_deleteTitle => 'ক্যাটাগরি মুছবেন?';
+
+  @override
+  String category_deleteBodyEmpty(String name) {
+    return '\"$name\" সরিয়ে ফেলা হবে।';
+  }
+
+  @override
+  String category_deleteBodyUsed(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি পণ্য',
+      one: '১টি পণ্য',
+    );
+    return '\"$name\" সরিয়ে ফেলা হবে। $_temp0 ক্যাটাগরিহীন হবে (মুছে যাবে না)।';
+  }
+
+  @override
+  String get category_addTooltip => 'ক্যাটাগরি যোগ';
+
+  @override
+  String get category_couldNotLoad => 'ক্যাটাগরি লোড করা যায়নি। রিফ্রেশ করুন।';
+
+  @override
+  String category_productCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি পণ্য',
+      one: '১টি পণ্য',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get category_noneYet => 'এখনো কোনো ক্যাটাগরি নেই।';
+
+  @override
+  String get category_tapToAdd => 'যোগ করতে + চাপুন।';
+
+  @override
+  String get category_fieldLabel => 'ক্যাটাগরি';
+
+  @override
+  String get category_none => 'কোনো ক্যাটাগরি নয়';
+
+  @override
+  String get category_addNew => 'নতুন ক্যাটাগরি যোগ';
+
+  @override
+  String get category_alreadyExists => 'আগে থেকেই আছে — বেছে দেওয়া হলো';
+
+  @override
+  String get category_newTitle => 'নতুন ক্যাটাগরি';
+
+  @override
+  String get category_nameLabel => 'ক্যাটাগরির নাম';
+
+  @override
+  String get category_nameHint => 'যেমন ফ্রোজেন আইটেম';
 }
