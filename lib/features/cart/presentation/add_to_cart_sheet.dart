@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/haptics.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../inventory/domain/product.dart';
@@ -56,6 +57,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final product = widget.product;
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
     final maxQty = ref.read(cartControllerProvider.notifier).remainingStockFor(product);
@@ -78,7 +80,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Add to cart', style: theme.textTheme.titleLarge),
+          Text(l10n.common_addToCart, style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
           Text(product.name, style: theme.textTheme.titleMedium),
           if (subtitle.isNotEmpty)
@@ -91,8 +93,8 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
           const SizedBox(height: 4),
           Text(
             outOfStock
-                ? 'No more available to add.'
-                : '${Product.trimNum(maxQty)} ${product.unitLabel} available to add',
+                ? l10n.addToCart_noMore
+                : l10n.addToCart_available(Product.trimNum(maxQty), product.unitLabel),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -101,7 +103,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Quantity', style: theme.textTheme.titleSmall),
+              Text(l10n.common_quantity, style: theme.textTheme.titleSmall),
               Row(
                 children: [
                   IconButton.filledTonal(
@@ -138,7 +140,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Subtotal', style: theme.textTheme.titleMedium),
+              Text(l10n.common_subtotal, style: theme.textTheme.titleMedium),
               Text(
                 Money.format(total, currencyCode: currency),
                 style: theme.textTheme.titleMedium,
@@ -151,14 +153,14 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.common_cancel),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
                   onPressed: (outOfStock || _qty <= 0) ? null : _add,
-                  child: const Text('Add to cart'),
+                  child: Text(l10n.common_addToCart),
                 ),
               ),
             ],

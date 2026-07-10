@@ -498,4 +498,137 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get category_nameHint => 'e.g. Frozen items';
+
+  @override
+  String get common_clear => 'Clear';
+
+  @override
+  String get common_remove => 'Remove';
+
+  @override
+  String get common_quantity => 'Quantity';
+
+  @override
+  String get common_subtotal => 'Subtotal';
+
+  @override
+  String get common_couldNotRecognize =>
+      'Could not recognize the product. Please try again.';
+
+  @override
+  String get cart_title => 'Cart';
+
+  @override
+  String cart_itemsInCart(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items in cart',
+      one: '1 item in cart',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cart_clearTitle => 'Clear cart?';
+
+  @override
+  String get cart_clearBody =>
+      'This removes every item from the cart. Nothing is sold.';
+
+  @override
+  String get cart_keep => 'Keep';
+
+  @override
+  String cart_totalItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return 'Total · $_temp0';
+  }
+
+  @override
+  String get cart_checkout => 'Checkout';
+
+  @override
+  String get cart_selling => 'Selling…';
+
+  @override
+  String get cart_empty => 'Your cart is empty';
+
+  @override
+  String get cart_emptyHint =>
+      'Add products from Items or Scan to build a sale, then check out here.';
+
+  @override
+  String cart_itemsSold(int count, String total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items sold',
+      one: '1 item sold',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get cart_checkoutFailed => 'Checkout failed. Please try again.';
+
+  @override
+  String cart_pricePerUnit(String price, String unit) {
+    return '$price / $unit';
+  }
+
+  @override
+  String cart_barSummary(int count, String total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get addToCart_noMore => 'No more available to add.';
+
+  @override
+  String addToCart_available(String qty, String unit) {
+    return '$qty $unit available to add';
+  }
+
+  @override
+  String get restock_confirmTitle => 'Confirm restock';
+
+  @override
+  String restock_inStock(String qty) {
+    return 'In stock: $qty';
+  }
+
+  @override
+  String get restock_unitCost => 'Unit cost';
+
+  @override
+  String get restock_totalCost => 'Total cost';
+
+  @override
+  String get scan_failed => 'Scan failed. Try again.';
+
+  @override
+  String scan_addedToCart(String name) {
+    return 'Added $name to cart';
+  }
+
+  @override
+  String get scan_didYouMean => 'Did you mean?';
+
+  @override
+  String get scan_noMatchPick => 'No match — pick the product';
+
+  @override
+  String get scan_searchProducts => 'Search products';
 }

@@ -493,4 +493,137 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get category_nameHint => 'যেমন ফ্রোজেন আইটেম';
+
+  @override
+  String get common_clear => 'খালি করুন';
+
+  @override
+  String get common_remove => 'মুছুন';
+
+  @override
+  String get common_quantity => 'পরিমাণ';
+
+  @override
+  String get common_subtotal => 'সাবটোটাল';
+
+  @override
+  String get common_couldNotRecognize =>
+      'পণ্য শনাক্ত করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get cart_title => 'কার্ট';
+
+  @override
+  String cart_itemsInCart(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি পণ্য কার্টে',
+      one: '১টি পণ্য কার্টে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cart_clearTitle => 'কার্ট খালি করবেন?';
+
+  @override
+  String get cart_clearBody =>
+      'এটি কার্টের সব পণ্য সরিয়ে দেবে। কিছু বিক্রি হবে না।';
+
+  @override
+  String get cart_keep => 'থাক';
+
+  @override
+  String cart_totalItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি পণ্য',
+      one: '১টি পণ্য',
+    );
+    return 'মোট · $_temp0';
+  }
+
+  @override
+  String get cart_checkout => 'চেকআউট';
+
+  @override
+  String get cart_selling => 'বিক্রি হচ্ছে…';
+
+  @override
+  String get cart_empty => 'আপনার কার্ট খালি';
+
+  @override
+  String get cart_emptyHint =>
+      'পণ্য বা স্ক্যান থেকে পণ্য যোগ করে বিক্রি শুরু করুন, তারপর এখানে চেকআউট করুন।';
+
+  @override
+  String cart_itemsSold(int count, String total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি পণ্য বিক্রি',
+      one: '১টি পণ্য বিক্রি',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get cart_checkoutFailed => 'চেকআউট ব্যর্থ। আবার চেষ্টা করুন।';
+
+  @override
+  String cart_pricePerUnit(String price, String unit) {
+    return '$price / $unit';
+  }
+
+  @override
+  String cart_barSummary(int count, String total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি পণ্য',
+      one: '১টি পণ্য',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get addToCart_noMore => 'যোগ করার মতো আর নেই।';
+
+  @override
+  String addToCart_available(String qty, String unit) {
+    return '$qty $unit যোগ করা যাবে';
+  }
+
+  @override
+  String get restock_confirmTitle => 'রিস্টক নিশ্চিত করুন';
+
+  @override
+  String restock_inStock(String qty) {
+    return 'স্টকে: $qty';
+  }
+
+  @override
+  String get restock_unitCost => 'একক খরচ';
+
+  @override
+  String get restock_totalCost => 'মোট খরচ';
+
+  @override
+  String get scan_failed => 'স্ক্যান ব্যর্থ। আবার চেষ্টা করুন।';
+
+  @override
+  String scan_addedToCart(String name) {
+    return '$name কার্টে যোগ হয়েছে';
+  }
+
+  @override
+  String get scan_didYouMean => 'আপনি কি এটি বোঝাতে চেয়েছেন?';
+
+  @override
+  String get scan_noMatchPick => 'মেলেনি — পণ্য বেছে নিন';
+
+  @override
+  String get scan_searchProducts => 'পণ্য খুঁজুন';
 }

@@ -961,6 +961,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'e.g. Frozen items'**
   String get category_nameHint;
+
+  /// No description provided for @common_clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get common_clear;
+
+  /// No description provided for @common_remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get common_remove;
+
+  /// No description provided for @common_quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get common_quantity;
+
+  /// No description provided for @common_subtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get common_subtotal;
+
+  /// No description provided for @common_couldNotRecognize.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not recognize the product. Please try again.'**
+  String get common_couldNotRecognize;
+
+  /// No description provided for @cart_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart'**
+  String get cart_title;
+
+  /// No description provided for @cart_itemsInCart.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item in cart} other{{count} items in cart}}'**
+  String cart_itemsInCart(int count);
+
+  /// No description provided for @cart_clearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cart?'**
+  String get cart_clearTitle;
+
+  /// No description provided for @cart_clearBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes every item from the cart. Nothing is sold.'**
+  String get cart_clearBody;
+
+  /// No description provided for @cart_keep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get cart_keep;
+
+  /// No description provided for @cart_totalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Total · {count, plural, =1{1 item} other{{count} items}}'**
+  String cart_totalItems(int count);
+
+  /// No description provided for @cart_checkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get cart_checkout;
+
+  /// No description provided for @cart_selling.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling…'**
+  String get cart_selling;
+
+  /// No description provided for @cart_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cart is empty'**
+  String get cart_empty;
+
+  /// No description provided for @cart_emptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add products from Items or Scan to build a sale, then check out here.'**
+  String get cart_emptyHint;
+
+  /// No description provided for @cart_itemsSold.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item sold} other{{count} items sold}} · {total}'**
+  String cart_itemsSold(int count, String total);
+
+  /// No description provided for @cart_checkoutFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout failed. Please try again.'**
+  String get cart_checkoutFailed;
+
+  /// No description provided for @cart_pricePerUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} / {unit}'**
+  String cart_pricePerUnit(String price, String unit);
+
+  /// No description provided for @cart_barSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}} · {total}'**
+  String cart_barSummary(int count, String total);
+
+  /// No description provided for @addToCart_noMore.
+  ///
+  /// In en, this message translates to:
+  /// **'No more available to add.'**
+  String get addToCart_noMore;
+
+  /// No description provided for @addToCart_available.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} {unit} available to add'**
+  String addToCart_available(String qty, String unit);
+
+  /// No description provided for @restock_confirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm restock'**
+  String get restock_confirmTitle;
+
+  /// No description provided for @restock_inStock.
+  ///
+  /// In en, this message translates to:
+  /// **'In stock: {qty}'**
+  String restock_inStock(String qty);
+
+  /// No description provided for @restock_unitCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit cost'**
+  String get restock_unitCost;
+
+  /// No description provided for @restock_totalCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Total cost'**
+  String get restock_totalCost;
+
+  /// No description provided for @scan_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan failed. Try again.'**
+  String get scan_failed;
+
+  /// No description provided for @scan_addedToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {name} to cart'**
+  String scan_addedToCart(String name);
+
+  /// No description provided for @scan_didYouMean.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you mean?'**
+  String get scan_didYouMean;
+
+  /// No description provided for @scan_noMatchPick.
+  ///
+  /// In en, this message translates to:
+  /// **'No match — pick the product'**
+  String get scan_noMatchPick;
+
+  /// No description provided for @scan_searchProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Search products'**
+  String get scan_searchProducts;
 }
 
 class _AppLocalizationsDelegate
