@@ -75,6 +75,19 @@ flutter:
   # Generate typed localizations (AppLocalizations) from lib/l10n/*.arb.
   generate: true
 
+  # Bengali-capable font (OFL). Inter has no Bengali glyphs; this is registered
+  # as fontFamilyFallback on the text theme so Bengali renders consistently
+  # across devices instead of relying on each phone's system fallback.
+  fonts:
+    - family: HindSiliguri
+      fonts:
+        - asset: assets/fonts/HindSiliguri-Regular.ttf
+        - asset: assets/fonts/HindSiliguri-SemiBold.ttf
+          weight: 600
+
+  assets:
+    - assets/fonts/
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
