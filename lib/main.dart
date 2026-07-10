@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/supabase_config.dart';
+import 'shared/providers/locale_provider.dart';
 import 'shared/providers/onboarding_provider.dart';
 import 'shared/providers/theme_mode_provider.dart';
 
@@ -30,12 +32,15 @@ Future<void> main() async {
 
   final seenOnboarding = await loadOnboardingSeen();
   final themeMode = await loadThemeMode();
+  await initializeDateFormatting();
+  final locale = await loadLocale();
 
   runApp(
     ProviderScope(
       overrides: [
         initialOnboardingSeenProvider.overrideWithValue(seenOnboarding),
         initialThemeModeProvider.overrideWithValue(themeMode),
+        initialLocaleProvider.overrideWithValue(locale),
       ],
       child: const App(),
     ),
