@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/config/theme.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 
 /// The dashboard's primary card: a brand-filled hero that leads with period
@@ -53,7 +54,7 @@ class RevenueHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Revenue · $periodWord',
+                    context.l10n.dashboard_revenuePeriod(periodWord),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: onAccent.withValues(alpha: 0.75),
                     ),
@@ -78,7 +79,7 @@ class RevenueHero extends StatelessWidget {
                     const SizedBox(height: 10),
                     _DeltaPill(
                       percent: deltaPercent!,
-                      suffix: showDeltaSuffix ? 'vs yesterday' : null,
+                      suffix: showDeltaSuffix ? context.l10n.dashboard_vsYesterday : null,
                       onAccent: onAccent,
                     ),
                   ],
@@ -87,17 +88,17 @@ class RevenueHero extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _HeroStat(
-                        label: 'Profit',
+                        label: context.l10n.dashboard_profit,
                         value: Money.compact(profit, currencyCode: currency),
                         onAccent: onAccent,
                       ),
                       _HeroStat(
-                        label: 'Margin',
+                        label: context.l10n.dashboard_margin,
                         value: '${marginPercent.toStringAsFixed(1)}%',
                         onAccent: onAccent,
                       ),
                       _HeroStat(
-                        label: 'Items sold',
+                        label: context.l10n.dashboard_itemsSold,
                         value: Money.compactCount(unitsSold),
                         onAccent: onAccent,
                       ),

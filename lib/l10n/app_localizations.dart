@@ -253,6 +253,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View and restore removed products'**
   String get settings_archivedProductsSub;
+
+  /// No description provided for @common_restock.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock'**
+  String get common_restock;
+
+  /// No description provided for @common_sell.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell'**
+  String get common_sell;
+
+  /// No description provided for @common_period_today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get common_period_today;
+
+  /// No description provided for @common_period_week.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get common_period_week;
+
+  /// No description provided for @common_period_month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get common_period_month;
+
+  /// No description provided for @common_period_all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get common_period_all;
+
+  /// No description provided for @dashboard_yourShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shop'**
+  String get dashboard_yourShop;
+
+  /// No description provided for @dashboard_notificationsCaughtUp.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get dashboard_notificationsCaughtUp;
+
+  /// No description provided for @dashboard_notificationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll alert you about low stock and sales here.'**
+  String get dashboard_notificationsHint;
+
+  /// No description provided for @dashboard_salesLast7.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales · last 7 days'**
+  String get dashboard_salesLast7;
+
+  /// No description provided for @dashboard_bestDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} best'**
+  String dashboard_bestDay(String day);
+
+  /// No description provided for @dashboard_topPerformer.
+  ///
+  /// In en, this message translates to:
+  /// **'TOP PERFORMER'**
+  String get dashboard_topPerformer;
+
+  /// No description provided for @dashboard_mvpBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'MVP'**
+  String get dashboard_mvpBadge;
+
+  /// No description provided for @dashboard_noSalesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales yet — your best seller will appear here.'**
+  String get dashboard_noSalesYet;
+
+  /// No description provided for @dashboard_soldRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'{units} sold · {revenue} revenue'**
+  String dashboard_soldRevenue(String units, String revenue);
+
+  /// No description provided for @dashboard_lowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get dashboard_lowStock;
+
+  /// No description provided for @dashboard_viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get dashboard_viewAll;
+
+  /// No description provided for @dashboard_fullyStocked.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re fully stocked — nothing needs reordering.'**
+  String get dashboard_fullyStocked;
+
+  /// No description provided for @dashboard_leftReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} left · reorder'**
+  String dashboard_leftReorder(String qty);
+
+  /// No description provided for @dashboard_couldNotLoadSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load summary.'**
+  String get dashboard_couldNotLoadSummary;
+
+  /// No description provided for @dashboard_couldNotLoadSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load sales.'**
+  String get dashboard_couldNotLoadSales;
+
+  /// No description provided for @dashboard_revenuePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue · {period}'**
+  String dashboard_revenuePeriod(String period);
+
+  /// No description provided for @dashboard_profit.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit'**
+  String get dashboard_profit;
+
+  /// No description provided for @dashboard_margin.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin'**
+  String get dashboard_margin;
+
+  /// No description provided for @dashboard_itemsSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Items sold'**
+  String get dashboard_itemsSold;
+
+  /// No description provided for @dashboard_vsYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'vs yesterday'**
+  String get dashboard_vsYesterday;
+
+  /// No description provided for @dashboard_breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown'**
+  String get dashboard_breakdown;
+
+  /// No description provided for @dashboard_exactFigures.
+  ///
+  /// In en, this message translates to:
+  /// **'{period} · exact figures'**
+  String dashboard_exactFigures(String period);
+
+  /// No description provided for @dashboard_revenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get dashboard_revenue;
+
+  /// No description provided for @dashboard_costOfGoods.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost of goods'**
+  String get dashboard_costOfGoods;
+
+  /// No description provided for @dashboard_grossProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross profit'**
+  String get dashboard_grossProfit;
+
+  /// No description provided for @dashboard_avgItemPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg item price'**
+  String get dashboard_avgItemPrice;
+
+  /// No description provided for @dashboard_viewFullReport.
+  ///
+  /// In en, this message translates to:
+  /// **'View full report'**
+  String get dashboard_viewFullReport;
 }
 
 class _AppLocalizationsDelegate

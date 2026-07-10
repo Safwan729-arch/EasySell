@@ -88,4 +88,116 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settings_archivedProductsSub =>
       'View and restore removed products';
+
+  @override
+  String get common_restock => 'Restock';
+
+  @override
+  String get common_sell => 'Sell';
+
+  @override
+  String get common_period_today => 'Today';
+
+  @override
+  String get common_period_week => 'Week';
+
+  @override
+  String get common_period_month => 'Month';
+
+  @override
+  String get common_period_all => 'All';
+
+  @override
+  String get dashboard_yourShop => 'Your shop';
+
+  @override
+  String get dashboard_notificationsCaughtUp => 'You\'re all caught up';
+
+  @override
+  String get dashboard_notificationsHint =>
+      'We\'ll alert you about low stock and sales here.';
+
+  @override
+  String get dashboard_salesLast7 => 'Sales · last 7 days';
+
+  @override
+  String dashboard_bestDay(String day) {
+    return '$day best';
+  }
+
+  @override
+  String get dashboard_topPerformer => 'TOP PERFORMER';
+
+  @override
+  String get dashboard_mvpBadge => 'MVP';
+
+  @override
+  String get dashboard_noSalesYet =>
+      'No sales yet — your best seller will appear here.';
+
+  @override
+  String dashboard_soldRevenue(String units, String revenue) {
+    return '$units sold · $revenue revenue';
+  }
+
+  @override
+  String get dashboard_lowStock => 'Low stock';
+
+  @override
+  String get dashboard_viewAll => 'View all';
+
+  @override
+  String get dashboard_fullyStocked =>
+      'You\'re fully stocked — nothing needs reordering.';
+
+  @override
+  String dashboard_leftReorder(String qty) {
+    return '$qty left · reorder';
+  }
+
+  @override
+  String get dashboard_couldNotLoadSummary => 'Could not load summary.';
+
+  @override
+  String get dashboard_couldNotLoadSales => 'Could not load sales.';
+
+  @override
+  String dashboard_revenuePeriod(String period) {
+    return 'Revenue · $period';
+  }
+
+  @override
+  String get dashboard_profit => 'Profit';
+
+  @override
+  String get dashboard_margin => 'Margin';
+
+  @override
+  String get dashboard_itemsSold => 'Items sold';
+
+  @override
+  String get dashboard_vsYesterday => 'vs yesterday';
+
+  @override
+  String get dashboard_breakdown => 'Breakdown';
+
+  @override
+  String dashboard_exactFigures(String period) {
+    return '$period · exact figures';
+  }
+
+  @override
+  String get dashboard_revenue => 'Revenue';
+
+  @override
+  String get dashboard_costOfGoods => 'Cost of goods';
+
+  @override
+  String get dashboard_grossProfit => 'Gross profit';
+
+  @override
+  String get dashboard_avgItemPrice => 'Avg item price';
+
+  @override
+  String get dashboard_viewFullReport => 'View full report';
 }

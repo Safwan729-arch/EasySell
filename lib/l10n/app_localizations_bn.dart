@@ -85,4 +85,115 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settings_archivedProductsSub => 'সরানো পণ্য দেখুন ও ফেরান';
+
+  @override
+  String get common_restock => 'রিস্টক';
+
+  @override
+  String get common_sell => 'বিক্রি';
+
+  @override
+  String get common_period_today => 'আজ';
+
+  @override
+  String get common_period_week => 'সপ্তাহ';
+
+  @override
+  String get common_period_month => 'মাস';
+
+  @override
+  String get common_period_all => 'সব';
+
+  @override
+  String get dashboard_yourShop => 'আপনার দোকান';
+
+  @override
+  String get dashboard_notificationsCaughtUp => 'সব দেখা হয়ে গেছে';
+
+  @override
+  String get dashboard_notificationsHint =>
+      'কম স্টক আর বিক্রির খবর এখানে পাবেন।';
+
+  @override
+  String get dashboard_salesLast7 => 'বিক্রি · গত ৭ দিন';
+
+  @override
+  String dashboard_bestDay(String day) {
+    return '$day সেরা';
+  }
+
+  @override
+  String get dashboard_topPerformer => 'সেরা বিক্রেতা';
+
+  @override
+  String get dashboard_mvpBadge => 'সেরা';
+
+  @override
+  String get dashboard_noSalesYet =>
+      'এখনো বিক্রি নেই — সেরা বিক্রেতা এখানে দেখাবে।';
+
+  @override
+  String dashboard_soldRevenue(String units, String revenue) {
+    return '$units বিক্রি · $revenue আয়';
+  }
+
+  @override
+  String get dashboard_lowStock => 'কম স্টক';
+
+  @override
+  String get dashboard_viewAll => 'সব দেখুন';
+
+  @override
+  String get dashboard_fullyStocked => 'স্টক ভরা — কিছু রিঅর্ডার করতে হবে না।';
+
+  @override
+  String dashboard_leftReorder(String qty) {
+    return '$qty বাকি · রিঅর্ডার';
+  }
+
+  @override
+  String get dashboard_couldNotLoadSummary => 'সারসংক্ষেপ লোড করা যায়নি।';
+
+  @override
+  String get dashboard_couldNotLoadSales => 'বিক্রি লোড করা যায়নি।';
+
+  @override
+  String dashboard_revenuePeriod(String period) {
+    return 'আয় · $period';
+  }
+
+  @override
+  String get dashboard_profit => 'লাভ';
+
+  @override
+  String get dashboard_margin => 'মার্জিন';
+
+  @override
+  String get dashboard_itemsSold => 'বিক্রি';
+
+  @override
+  String get dashboard_vsYesterday => 'গতকালের চেয়ে';
+
+  @override
+  String get dashboard_breakdown => 'বিস্তারিত';
+
+  @override
+  String dashboard_exactFigures(String period) {
+    return '$period · সঠিক হিসাব';
+  }
+
+  @override
+  String get dashboard_revenue => 'আয়';
+
+  @override
+  String get dashboard_costOfGoods => 'পণ্যের খরচ';
+
+  @override
+  String get dashboard_grossProfit => 'মোট লাভ';
+
+  @override
+  String get dashboard_avgItemPrice => 'গড় দাম';
+
+  @override
+  String get dashboard_viewFullReport => 'পূর্ণ রিপোর্ট দেখুন';
 }
