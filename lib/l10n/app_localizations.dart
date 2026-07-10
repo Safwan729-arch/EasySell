@@ -103,6 +103,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings_title;
+
+  /// No description provided for @common_signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get common_signOut;
+
+  /// No description provided for @settings_sectionProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get settings_sectionProfile;
+
+  /// No description provided for @settings_sectionShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get settings_sectionShop;
+
+  /// No description provided for @settings_sectionAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get settings_sectionAssistant;
+
+  /// No description provided for @settings_sectionAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settings_sectionAppearance;
+
+  /// No description provided for @settings_sectionInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get settings_sectionInventory;
+
+  /// No description provided for @settings_sectionLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settings_sectionLanguage;
+
+  /// No description provided for @settings_appLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get settings_appLanguage;
+
+  /// No description provided for @settings_guestSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest session'**
+  String get settings_guestSession;
+
+  /// No description provided for @settings_signedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in'**
+  String get settings_signedIn;
+
+  /// No description provided for @settings_anonymousData.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous — data is tied to this device'**
+  String get settings_anonymousData;
+
+  /// No description provided for @settings_shopName.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop name'**
+  String get settings_shopName;
+
+  /// No description provided for @settings_address.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get settings_address;
+
+  /// No description provided for @settings_phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get settings_phone;
+
+  /// No description provided for @settings_currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get settings_currency;
+
+  /// No description provided for @settings_aiInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Insights'**
+  String get settings_aiInsights;
+
+  /// No description provided for @settings_aiInsightsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions from the assistant'**
+  String get settings_aiInsightsSub;
+
+  /// No description provided for @settings_trends.
+  ///
+  /// In en, this message translates to:
+  /// **'Trends'**
+  String get settings_trends;
+
+  /// No description provided for @settings_trendsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales trend dashboards'**
+  String get settings_trendsSub;
+
+  /// No description provided for @settings_themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settings_themeLight;
+
+  /// No description provided for @settings_themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settings_themeDark;
+
+  /// No description provided for @settings_manageCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage categories'**
+  String get settings_manageCategories;
+
+  /// No description provided for @settings_manageCategoriesSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename, add, or remove categories'**
+  String get settings_manageCategoriesSub;
+
+  /// No description provided for @settings_archivedProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived products'**
+  String get settings_archivedProducts;
+
+  /// No description provided for @settings_archivedProductsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'View and restore removed products'**
+  String get settings_archivedProductsSub;
 }
 
 class _AppLocalizationsDelegate
