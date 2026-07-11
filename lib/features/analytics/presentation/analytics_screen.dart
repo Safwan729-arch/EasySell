@@ -1,9 +1,12 @@
+import 'package:ai_shopkeeper/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/config/haptics.dart';
 import '../../../core/config/motion.dart';
+import '../../../core/l10n/enum_labels.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/skeleton.dart';
@@ -39,6 +42,7 @@ class AnalyticsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -53,7 +57,7 @@ class AnalyticsScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
             children: [
               Text(
-                'BUSINESS REPORT',
+                l10n.analytics_kicker,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w800,
@@ -62,7 +66,7 @@ class AnalyticsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Reports',
+                l10n.analytics_title,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
@@ -144,7 +148,7 @@ class _CategoryCardState extends ConsumerState<_CategoryCard> {
       body = Padding(
         padding: const EdgeInsets.symmetric(vertical: 18),
         child: Text(
-          'No sales in this period yet.',
+          context.l10n.analytics_noSalesPeriod,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -159,7 +163,7 @@ class _CategoryCardState extends ConsumerState<_CategoryCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Kicker('Where revenue comes from'),
+          _Kicker(context.l10n.analytics_revenueSource),
           const SizedBox(height: 8),
           body,
           const SizedBox(height: 16),
@@ -178,11 +182,12 @@ class _DonutBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     if (slices.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 18),
         child: Text(
-          'No sales in this period yet.',
+          l10n.analytics_noSalesPeriod,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -199,8 +204,8 @@ class _DonutBlock extends StatelessWidget {
               for (var i = 0; i < slices.length; i++)
                 DonutSlice(value: slices[i].fraction, color: _donutColor(i)),
             ],
-            centerLabel: '$topPct%',
-            centerSub: 'top share',
+            centerLabel: '${Qty.format(topPct)}%',
+            centerSub: l10n.analytics_topShare,
           ),
         ),
         const SizedBox(height: 18),
@@ -253,7 +258,7 @@ class _LegendRow extends StatelessWidget {
             ),
           ),
           Text(
-            '$percent%',
+            '${Qty.format(percent)}%',
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -278,16 +283,10 @@ class _PeriodControl extends ConsumerWidget {
     AnalyticsPeriod.month,
   ];
 
-  static String _word(AnalyticsPeriod p) => switch (p) {
-    AnalyticsPeriod.today => 'Today',
-    AnalyticsPeriod.week => 'Week',
-    AnalyticsPeriod.month => 'Month',
-    AnalyticsPeriod.all => 'All',
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final period = ref.watch(reportPeriodProvider);
     final day = ref.watch(reportSelectedDayProvider);
     return Column(
@@ -302,7 +301,7 @@ class _PeriodControl extends ConsumerWidget {
                   values: _periods,
                   // Day-mode overrides the period, so no pill is highlighted.
                   selected: day == null ? period : null,
-                  labelOf: _word,
+                  labelOf: (p) => periodLabel(l10n, p),
                   gap: 22,
                   onChanged: (p) {
                     ref.read(reportSelectedDayProvider.notifier).set(null);
@@ -373,7 +372,7 @@ class _BestSellersCardState extends ConsumerState<_BestSellersCard> {
       body = Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'No sales in this period yet.',
+          context.l10n.analytics_noSalesPeriod,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -388,7 +387,7 @@ class _BestSellersCardState extends ConsumerState<_BestSellersCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Kicker('Biggest wins'),
+          _Kicker(context.l10n.analytics_biggestWins),
           const SizedBox(height: 8),
           body,
         ],
@@ -412,13 +411,15 @@ class _WinsBody extends StatelessWidget {
 
   /// The trailing phrase in "X is carrying …". A drilled-into day wins over the
   /// running period, matching how the control scopes the data.
-  static String _scopeWord(AnalyticsPeriod p, DateTime? day) {
-    if (day != null) return 'on ${DateFormat('d MMM').format(day)}';
+  static String _scopeWord(AppLocalizations l10n, AnalyticsPeriod p, DateTime? day) {
+    if (day != null) {
+      return l10n.analytics_scopeDay(DateFormat('d MMM').format(day));
+    }
     return switch (p) {
-      AnalyticsPeriod.week => 'this week',
-      AnalyticsPeriod.month => 'this month',
-      AnalyticsPeriod.all => 'all time',
-      AnalyticsPeriod.today => 'today',
+      AnalyticsPeriod.week => l10n.analytics_scopeWeek,
+      AnalyticsPeriod.month => l10n.analytics_scopeMonth,
+      AnalyticsPeriod.all => l10n.analytics_scopeAll,
+      AnalyticsPeriod.today => l10n.analytics_scopeToday,
     };
   }
 
@@ -426,11 +427,12 @@ class _WinsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     if (top.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'No sales in this period yet.',
+          l10n.analytics_noSalesPeriod,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -442,7 +444,7 @@ class _WinsBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${top.first.name} is carrying ${_scopeWord(period, day)}.',
+          l10n.analytics_carrying(top.first.name, _scopeWord(l10n, period, day)),
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             height: 1.25,
@@ -455,7 +457,7 @@ class _WinsBody extends StatelessWidget {
             child: _LeaderRow(
               rank: i + 1,
               name: top[i].name,
-              units: '${Qty.format(top[i].units)} units',
+              units: l10n.analytics_units(Qty.format(top[i].units)),
               revenue: Money.compact(top[i].revenue, currencyCode: currency),
               fraction: leaderUnits <= 0 ? 0 : top[i].units / leaderUnits,
             ),

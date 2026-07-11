@@ -666,4 +666,72 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get history_colAmount => 'মোট';
+
+  @override
+  String get analytics_kicker => 'ব্যবসার রিপোর্ট';
+
+  @override
+  String get analytics_title => 'রিপোর্ট';
+
+  @override
+  String get analytics_noSalesPeriod => 'এই সময়ে এখনো কোনো বিক্রি নেই।';
+
+  @override
+  String get analytics_revenueSource => 'আয় কোথা থেকে আসছে';
+
+  @override
+  String get analytics_topShare => 'সেরা অংশ';
+
+  @override
+  String get analytics_biggestWins => 'সেরা বিক্রি';
+
+  @override
+  String analytics_carrying(String name, String scope) {
+    return '$scope $name সবচেয়ে এগিয়ে।';
+  }
+
+  @override
+  String get analytics_scopeToday => 'আজ';
+
+  @override
+  String get analytics_scopeWeek => 'এই সপ্তাহে';
+
+  @override
+  String get analytics_scopeMonth => 'এই মাসে';
+
+  @override
+  String get analytics_scopeAll => 'সব সময়';
+
+  @override
+  String analytics_scopeDay(String date) {
+    return '$date তারিখে';
+  }
+
+  @override
+  String analytics_units(String qty) {
+    return '$qty একক';
+  }
+
+  @override
+  String get insights_title => 'এআই ইনসাইট';
+
+  @override
+  String get insights_couldNotLoad => 'ইনসাইট লোড করা যায়নি।';
+
+  @override
+  String get insights_empty =>
+      'এখনো কোনো ইনসাইট নেই।\nঅ্যাসিস্ট্যান্ট আপনার বিক্রি বিশ্লেষণ করলে এখানে ইনসাইট দেখাবে।';
+
+  @override
+  String get trends_title => 'ট্রেন্ড';
+
+  @override
+  String get trends_couldNotLoad => 'ট্রেন্ড লোড করা যায়নি।';
+
+  @override
+  String get trends_empty =>
+      'এখনো কোনো ট্রেন্ড নেই।\nঅ্যাসিস্ট্যান্ট আপনার বিক্রি বিশ্লেষণ করলে এখানে ট্রেন্ড দেখাবে।';
+
+  @override
+  String get trends_noData => 'কোনো ডেটা নেই।';
 }

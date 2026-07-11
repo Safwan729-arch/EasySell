@@ -1213,6 +1213,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount'**
   String get history_colAmount;
+
+  /// No description provided for @analytics_kicker.
+  ///
+  /// In en, this message translates to:
+  /// **'BUSINESS REPORT'**
+  String get analytics_kicker;
+
+  /// No description provided for @analytics_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get analytics_title;
+
+  /// No description provided for @analytics_noSalesPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales in this period yet.'**
+  String get analytics_noSalesPeriod;
+
+  /// No description provided for @analytics_revenueSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Where revenue comes from'**
+  String get analytics_revenueSource;
+
+  /// No description provided for @analytics_topShare.
+  ///
+  /// In en, this message translates to:
+  /// **'top share'**
+  String get analytics_topShare;
+
+  /// No description provided for @analytics_biggestWins.
+  ///
+  /// In en, this message translates to:
+  /// **'Biggest wins'**
+  String get analytics_biggestWins;
+
+  /// No description provided for @analytics_carrying.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is carrying {scope}.'**
+  String analytics_carrying(String name, String scope);
+
+  /// No description provided for @analytics_scopeToday.
+  ///
+  /// In en, this message translates to:
+  /// **'today'**
+  String get analytics_scopeToday;
+
+  /// No description provided for @analytics_scopeWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'this week'**
+  String get analytics_scopeWeek;
+
+  /// No description provided for @analytics_scopeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'this month'**
+  String get analytics_scopeMonth;
+
+  /// No description provided for @analytics_scopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'all time'**
+  String get analytics_scopeAll;
+
+  /// No description provided for @analytics_scopeDay.
+  ///
+  /// In en, this message translates to:
+  /// **'on {date}'**
+  String analytics_scopeDay(String date);
+
+  /// No description provided for @analytics_units.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} units'**
+  String analytics_units(String qty);
+
+  /// No description provided for @insights_title.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Insights'**
+  String get insights_title;
+
+  /// No description provided for @insights_couldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load insights.'**
+  String get insights_couldNotLoad;
+
+  /// No description provided for @insights_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No insights yet.\nAI insights will appear here once the assistant has analyzed your sales.'**
+  String get insights_empty;
+
+  /// No description provided for @trends_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Trends'**
+  String get trends_title;
+
+  /// No description provided for @trends_couldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load trends.'**
+  String get trends_couldNotLoad;
+
+  /// No description provided for @trends_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No trends yet.\nTrend dashboards will appear here once the assistant has analyzed your sales.'**
+  String get trends_empty;
+
+  /// No description provided for @trends_noData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data points.'**
+  String get trends_noData;
 }
 
 class _AppLocalizationsDelegate

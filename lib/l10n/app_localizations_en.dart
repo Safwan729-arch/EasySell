@@ -671,4 +671,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get history_colAmount => 'Amount';
+
+  @override
+  String get analytics_kicker => 'BUSINESS REPORT';
+
+  @override
+  String get analytics_title => 'Reports';
+
+  @override
+  String get analytics_noSalesPeriod => 'No sales in this period yet.';
+
+  @override
+  String get analytics_revenueSource => 'Where revenue comes from';
+
+  @override
+  String get analytics_topShare => 'top share';
+
+  @override
+  String get analytics_biggestWins => 'Biggest wins';
+
+  @override
+  String analytics_carrying(String name, String scope) {
+    return '$name is carrying $scope.';
+  }
+
+  @override
+  String get analytics_scopeToday => 'today';
+
+  @override
+  String get analytics_scopeWeek => 'this week';
+
+  @override
+  String get analytics_scopeMonth => 'this month';
+
+  @override
+  String get analytics_scopeAll => 'all time';
+
+  @override
+  String analytics_scopeDay(String date) {
+    return 'on $date';
+  }
+
+  @override
+  String analytics_units(String qty) {
+    return '$qty units';
+  }
+
+  @override
+  String get insights_title => 'AI Insights';
+
+  @override
+  String get insights_couldNotLoad => 'Could not load insights.';
+
+  @override
+  String get insights_empty =>
+      'No insights yet.\nAI insights will appear here once the assistant has analyzed your sales.';
+
+  @override
+  String get trends_title => 'Trends';
+
+  @override
+  String get trends_couldNotLoad => 'Could not load trends.';
+
+  @override
+  String get trends_empty =>
+      'No trends yet.\nTrend dashboards will appear here once the assistant has analyzed your sales.';
+
+  @override
+  String get trends_noData => 'No data points.';
 }

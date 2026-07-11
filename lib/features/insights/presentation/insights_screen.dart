@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/insights_repository.dart';
@@ -21,28 +22,27 @@ class InsightsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final async = ref.watch(insightsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('AI Insights')),
+      appBar: AppBar(title: Text(l10n.insights_title)),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(insightsProvider),
         child: async.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _CenteredMessage(
             icon: Icons.error_outline,
-            message: 'Could not load insights.',
+            message: l10n.insights_couldNotLoad,
           ),
           data: (insights) {
             if (insights.isEmpty) {
               return ListView(
-                children: const [
-                  SizedBox(height: 120),
+                children: [
+                  const SizedBox(height: 120),
                   _CenteredMessage(
                     icon: Icons.lightbulb_outline,
-                    message:
-                        'No insights yet.\nAI insights will appear here once '
-                        'the assistant has analyzed your sales.',
+                    message: l10n.insights_empty,
                   ),
                 ],
               );
