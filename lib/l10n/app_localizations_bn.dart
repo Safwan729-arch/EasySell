@@ -238,7 +238,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String inventory_itemsValue(int count, String value) {
-    return '$countটি পণ্য · $value মূল্য';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countStringটি পণ্য · $value মূল্য';
   }
 
   @override
@@ -441,10 +445,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String category_deleteBodyUsed(String name, int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$countটি পণ্য',
+      other: '$countStringটি পণ্য',
       one: '১টি পণ্য',
     );
     return '\"$name\" সরিয়ে ফেলা হবে। $_temp0 ক্যাটাগরিহীন হবে (মুছে যাবে না)।';
@@ -458,10 +466,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String category_productCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$countটি পণ্য',
+      other: '$countStringটি পণ্য',
       one: '১টি পণ্য',
     );
     return '$_temp0';
@@ -515,10 +527,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String cart_itemsInCart(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$countটি পণ্য কার্টে',
+      other: '$countStringটি পণ্য কার্টে',
       one: '১টি পণ্য কার্টে',
     );
     return '$_temp0';
@@ -536,10 +552,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String cart_totalItems(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$countটি পণ্য',
+      other: '$countStringটি পণ্য',
       one: '১টি পণ্য',
     );
     return 'মোট · $_temp0';
@@ -560,10 +580,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String cart_itemsSold(int count, String total) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$countটি পণ্য বিক্রি',
+      other: '$countStringটি পণ্য বিক্রি',
       one: '১টি পণ্য বিক্রি',
     );
     return '$_temp0 · $total';
@@ -579,10 +603,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String cart_barSummary(int count, String total) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$countটি পণ্য',
+      other: '$countStringটি পণ্য',
       one: '১টি পণ্য',
     );
     return '$_temp0 · $total';
@@ -781,9 +809,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get auth_noAccount => 'অ্যাকাউন্ট নেই? সাইন আপ করুন';
 
   @override
-  String get profile_setupTitle => 'আপনার দোকান তৈরি করুন';
-
-  @override
   String get profile_tellUs => 'আপনার দোকান সম্পর্কে বলুন';
 
   @override
@@ -835,7 +860,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String onboarding_step(int current, int total) {
-    return 'ধাপ $current/$total';
+    final intl.NumberFormat currentNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String currentString = currentNumberFormat.format(current);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'ধাপ $currentString/$totalString';
   }
 
   @override

@@ -242,7 +242,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inventory_itemsValue(int count, String value) {
-    return '$count items · $value value';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString items · $value value';
   }
 
   @override
@@ -445,10 +449,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String category_deleteBodyUsed(String name, int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count products',
+      other: '$countString products',
       one: '1 product',
     );
     return '\"$name\" will be removed. $_temp0 will become uncategorized (not deleted).';
@@ -463,10 +471,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String category_productCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count products',
+      other: '$countString products',
       one: '1 product',
     );
     return '$_temp0';
@@ -520,10 +532,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String cart_itemsInCart(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count items in cart',
+      other: '$countString items in cart',
       one: '1 item in cart',
     );
     return '$_temp0';
@@ -541,10 +557,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String cart_totalItems(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count items',
+      other: '$countString items',
       one: '1 item',
     );
     return 'Total · $_temp0';
@@ -565,10 +585,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String cart_itemsSold(int count, String total) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count items sold',
+      other: '$countString items sold',
       one: '1 item sold',
     );
     return '$_temp0 · $total';
@@ -584,10 +608,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String cart_barSummary(int count, String total) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count items',
+      other: '$countString items',
       one: '1 item',
     );
     return '$_temp0 · $total';
@@ -786,9 +814,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_noAccount => 'Don\'t have an account? Sign up';
 
   @override
-  String get profile_setupTitle => 'Set up your shop';
-
-  @override
   String get profile_tellUs => 'Tell us about your shop';
 
   @override
@@ -840,7 +865,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String onboarding_step(int current, int total) {
-    return 'Step $current of $total';
+    final intl.NumberFormat currentNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String currentString = currentNumberFormat.format(current);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'Step $currentString of $totalString';
   }
 
   @override

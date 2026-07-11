@@ -1424,12 +1424,6 @@ abstract class AppLocalizations {
   /// **'Don\'t have an account? Sign up'**
   String get auth_noAccount;
 
-  /// No description provided for @profile_setupTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set up your shop'**
-  String get profile_setupTitle;
-
   /// No description provided for @profile_tellUs.
   ///
   /// In en, this message translates to:
