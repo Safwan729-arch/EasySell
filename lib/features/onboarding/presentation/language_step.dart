@@ -29,43 +29,59 @@ class _LanguageStepState extends ConsumerState<LanguageStep> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.onboarding_languageTitle,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+    // Scroll-safe layout: on a tall viewport the Spacer pins Continue to the
+    // bottom; on a short one (e.g. landscape) the content scrolls instead of
+    // overflowing.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const padding = EdgeInsets.fromLTRB(24, 16, 24, 24);
+        return SingleChildScrollView(
+          padding: padding,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - padding.vertical,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.onboarding_languageTitle,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.onboarding_languageSubtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _LanguageCard(
+                    label: 'English',
+                    selected: _picked == const Locale('en'),
+                    onTap: () => _pick(const Locale('en')),
+                  ),
+                  const SizedBox(height: 12),
+                  _LanguageCard(
+                    label: 'বাংলা',
+                    selected: _picked == const Locale('bn'),
+                    onTap: () => _pick(const Locale('bn')),
+                  ),
+                  const SizedBox(height: 24),
+                  const Spacer(),
+                  FilledButton(
+                    onPressed: _picked == null ? null : widget.onContinue,
+                    child: Text(l10n.common_continue),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.onboarding_languageSubtitle,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _LanguageCard(
-            label: 'English',
-            selected: _picked == const Locale('en'),
-            onTap: () => _pick(const Locale('en')),
-          ),
-          const SizedBox(height: 12),
-          _LanguageCard(
-            label: 'বাংলা',
-            selected: _picked == const Locale('bn'),
-            onTap: () => _pick(const Locale('bn')),
-          ),
-          const Spacer(),
-          FilledButton(
-            onPressed: _picked == null ? null : widget.onContinue,
-            child: Text(l10n.common_continue),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
