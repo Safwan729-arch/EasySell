@@ -734,4 +734,80 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get trends_noData => 'কোনো ডেটা নেই।';
+
+  @override
+  String get auth_createAccount => 'আপনার অ্যাকাউন্ট তৈরি করুন';
+
+  @override
+  String get auth_welcomeBack => 'আবার স্বাগতম';
+
+  @override
+  String get auth_fullName => 'পুরো নাম';
+
+  @override
+  String get auth_nameRequired => 'নাম দিতে হবে';
+
+  @override
+  String get auth_email => 'ইমেইল';
+
+  @override
+  String get auth_emailRequired => 'ইমেইল দিতে হবে';
+
+  @override
+  String get auth_emailInvalid => 'সঠিক ইমেইল দিন';
+
+  @override
+  String get auth_password => 'পাসওয়ার্ড';
+
+  @override
+  String get auth_passwordRequired => 'পাসওয়ার্ড দিতে হবে';
+
+  @override
+  String get auth_passwordMin => 'কমপক্ষে ৬ অক্ষর';
+
+  @override
+  String get auth_signUp => 'সাইন আপ';
+
+  @override
+  String get auth_signIn => 'সাইন ইন';
+
+  @override
+  String get auth_continueGoogle => 'Google দিয়ে চালিয়ে যান';
+
+  @override
+  String get auth_haveAccount => 'অ্যাকাউন্ট আছে? সাইন ইন করুন';
+
+  @override
+  String get auth_noAccount => 'অ্যাকাউন্ট নেই? সাইন আপ করুন';
+
+  @override
+  String get profile_setupTitle => 'আপনার দোকান তৈরি করুন';
+
+  @override
+  String get profile_tellUs => 'আপনার দোকান সম্পর্কে বলুন';
+
+  @override
+  String get profile_shopName => 'দোকানের নাম *';
+
+  @override
+  String get profile_shopNameRequired => 'দোকানের নাম দিতে হবে';
+
+  @override
+  String get profile_address => 'ঠিকানা (ঐচ্ছিক)';
+
+  @override
+  String get profile_phone => 'ফোন (ঐচ্ছিক)';
+
+  @override
+  String get profile_createShop => 'দোকান তৈরি করুন';
+
+  @override
+  String get welcome_headline => 'আপনার দোকান\nআরও স্মার্টভাবে চালান';
+
+  @override
+  String get welcome_subtitle =>
+      'পণ্য হিসাব রাখুন, কথা বা ছবিতে বিক্রি রেকর্ড করুন, আর এক নজরে লাভ দেখুন।';
+
+  @override
+  String get welcome_getStarted => 'শুরু করুন';
 }

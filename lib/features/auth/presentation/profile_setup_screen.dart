@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import 'auth_controller.dart';
 
 /// Shown on first login (no shop yet). Creates the user's `shop` row; once it
@@ -40,6 +41,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(authControllerProvider);
     final isLoading = state.isLoading;
 
@@ -47,7 +49,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       if (next is AsyncError) {
         final message = switch (next.error) {
           Failure(:final message) => message,
-          _ => 'Something went wrong. Please try again.',
+          _ => l10n.common_somethingWrong,
         };
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -57,13 +59,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Set up your shop'),
+        title: Text(l10n.profile_setupTitle),
         actions: [
           TextButton(
             onPressed: isLoading
                 ? null
                 : () => ref.read(authControllerProvider.notifier).signOut(),
-            child: const Text('Sign out'),
+            child: Text(l10n.common_signOut),
           ),
         ],
       ),
@@ -80,28 +82,28 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Tell us about your shop',
+                      l10n.profile_tellUs,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _nameController,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Shop name *',
-                        prefixIcon: Icon(Icons.storefront_outlined),
+                      decoration: InputDecoration(
+                        labelText: l10n.profile_shopName,
+                        prefixIcon: const Icon(Icons.storefront_outlined),
                       ),
                       validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Shop name is required'
+                          ? l10n.profile_shopNameRequired
                           : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _addressController,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Address (optional)',
-                        prefixIcon: Icon(Icons.location_on_outlined),
+                      decoration: InputDecoration(
+                        labelText: l10n.profile_address,
+                        prefixIcon: const Icon(Icons.location_on_outlined),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -110,9 +112,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(
-                        labelText: 'Phone (optional)',
-                        prefixIcon: Icon(Icons.phone_outlined),
+                      decoration: InputDecoration(
+                        labelText: l10n.profile_phone,
+                        prefixIcon: const Icon(Icons.phone_outlined),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -124,7 +126,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Create shop'),
+                          : Text(l10n.profile_createShop),
                     ),
                   ],
                 ),

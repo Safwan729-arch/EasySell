@@ -1333,6 +1333,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No data points.'**
   String get trends_noData;
+
+  /// No description provided for @auth_createAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get auth_createAccount;
+
+  /// No description provided for @auth_welcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get auth_welcomeBack;
+
+  /// No description provided for @auth_fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name'**
+  String get auth_fullName;
+
+  /// No description provided for @auth_nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get auth_nameRequired;
+
+  /// No description provided for @auth_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get auth_email;
+
+  /// No description provided for @auth_emailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is required'**
+  String get auth_emailRequired;
+
+  /// No description provided for @auth_emailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email'**
+  String get auth_emailInvalid;
+
+  /// No description provided for @auth_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get auth_password;
+
+  /// No description provided for @auth_passwordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required'**
+  String get auth_passwordRequired;
+
+  /// No description provided for @auth_passwordMin.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 6 characters'**
+  String get auth_passwordMin;
+
+  /// No description provided for @auth_signUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get auth_signUp;
+
+  /// No description provided for @auth_signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get auth_signIn;
+
+  /// No description provided for @auth_continueGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get auth_continueGoogle;
+
+  /// No description provided for @auth_haveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Sign in'**
+  String get auth_haveAccount;
+
+  /// No description provided for @auth_noAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? Sign up'**
+  String get auth_noAccount;
+
+  /// No description provided for @profile_setupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your shop'**
+  String get profile_setupTitle;
+
+  /// No description provided for @profile_tellUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about your shop'**
+  String get profile_tellUs;
+
+  /// No description provided for @profile_shopName.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop name *'**
+  String get profile_shopName;
+
+  /// No description provided for @profile_shopNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop name is required'**
+  String get profile_shopNameRequired;
+
+  /// No description provided for @profile_address.
+  ///
+  /// In en, this message translates to:
+  /// **'Address (optional)'**
+  String get profile_address;
+
+  /// No description provided for @profile_phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (optional)'**
+  String get profile_phone;
+
+  /// No description provided for @profile_createShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Create shop'**
+  String get profile_createShop;
+
+  /// No description provided for @welcome_headline.
+  ///
+  /// In en, this message translates to:
+  /// **'Run your shop\nsmarter'**
+  String get welcome_headline;
+
+  /// No description provided for @welcome_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track inventory, record sales by voice or photo, and see your profit at a glance.'**
+  String get welcome_subtitle;
+
+  /// No description provided for @welcome_getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get welcome_getStarted;
 }
 
 class _AppLocalizationsDelegate

@@ -739,4 +739,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trends_noData => 'No data points.';
+
+  @override
+  String get auth_createAccount => 'Create your account';
+
+  @override
+  String get auth_welcomeBack => 'Welcome back';
+
+  @override
+  String get auth_fullName => 'Full name';
+
+  @override
+  String get auth_nameRequired => 'Name is required';
+
+  @override
+  String get auth_email => 'Email';
+
+  @override
+  String get auth_emailRequired => 'Email is required';
+
+  @override
+  String get auth_emailInvalid => 'Enter a valid email';
+
+  @override
+  String get auth_password => 'Password';
+
+  @override
+  String get auth_passwordRequired => 'Password is required';
+
+  @override
+  String get auth_passwordMin => 'At least 6 characters';
+
+  @override
+  String get auth_signUp => 'Sign up';
+
+  @override
+  String get auth_signIn => 'Sign in';
+
+  @override
+  String get auth_continueGoogle => 'Continue with Google';
+
+  @override
+  String get auth_haveAccount => 'Already have an account? Sign in';
+
+  @override
+  String get auth_noAccount => 'Don\'t have an account? Sign up';
+
+  @override
+  String get profile_setupTitle => 'Set up your shop';
+
+  @override
+  String get profile_tellUs => 'Tell us about your shop';
+
+  @override
+  String get profile_shopName => 'Shop name *';
+
+  @override
+  String get profile_shopNameRequired => 'Shop name is required';
+
+  @override
+  String get profile_address => 'Address (optional)';
+
+  @override
+  String get profile_phone => 'Phone (optional)';
+
+  @override
+  String get profile_createShop => 'Create shop';
+
+  @override
+  String get welcome_headline => 'Run your shop\nsmarter';
+
+  @override
+  String get welcome_subtitle =>
+      'Track inventory, record sales by voice or photo, and see your profit at a glance.';
+
+  @override
+  String get welcome_getStarted => 'Get started';
 }
