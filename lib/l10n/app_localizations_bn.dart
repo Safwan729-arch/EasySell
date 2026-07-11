@@ -626,4 +626,44 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get scan_searchProducts => 'পণ্য খুঁজুন';
+
+  @override
+  String get history_title => 'বিক্রির হিসাব';
+
+  @override
+  String get history_search => 'বিক্রি খুঁজুন';
+
+  @override
+  String get history_couldNotLoad =>
+      'বিক্রির হিসাব লোড করা যায়নি। রিফ্রেশ করুন।';
+
+  @override
+  String get history_noSalesYet => 'এখনো কোনো বিক্রি হয়নি।';
+
+  @override
+  String history_noSalesOnDay(String date) {
+    return '$date তারিখে কোনো বিক্রি নেই।';
+  }
+
+  @override
+  String get history_emptyHint =>
+      'পণ্য থেকে একটি পণ্যে চাপ দিন → কার্টে যোগ করুন, অথবা কার্ট বার দিয়ে চেকআউট করে বিক্রি রেকর্ড করুন।';
+
+  @override
+  String get history_noMatch => 'আপনার খোঁজার সাথে কোনো বিক্রি মেলেনি।';
+
+  @override
+  String get history_saleFallback => 'বিক্রি';
+
+  @override
+  String get history_colTime => 'সময়';
+
+  @override
+  String get history_colItem => 'পণ্য';
+
+  @override
+  String get history_colQty => 'পরিমাণ';
+
+  @override
+  String get history_colAmount => 'মোট';
 }

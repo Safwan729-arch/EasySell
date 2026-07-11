@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../shared/extensions/format.dart';
@@ -163,6 +164,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final day = _selectedDay;
     final salesAsync = day == null
         ? ref.watch(recentSalesProvider)
@@ -187,9 +189,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         child: salesAsync.when(
           loading: () => const _HistorySkeleton(),
           error: (e, _) => _ErrorState(
-            message: e is Failure
-                ? e.message
-                : 'Could not load sales history. Pull to retry.',
+            message: e is Failure ? e.message : l10n.history_couldNotLoad,
             onRetry: refreshActive,
           ),
           data: (all) {
@@ -199,7 +199,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                   child: Text(
-                    'Sales history',
+                    l10n.history_title,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -211,7 +211,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     controller: _searchController,
                     onChanged: _onSearchChanged,
                     decoration: InputDecoration(
-                      hintText: 'Search sales',
+                      hintText: l10n.history_search,
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _query.isEmpty
                           ? null
@@ -269,8 +269,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   child: all.isEmpty
                       ? _EmptyState(
                           message: day == null
-                              ? 'No sales recorded yet.'
-                              : 'No sales on ${DateFormat('EEE, d MMM y').format(day)}.',
+                              ? l10n.history_noSalesYet
+                              : l10n.history_noSalesOnDay(
+                                  DateFormat('EEE, d MMM y').format(day),
+                                ),
                           showHint: day == null,
                         )
                       : _SalesTable(
@@ -307,11 +309,9 @@ class _ReceiptRow {
   bool get isSingle => receipt.lineCount == 1;
 
   /// The product name that leads the row: the sale's product for a single, or
-  /// the receipt's first line for a checkout. Empty names fall back to 'Sale'.
-  String get leadName {
-    final name = names[receipt.lines.first.productId] ?? '';
-    return name.isEmpty ? 'Sale' : name;
-  }
+  /// the receipt's first line for a checkout. Empty (deleted product) — the
+  /// caller substitutes a localized "Sale" fallback.
+  String get leadName => names[receipt.lines.first.productId] ?? '';
 
   /// Additional lines a receipt bundles beyond its lead (0 for a single sale);
   /// rendered as a muted "+N" badge next to [leadName].
@@ -379,8 +379,8 @@ class _ScopeSelector extends StatelessWidget {
             Expanded(
               child: _ScopeTab(
                 label: switch (s) {
-                  _Scope.today => 'Today',
-                  _Scope.week => 'Week',
+                  _Scope.today => context.l10n.common_period_today,
+                  _Scope.week => context.l10n.common_period_week,
                 },
                 selected: !dayActive && s == scope,
                 onTap: () => onChanged(s),
@@ -520,12 +520,13 @@ class _HeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Row(
         children: [
           _HeaderCell(
-            label: 'Time',
+            label: l10n.history_colTime,
             width: _timeW,
             align: TextAlign.left,
             active: sortKey == _SortKey.time,
@@ -533,13 +534,13 @@ class _HeaderRow extends StatelessWidget {
             onTap: () => onSort(_SortKey.time),
           ),
           _HeaderCell(
-            label: 'Item',
+            label: l10n.history_colItem,
             active: sortKey == _SortKey.item,
             ascending: ascending,
             onTap: () => onSort(_SortKey.item),
           ),
           _HeaderCell(
-            label: 'Qty',
+            label: l10n.history_colQty,
             width: _qtyW,
             align: TextAlign.center,
             active: sortKey == _SortKey.qty,
@@ -547,7 +548,7 @@ class _HeaderRow extends StatelessWidget {
             onTap: () => onSort(_SortKey.qty),
           ),
           _HeaderCell(
-            label: 'Amount',
+            label: l10n.history_colAmount,
             width: _amtW,
             align: TextAlign.right,
             accent: true,
@@ -649,10 +650,12 @@ class _ReceiptTileState extends State<_ReceiptTile> {
 
   String _time(DateTime? d) {
     final t = (d ?? DateTime.now()).toLocal();
-    final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
-    final m = t.minute.toString().padLeft(2, '0');
+    // DateFormat localizes the digits via Intl.defaultLocale, so the time
+    // renders in Bengali digits (৯:০৫) when the app is in Bengali. AM/PM stays
+    // in Latin — universally read on Bangladeshi shop signage and tills.
+    final hm = DateFormat('h:mm').format(t);
     final ampm = t.hour < 12 ? 'AM' : 'PM';
-    return '$h:$m$ampm';
+    return '$hm$ampm';
   }
 
   String _lineQty(double v) =>
@@ -662,6 +665,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = context.l10n;
     final row = widget.row;
     final canExpand = !row.isSingle;
 
@@ -701,7 +705,11 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                                 color: scheme.onSurface,
                               ),
                               children: [
-                                TextSpan(text: row.leadName),
+                                TextSpan(
+                                  text: row.leadName.isEmpty
+                                      ? l10n.history_saleFallback
+                                      : row.leadName,
+                                ),
                                 if (row.extraCount > 0)
                                   TextSpan(
                                     text: '  +${row.extraCount}',
@@ -785,7 +793,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                           child: Text(
                             (row.names[line.productId]?.isNotEmpty ?? false)
                                 ? row.names[line.productId]!
-                                : 'Sale',
+                                : l10n.history_saleFallback,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -846,7 +854,7 @@ class _NoMatch extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'No sales match your search.',
+              context.l10n.history_noMatch,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -912,7 +920,7 @@ class _EmptyState extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'Record a sale from Items → tap a product → Add to cart, or use the cart bar to checkout.',
+                context.l10n.history_emptyHint,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -949,7 +957,10 @@ class _ErrorState extends StatelessWidget {
             child: Text(message, textAlign: TextAlign.center),
           ),
           const SizedBox(height: 12),
-          FilledButton.tonal(onPressed: onRetry, child: const Text('Retry')),
+          FilledButton.tonal(
+            onPressed: onRetry,
+            child: Text(context.l10n.common_retry),
+          ),
         ],
       ),
     );

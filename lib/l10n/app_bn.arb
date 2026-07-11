@@ -198,5 +198,18 @@
   "@scan_addedToCart": { "placeholders": { "name": { "type": "String" } } },
   "scan_didYouMean": "আপনি কি এটি বোঝাতে চেয়েছেন?",
   "scan_noMatchPick": "মেলেনি — পণ্য বেছে নিন",
-  "scan_searchProducts": "পণ্য খুঁজুন"
+  "scan_searchProducts": "পণ্য খুঁজুন",
+  "history_title": "বিক্রির হিসাব",
+  "history_search": "বিক্রি খুঁজুন",
+  "history_couldNotLoad": "বিক্রির হিসাব লোড করা যায়নি। রিফ্রেশ করুন।",
+  "history_noSalesYet": "এখনো কোনো বিক্রি হয়নি।",
+  "history_noSalesOnDay": "{date} তারিখে কোনো বিক্রি নেই।",
+  "@history_noSalesOnDay": { "placeholders": { "date": { "type": "String" } } },
+  "history_emptyHint": "পণ্য থেকে একটি পণ্যে চাপ দিন → কার্টে যোগ করুন, অথবা কার্ট বার দিয়ে চেকআউট করে বিক্রি রেকর্ড করুন।",
+  "history_noMatch": "আপনার খোঁজার সাথে কোনো বিক্রি মেলেনি।",
+  "history_saleFallback": "বিক্রি",
+  "history_colTime": "সময়",
+  "history_colItem": "পণ্য",
+  "history_colQty": "পরিমাণ",
+  "history_colAmount": "মোট"
 }

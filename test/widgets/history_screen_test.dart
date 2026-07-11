@@ -6,7 +6,10 @@ import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controll
 import 'package:ai_shopkeeper/features/transactions/domain/transaction.dart';
 import 'package:ai_shopkeeper/features/transactions/presentation/history_screen.dart';
 import 'package:ai_shopkeeper/features/transactions/presentation/sales_providers.dart';
+import 'package:ai_shopkeeper/l10n/app_localizations.dart';
+import 'package:ai_shopkeeper/shared/providers/locale_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,7 +61,18 @@ void main() {
           productsStreamProvider.overrideWith((ref) => Stream.value(products)),
           earliestSaleDateProvider.overrideWith((ref) async => null),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const HistoryScreen()),
+        child: MaterialApp(
+          theme: AppTheme.light,
+          locale: const Locale('en'),
+          supportedLocales: supportedAppLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const HistoryScreen(),
+        ),
       );
 
   void usePhone(WidgetTester tester) {

@@ -631,4 +631,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scan_searchProducts => 'Search products';
+
+  @override
+  String get history_title => 'Sales history';
+
+  @override
+  String get history_search => 'Search sales';
+
+  @override
+  String get history_couldNotLoad =>
+      'Could not load sales history. Pull to retry.';
+
+  @override
+  String get history_noSalesYet => 'No sales recorded yet.';
+
+  @override
+  String history_noSalesOnDay(String date) {
+    return 'No sales on $date.';
+  }
+
+  @override
+  String get history_emptyHint =>
+      'Record a sale from Items → tap a product → Add to cart, or use the cart bar to checkout.';
+
+  @override
+  String get history_noMatch => 'No sales match your search.';
+
+  @override
+  String get history_saleFallback => 'Sale';
+
+  @override
+  String get history_colTime => 'Time';
+
+  @override
+  String get history_colItem => 'Item';
+
+  @override
+  String get history_colQty => 'Qty';
+
+  @override
+  String get history_colAmount => 'Amount';
 }

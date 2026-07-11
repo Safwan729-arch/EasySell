@@ -1141,6 +1141,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search products'**
   String get scan_searchProducts;
+
+  /// No description provided for @history_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales history'**
+  String get history_title;
+
+  /// No description provided for @history_search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search sales'**
+  String get history_search;
+
+  /// No description provided for @history_couldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load sales history. Pull to retry.'**
+  String get history_couldNotLoad;
+
+  /// No description provided for @history_noSalesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales recorded yet.'**
+  String get history_noSalesYet;
+
+  /// No description provided for @history_noSalesOnDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales on {date}.'**
+  String history_noSalesOnDay(String date);
+
+  /// No description provided for @history_emptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a sale from Items → tap a product → Add to cart, or use the cart bar to checkout.'**
+  String get history_emptyHint;
+
+  /// No description provided for @history_noMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales match your search.'**
+  String get history_noMatch;
+
+  /// No description provided for @history_saleFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale'**
+  String get history_saleFallback;
+
+  /// No description provided for @history_colTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get history_colTime;
+
+  /// No description provided for @history_colItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get history_colItem;
+
+  /// No description provided for @history_colQty.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get history_colQty;
+
+  /// No description provided for @history_colAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get history_colAmount;
 }
 
 class _AppLocalizationsDelegate

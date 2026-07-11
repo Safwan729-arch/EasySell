@@ -198,5 +198,18 @@
   "@scan_addedToCart": { "placeholders": { "name": { "type": "String" } } },
   "scan_didYouMean": "Did you mean?",
   "scan_noMatchPick": "No match — pick the product",
-  "scan_searchProducts": "Search products"
+  "scan_searchProducts": "Search products",
+  "history_title": "Sales history",
+  "history_search": "Search sales",
+  "history_couldNotLoad": "Could not load sales history. Pull to retry.",
+  "history_noSalesYet": "No sales recorded yet.",
+  "history_noSalesOnDay": "No sales on {date}.",
+  "@history_noSalesOnDay": { "placeholders": { "date": { "type": "String" } } },
+  "history_emptyHint": "Record a sale from Items → tap a product → Add to cart, or use the cart bar to checkout.",
+  "history_noMatch": "No sales match your search.",
+  "history_saleFallback": "Sale",
+  "history_colTime": "Time",
+  "history_colItem": "Item",
+  "history_colQty": "Qty",
+  "history_colAmount": "Amount"
 }
