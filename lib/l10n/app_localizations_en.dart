@@ -827,4 +827,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nav_history => 'History';
+
+  @override
+  String get common_continue => 'Continue';
+
+  @override
+  String get onboarding_languageTitle => 'Choose your language';
+
+  @override
+  String get onboarding_languageSubtitle =>
+      'You can change this anytime in Settings.';
+
+  @override
+  String onboarding_step(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get onboarding_defaultCurrency => 'Default currency *';
 }

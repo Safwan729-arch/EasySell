@@ -1507,6 +1507,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'History'**
   String get nav_history;
+
+  /// No description provided for @common_continue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get common_continue;
+
+  /// No description provided for @onboarding_languageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get onboarding_languageTitle;
+
+  /// No description provided for @onboarding_languageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change this anytime in Settings.'**
+  String get onboarding_languageSubtitle;
+
+  /// No description provided for @onboarding_step.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String onboarding_step(int current, int total);
+
+  /// No description provided for @onboarding_defaultCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Default currency *'**
+  String get onboarding_defaultCurrency;
 }
 
 class _AppLocalizationsDelegate

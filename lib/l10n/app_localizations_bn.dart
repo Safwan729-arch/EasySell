@@ -822,4 +822,22 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get nav_history => 'হিসাব';
+
+  @override
+  String get common_continue => 'চালিয়ে যান';
+
+  @override
+  String get onboarding_languageTitle => 'আপনার ভাষা বেছে নিন';
+
+  @override
+  String get onboarding_languageSubtitle =>
+      'পরে যেকোনো সময় সেটিংসে এটি বদলাতে পারবেন।';
+
+  @override
+  String onboarding_step(int current, int total) {
+    return 'ধাপ $current/$total';
+  }
+
+  @override
+  String get onboarding_defaultCurrency => 'ডিফল্ট মুদ্রা *';
 }

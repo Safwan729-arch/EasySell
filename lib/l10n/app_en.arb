@@ -263,5 +263,11 @@
   "nav_home": "Home",
   "nav_items": "Items",
   "nav_reports": "Reports",
-  "nav_history": "History"
+  "nav_history": "History",
+  "common_continue": "Continue",
+  "onboarding_languageTitle": "Choose your language",
+  "onboarding_languageSubtitle": "You can change this anytime in Settings.",
+  "onboarding_step": "Step {current} of {total}",
+  "@onboarding_step": { "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } } },
+  "onboarding_defaultCurrency": "Default currency *"
 }

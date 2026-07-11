@@ -263,5 +263,11 @@
   "nav_home": "হোম",
   "nav_items": "পণ্য",
   "nav_reports": "রিপোর্ট",
-  "nav_history": "হিসাব"
+  "nav_history": "হিসাব",
+  "common_continue": "চালিয়ে যান",
+  "onboarding_languageTitle": "আপনার ভাষা বেছে নিন",
+  "onboarding_languageSubtitle": "পরে যেকোনো সময় সেটিংসে এটি বদলাতে পারবেন।",
+  "onboarding_step": "ধাপ {current}/{total}",
+  "@onboarding_step": { "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } } },
+  "onboarding_defaultCurrency": "ডিফল্ট মুদ্রা *"
 }
