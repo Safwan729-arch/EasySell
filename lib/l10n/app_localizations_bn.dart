@@ -810,4 +810,16 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get welcome_getStarted => 'শুরু করুন';
+
+  @override
+  String get nav_home => 'হোম';
+
+  @override
+  String get nav_items => 'পণ্য';
+
+  @override
+  String get nav_reports => 'রিপোর্ট';
+
+  @override
+  String get nav_history => 'হিসাব';
 }

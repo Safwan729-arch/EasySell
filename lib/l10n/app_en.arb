@@ -259,5 +259,9 @@
   "profile_createShop": "Create shop",
   "welcome_headline": "Run your shop\nsmarter",
   "welcome_subtitle": "Track inventory, record sales by voice or photo, and see your profit at a glance.",
-  "welcome_getStarted": "Get started"
+  "welcome_getStarted": "Get started",
+  "nav_home": "Home",
+  "nav_items": "Items",
+  "nav_reports": "Reports",
+  "nav_history": "History"
 }

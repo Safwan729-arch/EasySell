@@ -1483,6 +1483,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get started'**
   String get welcome_getStarted;
+
+  /// No description provided for @nav_home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get nav_home;
+
+  /// No description provided for @nav_items.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get nav_items;
+
+  /// No description provided for @nav_reports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get nav_reports;
+
+  /// No description provided for @nav_history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get nav_history;
 }
 
 class _AppLocalizationsDelegate

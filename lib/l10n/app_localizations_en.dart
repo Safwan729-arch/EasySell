@@ -815,4 +815,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcome_getStarted => 'Get started';
+
+  @override
+  String get nav_home => 'Home';
+
+  @override
+  String get nav_items => 'Items';
+
+  @override
+  String get nav_reports => 'Reports';
+
+  @override
+  String get nav_history => 'History';
 }

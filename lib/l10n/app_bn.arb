@@ -259,5 +259,9 @@
   "profile_createShop": "দোকান তৈরি করুন",
   "welcome_headline": "আপনার দোকান\nআরও স্মার্টভাবে চালান",
   "welcome_subtitle": "পণ্য হিসাব রাখুন, কথা বা ছবিতে বিক্রি রেকর্ড করুন, আর এক নজরে লাভ দেখুন।",
-  "welcome_getStarted": "শুরু করুন"
+  "welcome_getStarted": "শুরু করুন",
+  "nav_home": "হোম",
+  "nav_items": "পণ্য",
+  "nav_reports": "রিপোর্ট",
+  "nav_history": "হিসাব"
 }
