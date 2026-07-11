@@ -108,6 +108,7 @@ class AuthRepository {
     required String name,
     String? address,
     String? phone,
+    String currency = 'BDT',
   }) async {
     final user = currentUser;
     if (user == null) {
@@ -120,6 +121,7 @@ class AuthRepository {
         name: name,
         address: address,
         phone: phone,
+        currency: currency,
       ).toInsert(ownerId: user.id);
 
       final row = await _client.from('shops').insert(payload).select().single();

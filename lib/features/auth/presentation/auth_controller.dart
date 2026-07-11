@@ -58,17 +58,19 @@ class AuthController extends AsyncNotifier<void> {
   Future<void> signOut() => _run(_repo.signOut);
 
   /// Creates the user's shop, then refreshes [myShopProvider] so the router
-  /// moves them off the profile-setup step.
+  /// moves them off the onboarding step.
   Future<void> createShop({
     required String name,
     String? address,
     String? phone,
+    String currency = 'BDT',
   }) async {
     state = const AsyncLoading();
     final result = await _repo.createShop(
       name: name.trim(),
       address: address?.trim(),
       phone: phone?.trim(),
+      currency: currency,
     );
     state = result.when(
       success: (_) {
