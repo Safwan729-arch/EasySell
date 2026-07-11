@@ -7,7 +7,6 @@ import '../config/motion.dart';
 import '../../features/analytics/presentation/analytics_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/login_screen.dart';
-import '../../features/auth/presentation/profile_setup_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/insights/presentation/insights_screen.dart';
@@ -17,6 +16,7 @@ import '../../features/inventory/presentation/inventory_list_screen.dart';
 import '../../features/inventory/presentation/manage_categories_screen.dart';
 import '../../features/inventory/presentation/product_detail_screen.dart';
 import '../../features/inventory/presentation/product_form_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/onboarding/presentation/welcome_screen.dart';
 import '../../features/scan/presentation/scan_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -32,7 +32,7 @@ class AppRoutes {
 
   static const String welcome = '/welcome';
   static const String login = '/login';
-  static const String profileSetup = '/profile-setup';
+  static const String onboarding = '/onboarding';
   static const String dashboard = '/';
   static const String inventory = '/inventory';
   static const String analytics = '/analytics';
@@ -81,7 +81,7 @@ CustomTransitionPage<void> _transitionPage(Widget child, {bool slide = true}) {
 /// and the settings sub-pages render full-screen on the root navigator.
 ///
 /// Redirects: first launch → /welcome; signed out → /login; signed in with no
-/// shop → /profile-setup; otherwise the app. Refreshes on auth, shop, and
+/// shop → /onboarding; otherwise the app. Refreshes on auth, shop, and
 /// onboarding changes.
 final goRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
@@ -115,9 +115,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           .read(myShopProvider)
           .maybeWhen(
             data: (shop) {
-              final atSetup = loc == AppRoutes.profileSetup;
-              if (shop == null) return atSetup ? null : AppRoutes.profileSetup;
-              if (atSetup || preAuthLoc) return AppRoutes.dashboard;
+              final atOnboarding = loc == AppRoutes.onboarding;
+              if (shop == null) {
+                return atOnboarding ? null : AppRoutes.onboarding;
+              }
+              if (atOnboarding || preAuthLoc) return AppRoutes.dashboard;
               return null;
             },
             orElse: () => preAuthLoc ? AppRoutes.dashboard : null,
@@ -135,9 +137,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             _transitionPage(const LoginScreen(), slide: false),
       ),
       GoRoute(
-        path: AppRoutes.profileSetup,
+        path: AppRoutes.onboarding,
         pageBuilder: (_, _) =>
-            _transitionPage(const ProfileSetupScreen(), slide: false),
+            _transitionPage(const OnboardingScreen(), slide: false),
       ),
 
       // Bottom-nav shell.

@@ -155,7 +155,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 /// The current user's shop (or null if not yet created). Refetches whenever auth
-/// state changes; the router reads this to gate the profile-setup step.
+/// state changes; the router reads this to gate the onboarding step.
 final myShopProvider = FutureProvider<Shop?>((ref) async {
   ref.watch(authStateChangesProvider);
   final repo = ref.watch(authRepositoryProvider);
