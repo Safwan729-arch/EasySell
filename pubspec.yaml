@@ -76,13 +76,16 @@ flutter:
   generate: true
 
   # Bengali-capable font (OFL). Inter has no Bengali glyphs; this is registered
-  # as fontFamilyFallback on the text theme so Bengali renders consistently
-  # across devices instead of relying on each phone's system fallback.
+  # as fontFamilyFallback on the text theme so Bengali letters AND numerals
+  # render consistently across devices instead of relying on each phone's system
+  # fallback. Noto Sans Bengali is chosen for clean, highly legible numerals
+  # (matching the polished Nirmala-UI look of the design mockup); Hind Siliguri's
+  # numerals read as heavier/harder on-device.
   fonts:
-    - family: HindSiliguri
+    - family: NotoSansBengali
       fonts:
-        - asset: assets/fonts/HindSiliguri-Regular.ttf
-        - asset: assets/fonts/HindSiliguri-SemiBold.ttf
+        - asset: assets/fonts/NotoSansBengali-Regular.ttf
+        - asset: assets/fonts/NotoSansBengali-SemiBold.ttf
           weight: 600
 
   assets:

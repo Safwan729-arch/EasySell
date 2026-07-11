@@ -353,6 +353,7 @@ class _WeeklySalesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -427,8 +428,7 @@ class _WeeklySalesCard extends StatelessWidget {
                 GradientBars(
                   values: values,
                   labels: [
-                    for (final p in points)
-                      DateFormat('E').format(p.bucket).substring(0, 1),
+                    for (final p in points) weekdayBarLabel(locale, p.bucket),
                   ],
                   highlight: peak >= 0 ? peak : null,
                   height: 150,
