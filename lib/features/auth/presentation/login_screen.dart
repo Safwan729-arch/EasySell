@@ -92,6 +92,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Surface failures as friendly snackbars (never raw errors).
     ref.listen<AsyncValue<void>>(authControllerProvider, (_, next) {
       if (next is AsyncError) {
+        // The persistent offline banner already communicates no-internet, so we
+        // skip the redundant snackbar for network failures.
+        if (next.error is NetworkFailure) return;
         final message = switch (next.error) {
           Failure(:final message) => message,
           _ => l10n.common_somethingWrong,
