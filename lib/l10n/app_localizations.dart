@@ -512,6 +512,12 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Please try again.'**
   String get common_somethingWrong;
 
+  /// No description provided for @common_noInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get common_noInternet;
+
   /// No description provided for @common_searchItems.
   ///
   /// In en, this message translates to:

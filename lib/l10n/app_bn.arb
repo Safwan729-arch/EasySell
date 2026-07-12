@@ -74,6 +74,7 @@
   "common_addedToCart": "কার্টে যোগ হয়েছে",
   "common_stockAdded": "স্টক যোগ হয়েছে",
   "common_somethingWrong": "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।",
+  "common_noInternet": "ইন্টারনেট সংযোগ নেই",
   "common_searchItems": "পণ্য খুঁজুন",
   "common_restore": "ফেরান",
   "inventory_title": "পণ্যতালিকা",

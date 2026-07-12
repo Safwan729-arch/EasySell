@@ -74,6 +74,7 @@
   "common_addedToCart": "Added to cart",
   "common_stockAdded": "Stock added",
   "common_somethingWrong": "Something went wrong. Please try again.",
+  "common_noInternet": "No internet connection",
   "common_searchItems": "Search items",
   "common_restore": "Restore",
   "inventory_title": "Inventory",

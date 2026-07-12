@@ -228,6 +228,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get common_somethingWrong => 'কিছু ভুল হয়েছে। আবার চেষ্টা করুন।';
 
   @override
+  String get common_noInternet => 'ইন্টারনেট সংযোগ নেই';
+
+  @override
   String get common_searchItems => 'পণ্য খুঁজুন';
 
   @override

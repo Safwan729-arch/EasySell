@@ -232,6 +232,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get common_somethingWrong => 'Something went wrong. Please try again.';
 
   @override
+  String get common_noInternet => 'No internet connection';
+
+  @override
   String get common_searchItems => 'Search items';
 
   @override
