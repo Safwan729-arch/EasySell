@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config/theme.dart';
 import 'core/router/app_router.dart';
+import 'core/widgets/offline_banner.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/providers/locale_provider.dart';
 import 'shared/providers/theme_mode_provider.dart';
@@ -55,7 +56,12 @@ class App extends ConsumerWidget {
           child: MediaQuery.withClampedTextScaling(
             minScaleFactor: 1.0,
             maxScaleFactor: 1.0,
-            child: child!,
+            child: Column(
+              children: [
+                const OfflineBanner(),
+                Expanded(child: child!),
+              ],
+            ),
           ),
         );
       },
