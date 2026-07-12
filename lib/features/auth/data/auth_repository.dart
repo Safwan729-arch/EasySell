@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,36 @@ import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../domain/shop.dart';
+
+/// Auth network calls have no timeout of their own (`package:http` doesn't set
+/// one), so a dead/half-open connection would hang the sign-in spinner forever.
+/// Cap them so a stalled request fails fast as a [NetworkFailure].
+const _authTimeout = Duration(seconds: 12);
+
+/// Converts an SDK exception into a user-friendly [Failure]. Top-level and pure
+/// so it can be unit-tested directly.
+///
+/// **Order matters.** gotrue catches the underlying `SocketException` on a
+/// network failure and re-throws it as [AuthRetryableFetchException], which is a
+/// subtype of [AuthException]. So the network cases MUST be checked *before* the
+/// generic [AuthException] branch — otherwise an offline sign-in gets mislabeled
+/// as an auth error and never becomes a [NetworkFailure].
+Failure mapSupabaseError(Object e) {
+  if (e is SocketException ||
+      e is TimeoutException ||
+      e is AuthRetryableFetchException) {
+    return const NetworkFailure('No internet connection. Please try again.');
+  }
+  if (e is AuthException) return AuthFailure(e.message);
+  if (e is PostgrestException) {
+    return DatabaseFailure(
+      e.message.isNotEmpty
+          ? e.message
+          : 'Could not complete the request. Please try again.',
+    );
+  }
+  return const UnexpectedFailure('Something went wrong. Please try again.');
+}
 
 /// Wraps all Supabase Auth + shop-bootstrap calls. Repositories are the only
 /// layer that touch the Supabase client; controllers call into here and never
@@ -23,7 +54,9 @@ class AuthRepository {
   /// Email + password sign in.
   Future<Result<void>> signInWithEmail(String email, String password) async {
     try {
-      await _auth.signInWithPassword(email: email, password: password);
+      await _auth
+          .signInWithPassword(email: email, password: password)
+          .timeout(_authTimeout);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(_map(e));
@@ -38,11 +71,13 @@ class AuthRepository {
     String? fullName,
   }) async {
     try {
-      await _auth.signUp(
-        email: email,
-        password: password,
-        data: fullName == null ? null : {'full_name': fullName},
-      );
+      await _auth
+          .signUp(
+            email: email,
+            password: password,
+            data: fullName == null ? null : {'full_name': fullName},
+          )
+          .timeout(_authTimeout);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(_map(e));
@@ -69,7 +104,7 @@ class AuthRepository {
   /// the Supabase dashboard (Authentication → Sign In / Providers).
   Future<Result<void>> signInAnonymously() async {
     try {
-      await _auth.signInAnonymously();
+      await _auth.signInAnonymously().timeout(_authTimeout);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(_map(e));
@@ -133,20 +168,7 @@ class AuthRepository {
 
   /// Converts SDK exceptions into a user-friendly [Failure]. Never leak raw
   /// Postgres/Auth strings to the UI beyond Supabase's own readable messages.
-  Failure _map(Object e) {
-    if (e is AuthException) return AuthFailure(e.message);
-    if (e is PostgrestException) {
-      return DatabaseFailure(
-        e.message.isNotEmpty
-            ? e.message
-            : 'Could not complete the request. Please try again.',
-      );
-    }
-    if (e is SocketException) {
-      return const NetworkFailure('No internet connection. Please try again.');
-    }
-    return const UnexpectedFailure('Something went wrong. Please try again.');
-  }
+  Failure _map(Object e) => mapSupabaseError(e);
 }
 
 /// Provider exposing the [AuthRepository].

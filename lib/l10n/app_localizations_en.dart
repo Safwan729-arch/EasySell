@@ -778,6 +778,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_welcomeBack => 'Welcome back';
 
   @override
+  String get auth_noInternet =>
+      'No internet connection. Connect to the internet and try again.';
+
+  @override
   String get auth_fullName => 'Full name';
 
   @override

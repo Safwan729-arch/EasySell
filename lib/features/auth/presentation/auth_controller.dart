@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
+import '../../../shared/providers/connectivity_provider.dart';
 import '../data/auth_repository.dart';
 import '../data/last_email_store.dart';
 
@@ -17,7 +19,27 @@ class AuthController extends AsyncNotifier<void> {
 
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
-  Future<void> _run(Future<Result<void>> Function() action) async {
+  /// Interface-level connectivity. Fails open (assumes online) while the reading
+  /// is still loading, mirroring the offline banner.
+  bool get _isOnline => ref.read(isOnlineProvider).value ?? true;
+
+  /// Short-circuits a network-bound action when the device is offline, so the
+  /// UI gets an instant [NetworkFailure] instead of a sign-in spinner that hangs
+  /// on an unreachable server. Returns `true` when the action was short-circuited.
+  bool _guardOffline() {
+    if (_isOnline) return false;
+    state = AsyncError(
+      const NetworkFailure('No internet connection. Please try again.'),
+      StackTrace.current,
+    );
+    return true;
+  }
+
+  Future<void> _run(
+    Future<Result<void>> Function() action, {
+    bool requiresNetwork = true,
+  }) async {
+    if (requiresNetwork && _guardOffline()) return;
     state = const AsyncLoading();
     final result = await action();
     state = result.when(
@@ -55,7 +77,9 @@ class AuthController extends AsyncNotifier<void> {
   /// Dev-only guest sign in (see [AuthRepository.signInAnonymously]).
   Future<void> signInAsGuest() => _run(_repo.signInAnonymously);
 
-  Future<void> signOut() => _run(_repo.signOut);
+  /// Sign-out clears the local session regardless of connectivity, so it must
+  /// work offline — don't gate it behind the network guard.
+  Future<void> signOut() => _run(_repo.signOut, requiresNetwork: false);
 
   /// Creates the user's shop, then refreshes [myShopProvider] so the router
   /// moves them off the onboarding step.
@@ -65,6 +89,7 @@ class AuthController extends AsyncNotifier<void> {
     String? phone,
     String currency = 'BDT',
   }) async {
+    if (_guardOffline()) return;
     state = const AsyncLoading();
     final result = await _repo.createShop(
       name: name.trim(),

@@ -1352,6 +1352,12 @@ abstract class AppLocalizations {
   /// **'Welcome back'**
   String get auth_welcomeBack;
 
+  /// No description provided for @auth_noInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Connect to the internet and try again.'**
+  String get auth_noInternet;
+
   /// No description provided for @auth_fullName.
   ///
   /// In en, this message translates to:

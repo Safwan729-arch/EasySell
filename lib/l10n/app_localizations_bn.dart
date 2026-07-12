@@ -773,6 +773,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get auth_welcomeBack => 'আবার স্বাগতম';
 
   @override
+  String get auth_noInternet =>
+      'ইন্টারনেট সংযোগ নেই। ইন্টারনেটে সংযুক্ত হয়ে আবার চেষ্টা করুন।';
+
+  @override
   String get auth_fullName => 'পুরো নাম';
 
   @override

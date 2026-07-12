@@ -238,6 +238,7 @@
   "trends_noData": "No data points.",
   "auth_createAccount": "Create your account",
   "auth_welcomeBack": "Welcome back",
+  "auth_noInternet": "No internet connection. Connect to the internet and try again.",
   "auth_fullName": "Full name",
   "auth_nameRequired": "Name is required",
   "auth_email": "Email",

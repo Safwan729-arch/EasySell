@@ -238,6 +238,7 @@
   "trends_noData": "কোনো ডেটা নেই।",
   "auth_createAccount": "আপনার অ্যাকাউন্ট তৈরি করুন",
   "auth_welcomeBack": "আবার স্বাগতম",
+  "auth_noInternet": "ইন্টারনেট সংযোগ নেই। ইন্টারনেটে সংযুক্ত হয়ে আবার চেষ্টা করুন।",
   "auth_fullName": "পুরো নাম",
   "auth_nameRequired": "নাম দিতে হবে",
   "auth_email": "ইমেইল",
