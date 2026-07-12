@@ -7,6 +7,7 @@ import 'core/config/theme.dart';
 import 'core/router/app_router.dart';
 import 'core/widgets/offline_banner.dart';
 import 'l10n/app_localizations.dart';
+import 'shared/providers/connectivity_provider.dart';
 import 'shared/providers/locale_provider.dart';
 import 'shared/providers/theme_mode_provider.dart';
 
@@ -56,11 +57,27 @@ class App extends ConsumerWidget {
           child: MediaQuery.withClampedTextScaling(
             minScaleFactor: 1.0,
             maxScaleFactor: 1.0,
-            child: Column(
-              children: [
-                const OfflineBanner(),
-                Expanded(child: child!),
-              ],
+            child: Consumer(
+              builder: (context, ref, _) {
+                // While offline the banner sits above the routed screen and its
+                // own SafeArea already consumes the status-bar inset, so strip
+                // the top padding from the screen below it to avoid reserving
+                // that gap twice. Scoped to this Consumer so only this subtree
+                // rebuilds when connectivity flips.
+                final isOnline = ref.watch(isOnlineProvider).value ?? true;
+                return Column(
+                  children: [
+                    const OfflineBanner(),
+                    Expanded(
+                      child: MediaQuery.removePadding(
+                        context: context,
+                        removeTop: !isOnline,
+                        child: child!,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         );
