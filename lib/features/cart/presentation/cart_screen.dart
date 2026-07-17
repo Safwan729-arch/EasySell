@@ -6,12 +6,15 @@ import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/segment_pills.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../customers/presentation/customer_picker_sheet.dart';
 import '../domain/cart_line.dart';
 import '../domain/cart_math.dart';
 import 'cart_checkout_controller.dart';
 import 'cart_controller.dart';
+import 'payment_method_controller.dart';
 
 /// Full-screen cart review + checkout. This IS the review-before-commit step
 /// for a multi-item sale -- there is no second confirmation modal, the same
@@ -24,25 +27,30 @@ class CartScreen extends ConsumerWidget {
     final itemCount = lines.length;
     final total = cartTotal(lines);
     final currency = ref.read(myShopProvider).value?.currency ?? 'USD';
+    final selection = ref.read(paymentMethodControllerProvider);
 
     final ok = await ref
         .read(cartCheckoutControllerProvider.notifier)
-        .checkout();
+        .checkout(customerId: selection.customer?.id);
     if (!context.mounted || !ok) return;
 
     AppHaptics.success();
     final l10n = context.l10n;
+    ref.read(paymentMethodControllerProvider.notifier).reset();
     context.pop();
+    final formattedTotal = Money.format(total, currencyCode: currency);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
           content: Text(
-            l10n.cart_itemsSold(
-              itemCount,
-              Money.format(total, currencyCode: currency),
-            ),
+            selection.customer != null
+                ? l10n.cart_addedToKhata(
+                    selection.customer!.name,
+                    formattedTotal,
+                  )
+                : l10n.cart_itemsSold(itemCount, formattedTotal),
           ),
         ),
       );
@@ -82,6 +90,7 @@ class CartScreen extends ConsumerWidget {
     if (cleared == true) {
       AppHaptics.warning();
       ref.read(cartControllerProvider.notifier).clear();
+      ref.read(paymentMethodControllerProvider.notifier).reset();
     }
   }
 
@@ -435,7 +444,10 @@ class _StepButton extends StatelessWidget {
 /// Bounded-height checkout bar. Uses `MainAxisSize.min` so it hugs its content
 /// instead of expanding to fill the loose height Scaffold grants a
 /// bottomNavigationBar (the bug that previously collapsed the item list).
-class _CheckoutBar extends StatelessWidget {
+/// A `ConsumerWidget` (rather than plain values) so it can own the Cash/Credit
+/// toggle and the chosen-customer row, which live in
+/// [paymentMethodControllerProvider].
+class _CheckoutBar extends ConsumerWidget {
   const _CheckoutBar({
     required this.total,
     required this.itemCount,
@@ -451,9 +463,15 @@ class _CheckoutBar extends StatelessWidget {
   final VoidCallback onCheckout;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = context.l10n;
+    final selection = ref.watch(paymentMethodControllerProvider);
+    final notifier = ref.read(paymentMethodControllerProvider.notifier);
+    final isCredit = selection.method == PaymentMethod.credit;
+    final customer = selection.customer;
+
     return Container(
       decoration: BoxDecoration(
         color: scheme.surface,
@@ -466,12 +484,55 @@ class _CheckoutBar extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SegmentPills<PaymentMethod>(
+                  values: PaymentMethod.values,
+                  selected: selection.method,
+                  labelOf: (m) => m == PaymentMethod.cash
+                      ? l10n.cart_paymentCash
+                      : l10n.cart_paymentCredit,
+                  onChanged: isLoading
+                      ? (_) {}
+                      : (m) => m == PaymentMethod.cash
+                          ? notifier.setCash()
+                          : notifier.setCredit(),
+                ),
+              ),
+              if (isCredit) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: customer == null
+                      ? OutlinedButton.icon(
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                                  final chosen = await showCustomerPickerSheet(
+                                    context,
+                                  );
+                                  if (chosen != null) {
+                                    notifier.chooseCustomer(chosen);
+                                  }
+                                },
+                          icon: const Icon(Icons.person_add_alt, size: 18),
+                          label: Text(l10n.cart_selectCustomer),
+                        )
+                      : Text(
+                          customer.name,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                ),
+              ],
+              const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     child: Text(
-                      context.l10n.cart_totalItems(itemCount),
+                      l10n.cart_totalItems(itemCount),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -492,7 +553,9 @@ class _CheckoutBar extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: isLoading ? null : onCheckout,
+                  onPressed: (isLoading || !selection.isReady)
+                      ? null
+                      : onCheckout,
                   icon: isLoading
                       ? const SizedBox(
                           height: 18,
@@ -503,7 +566,13 @@ class _CheckoutBar extends StatelessWidget {
                           ),
                         )
                       : const Icon(Icons.point_of_sale, size: 20),
-                  label: Text(isLoading ? context.l10n.cart_selling : context.l10n.cart_checkout),
+                  label: Text(
+                    isLoading
+                        ? l10n.cart_selling
+                        : (isCredit && customer != null)
+                        ? l10n.cart_addToKhata(customer.name)
+                        : l10n.cart_checkout,
+                  ),
                 ),
               ),
             ],
