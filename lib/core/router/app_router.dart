@@ -8,6 +8,8 @@ import '../../features/analytics/presentation/analytics_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
+import '../../features/customers/presentation/customer_detail_screen.dart';
+import '../../features/customers/presentation/customers_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/insights/presentation/insights_screen.dart';
 import '../../features/inventory/domain/product.dart';
@@ -42,6 +44,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String categories = '/categories';
   static const String archivedProducts = '/archived-products';
+  static const String customers = '/customers';
 }
 
 final _rootKey = GlobalKey<NavigatorState>();
@@ -235,6 +238,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.archivedProducts,
         parentNavigatorKey: _rootKey,
         pageBuilder: (_, _) => _transitionPage(const ArchivedProductsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.customers,
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, _) => _transitionPage(const CustomersScreen()),
+      ),
+      GoRoute(
+        path: '/customers/:id',
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, state) => _transitionPage(
+          CustomerDetailScreen(customerId: state.pathParameters['id']!),
+        ),
       ),
     ],
   );
