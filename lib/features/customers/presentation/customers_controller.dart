@@ -25,6 +25,13 @@ class CustomersController extends AsyncNotifier<List<CustomerBalance>> {
     return result.when(success: (v) => v, failure: (f) => throw f);
   }
 
+  /// Re-fetches the customer list (e.g. for pull-to-refresh). Completes once
+  /// the rebuilt value is available.
+  Future<void> refresh() async {
+    ref.invalidateSelf();
+    await future;
+  }
+
   Future<bool> createCustomer({
     required String name,
     required String phone,
