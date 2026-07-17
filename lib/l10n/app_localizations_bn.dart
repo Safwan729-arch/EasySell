@@ -879,4 +879,131 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get onboarding_defaultCurrency => 'ডিফল্ট মুদ্রা *';
+
+  @override
+  String get customers_title => 'গ্রাহক';
+
+  @override
+  String customers_receivablesHeader(String amount, int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString জন গ্রাহকের',
+      one: '১ জন গ্রাহকের',
+    );
+    return '$_temp0 কাছে $amount পাওনা';
+  }
+
+  @override
+  String get customers_empty => 'এখনো কোনো গ্রাহক নেই';
+
+  @override
+  String get customers_emptyHint =>
+      'খাতা শুরু করতে একজন গ্রাহক যোগ করুন, অথবা চেকআউটে বাকি বেছে নিন।';
+
+  @override
+  String get customers_searchHint => 'নাম বা ফোন নম্বর দিয়ে খুঁজুন';
+
+  @override
+  String get customers_add => 'গ্রাহক যোগ';
+
+  @override
+  String get customers_edit => 'গ্রাহক এডিট';
+
+  @override
+  String get customers_fieldName => 'নাম';
+
+  @override
+  String get customers_fieldPhone => 'ফোন';
+
+  @override
+  String get customers_fieldNote => 'নোট (ঐচ্ছিক)';
+
+  @override
+  String get customers_nameRequired => 'নাম দিন';
+
+  @override
+  String get customers_phoneRequired => 'ফোন নম্বর দিন';
+
+  @override
+  String get customers_save => 'সংরক্ষণ';
+
+  @override
+  String get customers_delete => 'গ্রাহক মুছুন';
+
+  @override
+  String customers_deleteConfirmTitle(String name) {
+    return '$name মুছবেন?';
+  }
+
+  @override
+  String get customers_deleteConfirmBody =>
+      'এটি গ্রাহক এবং তার খাতার হিসাব মুছে দেবে। শুধু হিসাব মেটানো গ্রাহকদের মুছা যাবে।';
+
+  @override
+  String customers_owes(String amount) {
+    return '$amount বাকি';
+  }
+
+  @override
+  String get customers_settled => 'পরিশোধিত';
+
+  @override
+  String get customers_balance => 'ব্যালেন্স';
+
+  @override
+  String get customers_ledgerEmpty => 'এখনো খাতায় কোনো হিসাব নেই';
+
+  @override
+  String get customers_recordPayment => 'টাকা জমা করুন';
+
+  @override
+  String get customers_paymentAmount => 'পরিমাণ';
+
+  @override
+  String get customers_paymentNote => 'নোট (ঐচ্ছিক)';
+
+  @override
+  String get customers_paymentAmountRequired => 'পরিমাণ দিন';
+
+  @override
+  String get customers_paymentTooLarge => 'বাকির চেয়ে বেশি';
+
+  @override
+  String get customers_paymentRecorded => 'টাকা জমা হয়েছে';
+
+  @override
+  String get customers_ledgerCreditSale => 'বাকিতে বিক্রি';
+
+  @override
+  String get customers_ledgerPayment => 'জমা';
+
+  @override
+  String get cart_paymentMethod => 'পেমেন্ট';
+
+  @override
+  String get cart_paymentCash => 'নগদ';
+
+  @override
+  String get cart_paymentCredit => 'বাকি';
+
+  @override
+  String get cart_selectCustomer => 'গ্রাহক বেছে নিন';
+
+  @override
+  String cart_addToKhata(String name) {
+    return '$name-এর খাতায় যোগ করুন';
+  }
+
+  @override
+  String cart_addedToKhata(String name, String total) {
+    return '$name-এর খাতায় যোগ হয়েছে · $total';
+  }
+
+  @override
+  String get dashboard_receivablesTitle => 'পাওনা';
 }

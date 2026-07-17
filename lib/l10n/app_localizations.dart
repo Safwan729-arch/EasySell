@@ -1543,6 +1543,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Default currency *'**
   String get onboarding_defaultCurrency;
+
+  /// No description provided for @customers_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get customers_title;
+
+  /// No description provided for @customers_receivablesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} owed by {count, plural, =1{1 customer} other{{count} customers}}'**
+  String customers_receivablesHeader(String amount, int count);
+
+  /// No description provided for @customers_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers yet'**
+  String get customers_empty;
+
+  /// No description provided for @customers_emptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a customer to start a khata, or choose Credit at checkout.'**
+  String get customers_emptyHint;
+
+  /// No description provided for @customers_searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or phone'**
+  String get customers_searchHint;
+
+  /// No description provided for @customers_add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add customer'**
+  String get customers_add;
+
+  /// No description provided for @customers_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit customer'**
+  String get customers_edit;
+
+  /// No description provided for @customers_fieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get customers_fieldName;
+
+  /// No description provided for @customers_fieldPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get customers_fieldPhone;
+
+  /// No description provided for @customers_fieldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get customers_fieldNote;
+
+  /// No description provided for @customers_nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get customers_nameRequired;
+
+  /// No description provided for @customers_phoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a phone number'**
+  String get customers_phoneRequired;
+
+  /// No description provided for @customers_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get customers_save;
+
+  /// No description provided for @customers_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete customer'**
+  String get customers_delete;
+
+  /// No description provided for @customers_deleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String customers_deleteConfirmTitle(String name);
+
+  /// No description provided for @customers_deleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the customer and their khata history. Only settled customers can be deleted.'**
+  String get customers_deleteConfirmBody;
+
+  /// No description provided for @customers_owes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes {amount}'**
+  String customers_owes(String amount);
+
+  /// No description provided for @customers_settled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled'**
+  String get customers_settled;
+
+  /// No description provided for @customers_balance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get customers_balance;
+
+  /// No description provided for @customers_ledgerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No khata activity yet'**
+  String get customers_ledgerEmpty;
+
+  /// No description provided for @customers_recordPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get customers_recordPayment;
+
+  /// No description provided for @customers_paymentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get customers_paymentAmount;
+
+  /// No description provided for @customers_paymentNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get customers_paymentNote;
+
+  /// No description provided for @customers_paymentAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount'**
+  String get customers_paymentAmountRequired;
+
+  /// No description provided for @customers_paymentTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'More than what is owed'**
+  String get customers_paymentTooLarge;
+
+  /// No description provided for @customers_paymentRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment recorded'**
+  String get customers_paymentRecorded;
+
+  /// No description provided for @customers_ledgerCreditSale.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit sale'**
+  String get customers_ledgerCreditSale;
+
+  /// No description provided for @customers_ledgerPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get customers_ledgerPayment;
+
+  /// No description provided for @cart_paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get cart_paymentMethod;
+
+  /// No description provided for @cart_paymentCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get cart_paymentCash;
+
+  /// No description provided for @cart_paymentCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get cart_paymentCredit;
+
+  /// No description provided for @cart_selectCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Select customer'**
+  String get cart_selectCustomer;
+
+  /// No description provided for @cart_addToKhata.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to {name}\'s khata'**
+  String cart_addToKhata(String name);
+
+  /// No description provided for @cart_addedToKhata.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to {name}\'s khata · {total}'**
+  String cart_addedToKhata(String name, String total);
+
+  /// No description provided for @dashboard_receivablesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Receivables'**
+  String get dashboard_receivablesTitle;
 }
 
 class _AppLocalizationsDelegate

@@ -884,4 +884,131 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboarding_defaultCurrency => 'Default currency *';
+
+  @override
+  String get customers_title => 'Customers';
+
+  @override
+  String customers_receivablesHeader(String amount, int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString customers',
+      one: '1 customer',
+    );
+    return '$amount owed by $_temp0';
+  }
+
+  @override
+  String get customers_empty => 'No customers yet';
+
+  @override
+  String get customers_emptyHint =>
+      'Add a customer to start a khata, or choose Credit at checkout.';
+
+  @override
+  String get customers_searchHint => 'Search by name or phone';
+
+  @override
+  String get customers_add => 'Add customer';
+
+  @override
+  String get customers_edit => 'Edit customer';
+
+  @override
+  String get customers_fieldName => 'Name';
+
+  @override
+  String get customers_fieldPhone => 'Phone';
+
+  @override
+  String get customers_fieldNote => 'Note (optional)';
+
+  @override
+  String get customers_nameRequired => 'Enter a name';
+
+  @override
+  String get customers_phoneRequired => 'Enter a phone number';
+
+  @override
+  String get customers_save => 'Save';
+
+  @override
+  String get customers_delete => 'Delete customer';
+
+  @override
+  String customers_deleteConfirmTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String get customers_deleteConfirmBody =>
+      'This removes the customer and their khata history. Only settled customers can be deleted.';
+
+  @override
+  String customers_owes(String amount) {
+    return 'Owes $amount';
+  }
+
+  @override
+  String get customers_settled => 'Settled';
+
+  @override
+  String get customers_balance => 'Balance';
+
+  @override
+  String get customers_ledgerEmpty => 'No khata activity yet';
+
+  @override
+  String get customers_recordPayment => 'Record payment';
+
+  @override
+  String get customers_paymentAmount => 'Amount';
+
+  @override
+  String get customers_paymentNote => 'Note (optional)';
+
+  @override
+  String get customers_paymentAmountRequired => 'Enter an amount';
+
+  @override
+  String get customers_paymentTooLarge => 'More than what is owed';
+
+  @override
+  String get customers_paymentRecorded => 'Payment recorded';
+
+  @override
+  String get customers_ledgerCreditSale => 'Credit sale';
+
+  @override
+  String get customers_ledgerPayment => 'Payment';
+
+  @override
+  String get cart_paymentMethod => 'Payment';
+
+  @override
+  String get cart_paymentCash => 'Cash';
+
+  @override
+  String get cart_paymentCredit => 'Credit';
+
+  @override
+  String get cart_selectCustomer => 'Select customer';
+
+  @override
+  String cart_addToKhata(String name) {
+    return 'Add to $name\'s khata';
+  }
+
+  @override
+  String cart_addedToKhata(String name, String total) {
+    return 'Added to $name\'s khata · $total';
+  }
+
+  @override
+  String get dashboard_receivablesTitle => 'Receivables';
 }
