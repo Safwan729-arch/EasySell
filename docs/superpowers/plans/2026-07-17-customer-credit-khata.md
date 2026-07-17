@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Spec:** `docs/superpowers/specs/2026-07-17-customer-credit-khata-design.md` — the source of truth; consult it when a task needs more context.
-- **Branch:** all work on `feat/customer-credit`, branched from `main` (NOT from the current `feat/offline-banner`). The uncommitted `supabase/functions/recognize-product/*` changes are unrelated — do not stage them.
+- **Branch:** all work on `feat/customer-credit`, branched from `feat/offline-banner` (CORRECTED during execution — `main` lacks the Bengali-localization infrastructure this feature depends on; `feat/offline-banner` is the dev tip that carries it). The uncommitted `supabase/functions/recognize-product/*` changes are unrelated and were stashed before branching — do not stage them.
 - **Never do client-side money/stock math** for persistence. Balances and stock changes are computed/enforced in Postgres RPCs (CLAUDE.md §10). Pure Dart balance helpers are for display/tests only.
 - **Every table gets RLS**, shop-scoped via `shop_id in (select id from shops where owner_id = auth.uid())` (CLAUDE.md §4).
 - **Accrual revenue:** a credit sale counts as revenue at sale time. Do NOT modify any analytics query or `get_dashboard_summary`.
