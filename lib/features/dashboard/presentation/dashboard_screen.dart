@@ -22,6 +22,7 @@ import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/presentation/sales_providers.dart';
 import '../../transactions/presentation/transaction_confirmation_sheet.dart';
+import 'receivables_card.dart';
 import 'revenue_hero.dart';
 import 'summary_breakdown_sheet.dart';
 
@@ -240,6 +241,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 16),
+              const Entrance(index: 3, child: ReceivablesCard()),
               const SizedBox(height: 16),
               Entrance(
                 index: 4,
