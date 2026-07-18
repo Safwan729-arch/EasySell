@@ -32,7 +32,7 @@ class CustomersController extends AsyncNotifier<List<CustomerBalance>> {
     await future;
   }
 
-  Future<bool> createCustomer({
+  Future<Failure?> createCustomer({
     required String name,
     required String phone,
     String? note,
@@ -47,7 +47,7 @@ class CustomersController extends AsyncNotifier<List<CustomerBalance>> {
     );
   }
 
-  Future<bool> updateCustomer({
+  Future<Failure?> updateCustomer({
     required String id,
     required String name,
     required String phone,
@@ -59,34 +59,29 @@ class CustomersController extends AsyncNotifier<List<CustomerBalance>> {
     );
   }
 
-  Future<bool> deleteCustomer(String id) {
+  Future<Failure?> deleteCustomer(String id) {
     return _run((repo, shopId) => repo.deleteCustomer(shopId: shopId, id: id));
   }
 
   /// Runs a repository mutation, refreshing dependent views on success and
-  /// surfacing the failure on the controller on error. Generic over the
+  /// reporting the failure to the caller on error (never clobbering the
+  /// loaded list with `AsyncError` — a failed create/update/delete shouldn't
+  /// blank out an otherwise-healthy customer list). Generic over the
   /// Result's payload so create/update/delete share one path.
-  Future<bool> _run<T>(
+  Future<Failure?> _run<T>(
     Future<Result<T>> Function(CustomerRepository repo, String shopId) action,
   ) async {
     final shopId = ref.read(myShopProvider).value?.id;
     if (shopId == null) {
-      state = AsyncError(
-        const AuthFailure('No shop found for this account.'),
-        StackTrace.current,
-      );
-      return false;
+      return const AuthFailure('No shop found for this account.');
     }
     final result = await action(ref.read(customerRepositoryProvider), shopId);
     return result.when(
       success: (_) {
         _refreshAll();
-        return true;
+        return null;
       },
-      failure: (f) {
-        state = AsyncError(f, StackTrace.current);
-        return false;
-      },
+      failure: (f) => f,
     );
   }
 

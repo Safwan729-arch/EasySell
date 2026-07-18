@@ -23,40 +23,47 @@ class ReceivablesCard extends ConsumerWidget {
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
     final theme = Theme.of(context);
 
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push(AppRoutes.customers),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              const Icon(Icons.account_balance_wallet_outlined),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.dashboard_receivablesTitle,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+    // The bottom margin lives here (inside the visible branch) rather than as
+    // a SizedBox around this widget in dashboard_screen.dart, so the gap
+    // truly collapses to zero when this card hides via the early return above
+    // instead of doubling up with a neighbouring SizedBox.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push(AppRoutes.customers),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(Icons.account_balance_wallet_outlined),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.dashboard_receivablesTitle,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    Text(
-                      l10n.customers_receivablesHeader(
-                        Money.format(summary.totalOwed, currencyCode: currency),
-                        summary.debtorCount,
+                      Text(
+                        l10n.customers_receivablesHeader(
+                          Money.format(summary.totalOwed, currencyCode: currency),
+                          summary.debtorCount,
+                        ),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right),
-            ],
+                const Icon(Icons.chevron_right),
+              ],
+            ),
           ),
         ),
       ),

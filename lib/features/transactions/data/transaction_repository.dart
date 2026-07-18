@@ -43,8 +43,7 @@ class TransactionRepository {
           'p_shop_id': shopId,
           'p_items': items,
           'p_source': source,
-          // ignore: use_null_aware_elements
-          if (customerId != null) 'p_customer_id': customerId,
+          'p_customer_id': ?customerId,
         },
       );
       final rows = result as List;

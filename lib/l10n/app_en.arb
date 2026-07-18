@@ -302,7 +302,6 @@
   "customers_paymentRecorded": "Payment recorded",
   "customers_ledgerCreditSale": "Credit sale",
   "customers_ledgerPayment": "Payment",
-  "cart_paymentMethod": "Payment",
   "cart_paymentCash": "Cash",
   "cart_paymentCredit": "Credit",
   "cart_selectCustomer": "Select customer",

@@ -302,7 +302,6 @@
   "customers_paymentRecorded": "টাকা জমা হয়েছে",
   "customers_ledgerCreditSale": "বাকিতে বিক্রি",
   "customers_ledgerPayment": "জমা",
-  "cart_paymentMethod": "পেমেন্ট",
   "cart_paymentCash": "নগদ",
   "cart_paymentCredit": "বাকি",
   "cart_selectCustomer": "গ্রাহক বেছে নিন",

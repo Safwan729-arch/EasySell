@@ -243,7 +243,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               const SizedBox(height: 16),
               const Entrance(index: 3, child: ReceivablesCard()),
-              const SizedBox(height: 16),
               Entrance(
                 index: 4,
                 child: _WeeklySalesCard(

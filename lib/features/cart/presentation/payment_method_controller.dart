@@ -16,12 +16,6 @@ class PaymentSelection {
 
   bool get isReady =>
       method == PaymentMethod.cash || customer != null;
-
-  PaymentSelection copyWith({PaymentMethod? method, Customer? customer}) =>
-      PaymentSelection(
-        method: method ?? this.method,
-        customer: customer ?? this.customer,
-      );
 }
 
 class PaymentMethodController extends Notifier<PaymentSelection> {

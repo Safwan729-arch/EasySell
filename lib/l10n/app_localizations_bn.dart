@@ -983,9 +983,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get customers_ledgerPayment => 'জমা';
 
   @override
-  String get cart_paymentMethod => 'পেমেন্ট';
-
-  @override
   String get cart_paymentCash => 'নগদ';
 
   @override

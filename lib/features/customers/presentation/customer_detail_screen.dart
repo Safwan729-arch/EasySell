@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/customer_labels.dart';
@@ -85,6 +87,13 @@ class CustomerDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          if (balanceRow != null)
+            IconButton(
+              tooltip: l10n.customers_delete,
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () =>
+                  _confirmDelete(context, ref, balanceRow!.id, balanceRow.name),
+            ),
         ],
       ),
       body: detailAsync.when(
@@ -125,6 +134,71 @@ class CustomerDetailScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Confirms destructive delete (mirrors `cart_screen.dart`'s
+  /// `_confirmClear` styling), then calls through to
+  /// [CustomersController.deleteCustomer]. On success, pops back to the
+  /// customers list; on failure (e.g. the customer still owes money), shows
+  /// the RPC's message in a floating snackbar and leaves this screen open.
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    String id,
+    String name,
+  ) async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final colors = Theme.of(ctx).extension<AppColors>()!;
+        return AlertDialog(
+          title: Text(l10n.customers_deleteConfirmTitle(name)),
+          content: Text(l10n.customers_deleteConfirmBody),
+          // Natural-width actions: the theme forces FilledButton to a
+          // full-width minimumSize, which makes a dialog's confirm button
+          // dwarf the text "Cancel". Reset it so both size to their content.
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.common_cancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                backgroundColor: colors.negative,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.common_delete),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+
+    final failure = await ref
+        .read(customersControllerProvider.notifier)
+        .deleteCustomer(id);
+    if (!context.mounted) return;
+
+    if (failure == null) {
+      AppHaptics.success();
+      context.pop();
+    } else {
+      AppHaptics.warning();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text(failure.message),
+          ),
+        );
+    }
   }
 }
 

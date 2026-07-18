@@ -988,9 +988,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customers_ledgerPayment => 'Payment';
 
   @override
-  String get cart_paymentMethod => 'Payment';
-
-  @override
   String get cart_paymentCash => 'Cash';
 
   @override

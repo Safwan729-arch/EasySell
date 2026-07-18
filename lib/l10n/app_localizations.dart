@@ -1712,12 +1712,6 @@ abstract class AppLocalizations {
   /// **'Payment'**
   String get customers_ledgerPayment;
 
-  /// No description provided for @cart_paymentMethod.
-  ///
-  /// In en, this message translates to:
-  /// **'Payment'**
-  String get cart_paymentMethod;
-
   /// No description provided for @cart_paymentCash.
   ///
   /// In en, this message translates to:

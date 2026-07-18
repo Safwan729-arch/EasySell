@@ -52,7 +52,17 @@ class _RecordPaymentSheetState extends ConsumerState<_RecordPaymentSheet> {
     setState(() => _submitting = false);
     if (ok) {
       AppHaptics.success();
+      final l10n = context.l10n;
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text(l10n.customers_paymentRecorded),
+          ),
+        );
     }
   }
 

@@ -47,15 +47,25 @@ class _CustomerFormSheetState extends ConsumerState<_CustomerFormSheet> {
     final name = _name.text.trim();
     final phone = _phone.text.trim();
     final note = _note.text.trim().isEmpty ? null : _note.text.trim();
-    final ok = widget.existing == null
+    final failure = widget.existing == null
         ? await notifier.createCustomer(name: name, phone: phone, note: note)
         : await notifier.updateCustomer(
             id: widget.existing!.id, name: name, phone: phone, note: note);
     if (!mounted) return;
-    setState(() => _submitting = false);
-    if (ok) {
+    if (failure == null) {
       AppHaptics.success();
       Navigator.of(context).pop();
+    } else {
+      setState(() => _submitting = false);
+      AppHaptics.warning();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text(failure.message),
+          ),
+        );
     }
   }
 
