@@ -57,4 +57,57 @@ void main() {
     expect(d.choices, hasLength(3));
     expect(d.choices.first.productId, 'a');
   });
+
+  test(
+    'sort is exercised: ascending-order input still resolves to highest',
+    () {
+      // Pass candidates in ascending order (low to high). The sort must reorder
+      // them and correctly identify the winner.
+      final d = decideVoiceLine([m('weak', 0.20), m('strong', 0.95)]);
+      expect(d.status, VoiceLineStatus.resolved);
+      expect(d.choices.single.productId, 'strong');
+    },
+  );
+
+  test('sort is exercised: shuffled input still ranks correctly', () {
+    // Pass candidates in random order. Ambiguous choices must be ranked
+    // highest-first regardless of input order.
+    final d = decideVoiceLine([
+      m('third', 0.58),
+      m('first', 0.60),
+      m('second', 0.59),
+    ], thresholds: const VoiceThresholds(maxChoices: 3));
+    expect(d.status, VoiceLineStatus.ambiguous);
+    expect(d.choices.map((c) => c.productId), ['first', 'second', 'third']);
+  });
+
+  test('exact boundary: top confidence exactly 0.80 with gap exactly 0.15', () {
+    // 0.80 >= strong (0.80), 0.80 - 0.65 = 0.15 >= margin (0.15) → resolved.
+    final d = decideVoiceLine([m('exact', 0.80), m('runner-up', 0.65)]);
+    expect(d.status, VoiceLineStatus.resolved);
+    expect(d.choices.single.productId, 'exact');
+  });
+
+  test('exact boundary: match at exactly 0.50 is offered as ambiguous', () {
+    // Confidence exactly at ambiguous threshold → should appear as a choice.
+    final d = decideVoiceLine([m('at-threshold', 0.50)]);
+    expect(d.status, VoiceLineStatus.ambiguous);
+    expect(d.choices.single.productId, 'at-threshold');
+  });
+
+  test(
+    'tie: two identical confidences are ambiguous with both ranked first',
+    () {
+      // Both at 0.70, gap = 0.70 - 0.70 = 0 < margin (0.15) → ambiguous.
+      // Both are in choices, and order should maintain original input order
+      // (after sort, ties are stable).
+      final d = decideVoiceLine([m('tied-a', 0.70), m('tied-b', 0.70)]);
+      expect(d.status, VoiceLineStatus.ambiguous);
+      expect(d.choices, hasLength(2));
+      expect(
+        d.choices.map((c) => c.productId),
+        containsAll(['tied-a', 'tied-b']),
+      );
+    },
+  );
 }
