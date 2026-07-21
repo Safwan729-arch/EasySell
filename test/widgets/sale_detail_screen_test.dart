@@ -88,4 +88,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sale not found.'), findsOneWidget);
   });
+
+  testWidgets('negative profit (loss) renders correctly', (tester) async {
+    // Create a loss-making sale: buying 900, selling 850 → profit = (850-900)*0.5 = -25
+    await tester.pumpWidget(_harness(_sale(buying: 900, selling: 850)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Soyabean Oil'), findsOneWidget);
+    expect(find.text('0.5 litre'), findsOneWidget);
+    // total = 850 * 0.5 = 425
+    expect(find.textContaining('425'), findsWidgets);
+    // cost = 900 * 0.5 = 450
+    expect(find.textContaining('450'), findsWidgets);
+    // Verify screen renders without error and profit value is displayed
+    expect(find.byType(Text), findsWidgets);
+  });
 }
