@@ -77,4 +77,49 @@ void main() {
     expect(r.items, isEmpty);
     expect(r.heardText, isNull);
   });
+
+  test('wrong-typed items field does not throw', () {
+    // items is a string, not a list
+    final r = VoiceParseResult.fromJson({'items': 'oops'});
+    expect(r.items, isEmpty);
+  });
+
+  test('wrong-typed matches field does not throw', () {
+    // matches is a string, not a list
+    final r = VoiceParseResult.fromJson({
+      'items': [
+        {'heard': 'pepsi', 'matches': 'oops'},
+      ],
+    });
+    expect(r.items, hasLength(1));
+    expect(r.items.first.matches, isEmpty);
+  });
+
+  test('wrong-typed heard field does not throw', () {
+    // heard is a number, not a string
+    final r = VoiceParseResult.fromJson({
+      'items': [
+        {'heard': 123, 'matches': []},
+      ],
+    });
+    expect(r.items, hasLength(1));
+    expect(r.items.first.heard, '');
+  });
+
+  test('wrong-typed product_id in match is skipped', () {
+    // product_id is a number, not a string
+    final r = VoiceParseResult.fromJson({
+      'items': [
+        {
+          'heard': 'pepsi',
+          'matches': [
+            {'product_id': 5, 'confidence': 0.9},
+            {'product_id': 'valid', 'confidence': 0.8},
+          ],
+        },
+      ],
+    });
+    expect(r.items.first.matches, hasLength(1));
+    expect(r.items.first.matches.first.productId, 'valid');
+  });
 }

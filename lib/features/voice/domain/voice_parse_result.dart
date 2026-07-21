@@ -9,10 +9,16 @@ class VoiceMatch {
   final String productId;
   final double confidence;
 
-  factory VoiceMatch.fromJson(Map<String, dynamic> json) => VoiceMatch(
-    productId: json['product_id'] as String,
-    confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
-  );
+  factory VoiceMatch.fromJson(Map<String, dynamic> json) {
+    final productId = json['product_id'];
+    if (productId is! String) {
+      throw FormatException('product_id must be a String');
+    }
+    return VoiceMatch(
+      productId: productId,
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+    );
+  }
 }
 
 /// One spoken item: what was heard, how many, and which products it might be.
@@ -46,16 +52,33 @@ class VoiceItem {
     final rawQty = json['quantity'];
     final qty = rawQty is num ? rawQty.toDouble() : null;
     final valid = qty != null && qty > 0;
-    final rawMatches = (json['matches'] as List?) ?? const [];
+
+    final rawMatches = json['matches'];
+    final matchesList = rawMatches is List ? rawMatches : [];
+
+    final heard = json['heard'];
+    final heardStr = heard is String ? heard : '';
+
+    final unitHeard = json['unit_heard'];
+    final unitHeardStr = unitHeard is String ? unitHeard : null;
+
+    final matches = <VoiceMatch>[];
+    for (final m in matchesList) {
+      if (m is Map) {
+        try {
+          matches.add(VoiceMatch.fromJson(Map<String, dynamic>.from(m)));
+        } catch (_) {
+          // Skip invalid match
+        }
+      }
+    }
+
     return VoiceItem(
-      heard: (json['heard'] as String?) ?? '',
+      heard: heardStr,
       quantity: valid ? qty : 1,
       quantityAssumed: !valid,
-      unitHeard: json['unit_heard'] as String?,
-      matches: [
-        for (final m in rawMatches)
-          VoiceMatch.fromJson(Map<String, dynamic>.from(m as Map)),
-      ],
+      unitHeard: unitHeardStr,
+      matches: matches,
     );
   }
 }
@@ -69,12 +92,17 @@ class VoiceParseResult {
   final List<VoiceItem> items;
 
   factory VoiceParseResult.fromJson(Map<String, dynamic> json) {
-    final rawItems = (json['items'] as List?) ?? const [];
+    final rawItems = json['items'];
+    final itemsList = rawItems is List ? rawItems : [];
+
+    final heardText = json['heard_text'];
+    final heardTextStr = heardText is String ? heardText : null;
+
     return VoiceParseResult(
-      heardText: json['heard_text'] as String?,
+      heardText: heardTextStr,
       items: [
-        for (final i in rawItems)
-          VoiceItem.fromJson(Map<String, dynamic>.from(i as Map)),
+        for (final i in itemsList)
+          if (i is Map) VoiceItem.fromJson(Map<String, dynamic>.from(i)),
       ],
     );
   }
