@@ -23,7 +23,9 @@ import '../../features/onboarding/presentation/welcome_screen.dart';
 import '../../features/scan/presentation/scan_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/shell/presentation/main_shell.dart';
+import '../../features/transactions/domain/transaction.dart';
 import '../../features/transactions/presentation/history_screen.dart';
+import '../../features/transactions/presentation/sale_detail_screen.dart';
 import '../../features/trends/presentation/trend_screen.dart';
 import '../../shared/providers/onboarding_provider.dart';
 import '../../shared/providers/supabase_provider.dart';
@@ -45,6 +47,7 @@ class AppRoutes {
   static const String categories = '/categories';
   static const String archivedProducts = '/archived-products';
   static const String customers = '/customers';
+  static const String saleDetail = '/history/sale';
 }
 
 final _rootKey = GlobalKey<NavigatorState>();
@@ -249,6 +252,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         pageBuilder: (_, state) => _transitionPage(
           CustomerDetailScreen(customerId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/history/sale/:id',
+        parentNavigatorKey: _rootKey,
+        pageBuilder: (_, state) => _transitionPage(
+          SaleDetailScreen(sale: state.extra as Transaction?),
         ),
       ),
     ],

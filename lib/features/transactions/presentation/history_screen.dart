@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/skeleton.dart';
@@ -661,6 +663,9 @@ class _ReceiptTileState extends State<_ReceiptTile> {
   String _lineQty(double v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
+  void _openDetail(Transaction line) =>
+      context.push('${AppRoutes.saleDetail}/${line.id}', extra: line);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -675,7 +680,9 @@ class _ReceiptTileState extends State<_ReceiptTile> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          onTap: canExpand ? () => setState(() => _expanded = !_expanded) : null,
+          onTap: canExpand
+              ? () => setState(() => _expanded = !_expanded)
+              : () => _openDetail(widget.row.receipt.lines.single),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             child: Row(
@@ -768,62 +775,65 @@ class _ReceiptTileState extends State<_ReceiptTile> {
             child: Column(
               children: [
                 for (final line in row.receipt.lines)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 5, 12, 5),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: _timeW,
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 9),
-                              child: Container(
-                                width: 4,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: scheme.onSurfaceVariant,
-                                  shape: BoxShape.circle,
+                  InkWell(
+                    onTap: () => _openDetail(line),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 5, 12, 5),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: _timeW,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 9),
+                                child: Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: scheme.onSurfaceVariant,
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            (row.names[line.productId]?.isNotEmpty ?? false)
-                                ? row.names[line.productId]!
-                                : l10n.history_saleFallback,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurface,
+                          Expanded(
+                            child: Text(
+                              (row.names[line.productId]?.isNotEmpty ?? false)
+                                  ? row.names[line.productId]!
+                                  : l10n.history_saleFallback,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurface,
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: _qtyW,
-                          child: Text(
-                            _lineQty(line.quantity),
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                              fontFeatures: tnum,
+                          SizedBox(
+                            width: _qtyW,
+                            child: Text(
+                              _lineQty(line.quantity),
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                fontFeatures: tnum,
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: _amtW,
-                          child: Text(
-                            Money.compact(line.revenue, currencyCode: widget.currency),
-                            textAlign: TextAlign.right,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                              fontFeatures: tnum,
+                          SizedBox(
+                            width: _amtW,
+                            child: Text(
+                              Money.compact(line.revenue, currencyCode: widget.currency),
+                              textAlign: TextAlign.right,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                fontFeatures: tnum,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
               ],
