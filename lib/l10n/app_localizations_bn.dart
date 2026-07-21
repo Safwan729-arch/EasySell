@@ -699,6 +699,45 @@ class AppLocalizationsBn extends AppLocalizations {
   String get history_colAmount => 'মোট';
 
   @override
+  String get saleDetail_title => 'বিক্রির বিবরণ';
+
+  @override
+  String get saleDetail_soldOn => 'বিক্রির সময়';
+
+  @override
+  String get saleDetail_quantity => 'পরিমাণ';
+
+  @override
+  String get saleDetail_priceEach => 'প্রতি একক দাম';
+
+  @override
+  String get saleDetail_total => 'মোট';
+
+  @override
+  String get saleDetail_cost => 'খরচ';
+
+  @override
+  String get saleDetail_profit => 'লাভ';
+
+  @override
+  String get saleDetail_enteredBy => 'যেভাবে এন্ট্রি হয়েছে';
+
+  @override
+  String get saleDetail_frozenNote => 'দাম বিক্রির মুহূর্তেই স্থির হয়ে যায়।';
+
+  @override
+  String get saleDetail_notFound => 'বিক্রি খুঁজে পাওয়া যায়নি।';
+
+  @override
+  String get saleDetail_sourceManual => 'ম্যানুয়াল';
+
+  @override
+  String get saleDetail_sourceVoice => 'ভয়েস';
+
+  @override
+  String get saleDetail_sourcePhoto => 'ছবি স্ক্যান';
+
+  @override
   String get analytics_kicker => 'ব্যবসার রিপোর্ট';
 
   @override

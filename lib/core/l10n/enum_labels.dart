@@ -47,3 +47,12 @@ String weekdayBarLabel(Locale locale, DateTime date) {
   // the app locale), and the default's date symbols are always initialized.
   return DateFormat('E').format(date).substring(0, 1);
 }
+
+/// Localized label for a transaction's `source` ('voice' | 'image' | 'manual').
+/// Unknown or null sources render as an em dash — older rows may have no source.
+String saleSourceLabel(AppLocalizations l10n, String? source) => switch (source) {
+  'voice' => l10n.saleDetail_sourceVoice,
+  'image' => l10n.saleDetail_sourcePhoto,
+  'manual' => l10n.saleDetail_sourceManual,
+  _ => '—',
+};

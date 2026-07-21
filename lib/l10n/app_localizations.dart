@@ -1220,6 +1220,84 @@ abstract class AppLocalizations {
   /// **'Amount'**
   String get history_colAmount;
 
+  /// No description provided for @saleDetail_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale details'**
+  String get saleDetail_title;
+
+  /// No description provided for @saleDetail_soldOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold on'**
+  String get saleDetail_soldOn;
+
+  /// No description provided for @saleDetail_quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get saleDetail_quantity;
+
+  /// No description provided for @saleDetail_priceEach.
+  ///
+  /// In en, this message translates to:
+  /// **'Price each'**
+  String get saleDetail_priceEach;
+
+  /// No description provided for @saleDetail_total.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get saleDetail_total;
+
+  /// No description provided for @saleDetail_cost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost'**
+  String get saleDetail_cost;
+
+  /// No description provided for @saleDetail_profit.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit'**
+  String get saleDetail_profit;
+
+  /// No description provided for @saleDetail_enteredBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Entered by'**
+  String get saleDetail_enteredBy;
+
+  /// No description provided for @saleDetail_frozenNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices are locked in from the moment of sale.'**
+  String get saleDetail_frozenNote;
+
+  /// No description provided for @saleDetail_notFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale not found.'**
+  String get saleDetail_notFound;
+
+  /// No description provided for @saleDetail_sourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get saleDetail_sourceManual;
+
+  /// No description provided for @saleDetail_sourceVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get saleDetail_sourceVoice;
+
+  /// No description provided for @saleDetail_sourcePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo scan'**
+  String get saleDetail_sourcePhoto;
+
   /// No description provided for @analytics_kicker.
   ///
   /// In en, this message translates to:

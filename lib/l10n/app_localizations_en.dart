@@ -704,6 +704,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get history_colAmount => 'Amount';
 
   @override
+  String get saleDetail_title => 'Sale details';
+
+  @override
+  String get saleDetail_soldOn => 'Sold on';
+
+  @override
+  String get saleDetail_quantity => 'Quantity';
+
+  @override
+  String get saleDetail_priceEach => 'Price each';
+
+  @override
+  String get saleDetail_total => 'Total';
+
+  @override
+  String get saleDetail_cost => 'Cost';
+
+  @override
+  String get saleDetail_profit => 'Profit';
+
+  @override
+  String get saleDetail_enteredBy => 'Entered by';
+
+  @override
+  String get saleDetail_frozenNote =>
+      'Prices are locked in from the moment of sale.';
+
+  @override
+  String get saleDetail_notFound => 'Sale not found.';
+
+  @override
+  String get saleDetail_sourceManual => 'Manual';
+
+  @override
+  String get saleDetail_sourceVoice => 'Voice';
+
+  @override
+  String get saleDetail_sourcePhoto => 'Photo scan';
+
+  @override
   String get analytics_kicker => 'BUSINESS REPORT';
 
   @override
