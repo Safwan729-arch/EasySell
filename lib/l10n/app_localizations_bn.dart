@@ -1042,4 +1042,56 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get dashboard_receivablesTitle => 'পাওনা';
+
+  @override
+  String get voice_title => 'বিক্রির কথা বলুন';
+
+  @override
+  String get voice_hintIdle => 'চেপে ধরে বলুন কী বিক্রি হয়েছে';
+
+  @override
+  String get voice_recording => 'শুনছি…';
+
+  @override
+  String get voice_thinking => 'বুঝে নিচ্ছি…';
+
+  @override
+  String get voice_heard => 'আমি শুনেছি';
+
+  @override
+  String get voice_whichOne => 'কোনটি?';
+
+  @override
+  String get voice_notFound => 'পাওয়া যায়নি';
+
+  @override
+  String get voice_pick => 'বেছে নিন';
+
+  @override
+  String get voice_addToCart => 'কার্টে যোগ করুন';
+
+  @override
+  String get voice_assumedQty => '১ ধরে নেওয়া হয়েছে — দেখে নিন';
+
+  @override
+  String voice_lowStock(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 'স্টকে আছে মাত্র $countStringটি';
+  }
+
+  @override
+  String get voice_errNoSpeech => 'শুনতে পাইনি। আবার চেষ্টা করুন।';
+
+  @override
+  String get voice_errNoMatch => 'আপনার বলা কিছুই মেলাতে পারিনি।';
+
+  @override
+  String get voice_errMicDenied =>
+      'মাইক্রোফোনের অনুমতি বন্ধ আছে। সেটিংসে গিয়ে চালু করুন।';
+
+  @override
+  String get voice_retry => 'আবার চেষ্টা করুন';
 }

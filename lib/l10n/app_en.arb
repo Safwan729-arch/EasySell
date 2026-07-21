@@ -322,5 +322,21 @@
   "@cart_addToKhata": { "placeholders": { "name": { "type": "String" } } },
   "cart_addedToKhata": "Added to {name}'s khata · {total}",
   "@cart_addedToKhata": { "placeholders": { "name": { "type": "String" }, "total": { "type": "String" } } },
-  "dashboard_receivablesTitle": "Receivables"
+  "dashboard_receivablesTitle": "Receivables",
+  "voice_title": "Speak a sale",
+  "voice_hintIdle": "Hold and say what you sold",
+  "voice_recording": "Listening…",
+  "voice_thinking": "Working it out…",
+  "voice_heard": "I heard",
+  "voice_whichOne": "Which one?",
+  "voice_notFound": "Not found",
+  "voice_pick": "Pick",
+  "voice_addToCart": "Add to cart",
+  "voice_assumedQty": "Assumed 1 — check this",
+  "voice_lowStock": "Only {count} in stock",
+  "@voice_lowStock": { "placeholders": { "count": { "type": "int", "format": "decimalPattern" } } },
+  "voice_errNoSpeech": "Didn't catch that. Try again.",
+  "voice_errNoMatch": "Couldn't match anything you said.",
+  "voice_errMicDenied": "Microphone access is off. Turn it on in Settings.",
+  "voice_retry": "Try again"
 }

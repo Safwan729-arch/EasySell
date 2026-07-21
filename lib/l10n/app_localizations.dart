@@ -1825,6 +1825,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Receivables'**
   String get dashboard_receivablesTitle;
+
+  /// No description provided for @voice_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak a sale'**
+  String get voice_title;
+
+  /// No description provided for @voice_hintIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold and say what you sold'**
+  String get voice_hintIdle;
+
+  /// No description provided for @voice_recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening…'**
+  String get voice_recording;
+
+  /// No description provided for @voice_thinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working it out…'**
+  String get voice_thinking;
+
+  /// No description provided for @voice_heard.
+  ///
+  /// In en, this message translates to:
+  /// **'I heard'**
+  String get voice_heard;
+
+  /// No description provided for @voice_whichOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Which one?'**
+  String get voice_whichOne;
+
+  /// No description provided for @voice_notFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found'**
+  String get voice_notFound;
+
+  /// No description provided for @voice_pick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick'**
+  String get voice_pick;
+
+  /// No description provided for @voice_addToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to cart'**
+  String get voice_addToCart;
+
+  /// No description provided for @voice_assumedQty.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumed 1 — check this'**
+  String get voice_assumedQty;
+
+  /// No description provided for @voice_lowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {count} in stock'**
+  String voice_lowStock(int count);
+
+  /// No description provided for @voice_errNoSpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t catch that. Try again.'**
+  String get voice_errNoSpeech;
+
+  /// No description provided for @voice_errNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t match anything you said.'**
+  String get voice_errNoMatch;
+
+  /// No description provided for @voice_errMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is off. Turn it on in Settings.'**
+  String get voice_errMicDenied;
+
+  /// No description provided for @voice_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get voice_retry;
 }
 
 class _AppLocalizationsDelegate

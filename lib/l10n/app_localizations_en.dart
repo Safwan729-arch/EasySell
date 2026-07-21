@@ -1048,4 +1048,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboard_receivablesTitle => 'Receivables';
+
+  @override
+  String get voice_title => 'Speak a sale';
+
+  @override
+  String get voice_hintIdle => 'Hold and say what you sold';
+
+  @override
+  String get voice_recording => 'Listening…';
+
+  @override
+  String get voice_thinking => 'Working it out…';
+
+  @override
+  String get voice_heard => 'I heard';
+
+  @override
+  String get voice_whichOne => 'Which one?';
+
+  @override
+  String get voice_notFound => 'Not found';
+
+  @override
+  String get voice_pick => 'Pick';
+
+  @override
+  String get voice_addToCart => 'Add to cart';
+
+  @override
+  String get voice_assumedQty => 'Assumed 1 — check this';
+
+  @override
+  String voice_lowStock(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 'Only $countString in stock';
+  }
+
+  @override
+  String get voice_errNoSpeech => 'Didn\'t catch that. Try again.';
+
+  @override
+  String get voice_errNoMatch => 'Couldn\'t match anything you said.';
+
+  @override
+  String get voice_errMicDenied =>
+      'Microphone access is off. Turn it on in Settings.';
+
+  @override
+  String get voice_retry => 'Try again';
 }
