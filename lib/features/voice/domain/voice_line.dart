@@ -4,14 +4,14 @@ import 'voice_parse_result.dart';
 /// One row in the review sheet: what was heard, how many, and which product it
 /// resolves to. Immutable -- edits return a new instance.
 class VoiceLine {
-  const VoiceLine({
+  VoiceLine({
     required this.heard,
     required this.quantity,
     required this.quantityAssumed,
     required this.status,
-    required this.choices,
+    required List<VoiceMatch> choices,
     this.chosenProductId,
-  });
+  }) : choices = List.unmodifiable(choices);
 
   final String heard;
   final double quantity;
@@ -21,7 +21,8 @@ class VoiceLine {
 
   final VoiceLineStatus status;
 
-  /// Candidates to offer when the user must choose.
+  /// Candidates to offer when the user must choose. Unmodifiable to prevent
+  /// external mutation from corrupting sibling lines.
   final List<VoiceMatch> choices;
 
   /// The product this line will add to the cart. Null until settled.
@@ -30,18 +31,22 @@ class VoiceLine {
   /// A line may only reach the cart once a real product is attached.
   bool get isSettled => chosenProductId != null;
 
-  VoiceLine chooseProduct(String productId) =>
-      _copy(chosenProductId: productId);
-
-  VoiceLine withQuantity(double newQuantity) => _copy(quantity: newQuantity);
-
-  VoiceLine _copy({String? chosenProductId, double? quantity}) => VoiceLine(
+  VoiceLine chooseProduct(String productId) => VoiceLine(
     heard: heard,
-    quantity: quantity ?? this.quantity,
+    quantity: quantity,
     quantityAssumed: quantityAssumed,
     status: status,
     choices: choices,
-    chosenProductId: chosenProductId ?? this.chosenProductId,
+    chosenProductId: productId,
+  );
+
+  VoiceLine withQuantity(double newQuantity) => VoiceLine(
+    heard: heard,
+    quantity: newQuantity,
+    quantityAssumed: quantityAssumed,
+    status: status,
+    choices: choices,
+    chosenProductId: chosenProductId,
   );
 }
 

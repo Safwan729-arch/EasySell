@@ -59,7 +59,10 @@ void main() {
         ],
       ),
     ).single;
-    expect(line.withQuantity(5).quantity, 5);
+    final corrected = line.withQuantity(5);
+    expect(corrected.quantity, 5);
+    // Verify immutability: original is unchanged
+    expect(line.quantity, 2);
   });
 
   test('cannot add to cart while any line is unsettled', () {
@@ -100,5 +103,24 @@ void main() {
       ),
     );
     expect(canAddToCart(removeLineAt(lines, 1)), isTrue);
+  });
+
+  test('buildVoiceLines on empty items returns empty lines', () {
+    final lines = buildVoiceLines(VoiceParseResult(items: []));
+    expect(lines, isEmpty);
+    expect(canAddToCart(lines), isFalse);
+  });
+
+  test('quantityAssumed propagates from item to line', () {
+    final itemWithAssumedQty = VoiceItem(
+      heard: 'pepsi',
+      quantity: 1,
+      quantityAssumed: true,
+      matches: [m('1L', 0.95)],
+    );
+    final lines = buildVoiceLines(
+      VoiceParseResult(items: [itemWithAssumedQty]),
+    );
+    expect(lines.single.quantityAssumed, isTrue);
   });
 }
