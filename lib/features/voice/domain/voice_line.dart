@@ -43,7 +43,8 @@ class VoiceLine {
   VoiceLine withQuantity(double newQuantity) => VoiceLine(
     heard: heard,
     quantity: newQuantity,
-    quantityAssumed: quantityAssumed,
+    // A human just supplied this number, so it is no longer assumed.
+    quantityAssumed: false,
     status: status,
     choices: choices,
     chosenProductId: chosenProductId,

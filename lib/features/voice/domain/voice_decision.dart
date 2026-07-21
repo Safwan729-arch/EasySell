@@ -13,7 +13,8 @@ enum VoiceLineStatus {
 }
 
 /// Tunable thresholds mapping model confidences to a review action. Mirrors
-/// [ScanThresholds]; calibrate on real speech in Phase 3.
+/// the ScanThresholds class in lib/features/scan/domain/scan_decision.dart;
+/// calibrate on real speech in Phase 3.
 class VoiceThresholds {
   const VoiceThresholds({
     this.strong = 0.80,
@@ -52,8 +53,15 @@ VoiceLineDecision decideVoiceLine(
   List<VoiceMatch> matches, {
   VoiceThresholds thresholds = const VoiceThresholds(),
 }) {
+  // List.sort is not stable, so equal-confidence candidates need an explicit
+  // tiebreak (by productId) to keep the choice list deterministic across runs.
   final ranked = [...matches]
-    ..sort((a, b) => b.confidence.compareTo(a.confidence));
+    ..sort((a, b) {
+      final byConfidence = b.confidence.compareTo(a.confidence);
+      return byConfidence != 0
+          ? byConfidence
+          : a.productId.compareTo(b.productId);
+    });
   if (ranked.isEmpty) {
     return const VoiceLineDecision(VoiceLineStatus.notFound, []);
   }

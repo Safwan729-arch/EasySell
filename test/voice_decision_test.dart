@@ -96,18 +96,16 @@ void main() {
   });
 
   test(
-    'tie: two identical confidences are ambiguous with both ranked first',
+    'tie: two identical confidences are ambiguous with a deterministic order',
     () {
       // Both at 0.70, gap = 0.70 - 0.70 = 0 < margin (0.15) → ambiguous.
-      // Both are in choices, and order should maintain original input order
-      // (after sort, ties are stable).
-      final d = decideVoiceLine([m('tied-a', 0.70), m('tied-b', 0.70)]);
+      // List.sort is not stable, so equal-confidence candidates are ordered
+      // by productId as a tiebreak, making the result deterministic regardless
+      // of input order.
+      final d = decideVoiceLine([m('tied-b', 0.70), m('tied-a', 0.70)]);
       expect(d.status, VoiceLineStatus.ambiguous);
       expect(d.choices, hasLength(2));
-      expect(
-        d.choices.map((c) => c.productId),
-        containsAll(['tied-a', 'tied-b']),
-      );
+      expect(d.choices.map((c) => c.productId).toList(), ['tied-a', 'tied-b']);
     },
   );
 }

@@ -14,9 +14,10 @@ class VoiceMatch {
     if (productId is! String) {
       throw FormatException('product_id must be a String');
     }
+    final confidence = json['confidence'];
     return VoiceMatch(
       productId: productId,
-      confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+      confidence: confidence is num ? confidence.toDouble() : 0,
     );
   }
 }

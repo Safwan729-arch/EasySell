@@ -106,6 +106,25 @@ void main() {
     expect(r.items.first.heard, '');
   });
 
+  test(
+    'wrong-typed confidence in match degrades to 0 rather than throwing',
+    () {
+      // confidence is a String, not a num
+      final r = VoiceParseResult.fromJson({
+        'items': [
+          {
+            'heard': 'pepsi',
+            'matches': [
+              {'product_id': 'a', 'confidence': 'high'},
+            ],
+          },
+        ],
+      });
+      expect(r.items.first.matches, hasLength(1));
+      expect(r.items.first.matches.first.confidence, 0);
+    },
+  );
+
   test('wrong-typed product_id in match is skipped', () {
     // product_id is a number, not a string
     final r = VoiceParseResult.fromJson({

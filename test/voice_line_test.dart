@@ -65,6 +65,27 @@ void main() {
     expect(line.quantity, 2);
   });
 
+  test(
+    'withQuantity clears quantityAssumed once a human supplies the number',
+    () {
+      // Build from an item with no spoken count, so the starting state is
+      // genuinely assumed (not just constructed with the flag set).
+      final itemWithNoCount = VoiceItem(
+        heard: 'pepsi',
+        quantity: 1,
+        quantityAssumed: true,
+        matches: [m('1L', 0.95)],
+      );
+      final line = buildVoiceLines(
+        VoiceParseResult(items: [itemWithNoCount]),
+      ).single;
+      expect(line.quantityAssumed, isTrue);
+
+      final corrected = line.withQuantity(5);
+      expect(corrected.quantityAssumed, isFalse);
+    },
+  );
+
   test('cannot add to cart while any line is unsettled', () {
     final lines = buildVoiceLines(
       VoiceParseResult(
@@ -109,6 +130,22 @@ void main() {
     final lines = buildVoiceLines(VoiceParseResult(items: []));
     expect(lines, isEmpty);
     expect(canAddToCart(lines), isFalse);
+  });
+
+  test('an ambiguous line blocks canAddToCart until it is settled', () {
+    final lines = buildVoiceLines(
+      VoiceParseResult(
+        items: [
+          item('chips', 3, [m('chips', 0.93)]),
+          item('pepsi', 1, [m('500ml', 0.55), m('1L', 0.52)]),
+        ],
+      ),
+    );
+    expect(lines[1].status, VoiceLineStatus.ambiguous);
+    expect(canAddToCart(lines), isFalse);
+
+    final settled = [lines[0], lines[1].chooseProduct('500ml')];
+    expect(canAddToCart(settled), isTrue);
   });
 
   test('quantityAssumed propagates from item to line', () {
