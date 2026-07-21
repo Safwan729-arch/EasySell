@@ -7,6 +7,7 @@ import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/gradient_bars.dart';
@@ -155,6 +156,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       // notifications surface (push alerts, low-stock/sale
                       // events). No dot until there's a real unread signal.
                       onTap: () => _showNotificationsSheet(context),
+                    ),
+                    const SizedBox(width: 8),
+                    // Permanent door to the customer credit (khata) ledger. The
+                    // receivables card below is hidden when nobody owes money, so
+                    // this header icon is the always-present entry point.
+                    _HeaderIcon(
+                      icon: Icons.people_alt_outlined,
+                      onTap: () => context.push(AppRoutes.customers),
                     ),
                     const SizedBox(width: 8),
                     _HeaderIcon(
