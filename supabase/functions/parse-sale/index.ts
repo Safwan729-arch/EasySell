@@ -1,18 +1,23 @@
 // Supabase Edge Function: parse-sale
-// Voice sale parser. Given a TRANSCRIPT of a shopkeeper's spoken sentence (the
-// phone does speech-to-text on-device) + the shop's product candidates, it asks
-// an LLM to turn the sentence into sale line items matched against those
-// candidates, and returns normalized JSON.
+// Voice sale parser. Accepts either a TRANSCRIPT (on-device speech-to-text,
+// our curl-testable path) or raw AUDIO (audio_base64 + audio_mime). Audio is
+// transcribed by calling the Gemini API directly — Gemini, not Frog, does the
+// "ears" here — then the resulting text is fed into the EXISTING Frog/GPT
+// parse step below, unchanged. The shop's product candidates are matched
+// against the sentence and returned as normalized JSON.
 //
-// Why text, not audio: the Frog gateway does NOT accept audio input — verified
-// 2026-07-22, it rejects an input_audio content block with "Content blocks are
-// expected to be either text or image_url type" and has no /audio/transcriptions
-// endpoint. So the "ears" (speech->text) happen on-device via the speech_to_text
-// plugin; only the resulting TEXT reaches this function.
+// Why Gemini, not Frog, for audio: the Frog gateway does NOT accept audio
+// input — verified 2026-07-22, it rejects an input_audio content block with
+// "Content blocks are expected to be either text or image_url type" and has
+// no /audio/transcriptions endpoint. Gemini has a free tier and accepts audio
+// directly via generateContent, so it does the transcription step, and Frog
+// keeps doing exactly what it always has: turn TEXT into structured sale
+// line items.
 //
-// Like recognize-product it calls **Frog API** — an OpenAI-compatible gateway —
-// so there is one base URL + one key. Keys stay in Supabase secrets (never on
-// the device). MEMBER B owns prompt tuning.
+// Like recognize-product it calls **Frog API** for the parse step — an
+// OpenAI-compatible gateway — so there is one base URL + one key for that
+// half. Keys stay in Supabase secrets (never on the device). MEMBER B owns
+// prompt tuning.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 interface Candidate {
@@ -31,6 +36,12 @@ const API_KEY = Deno.env.get("FROG_API_KEY") ?? "";
 // gpt-5.6-luna) so voice needs no new secret. Model slugs retire, so keep this
 // overridable via a secret.
 const MODEL = Deno.env.get("VOICE_MODEL") ?? Deno.env.get("OPENAI_MODEL") ?? "gpt-5.6-luna";
+
+// Gemini config for the audio-transcription step only. Free-tier key, set by
+// the user. Model defaults to a free, audio-capable Gemini model but stays
+// overridable in case a slug retires.
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+const GEMINI_MODEL = Deno.env.get("GEMINI_TRANSCRIBE_MODEL") ?? "gemini-2.5-flash";
 
 const instruction = (candidates: Candidate[]) =>
   `You turn a shopkeeper's spoken sentence (already transcribed to text) into sale
@@ -55,11 +66,64 @@ Set "heard_text" to the shopkeeper's sentence. Rank each item's matches by
 confidence (highest first). If nothing sale-like was said, return an empty items
 array. Product list: ${JSON.stringify(candidates)}`;
 
+// Transcription prompt for the Gemini audio step. Only bare vocabulary (name +
+// brand) is sent as context hints — never the full candidate JSON with ids;
+// Gemini's job here is hearing words correctly, not matching products.
+const transcribePrompt = (candidates: Candidate[]) => {
+  const hints = [...new Set(
+    candidates
+      .flatMap((c) => [c.name, c.brand])
+      .filter((v): v is string => typeof v === "string" && v.trim().length > 0),
+  )];
+  const hintLine = hints.length
+    ? `\n\nThe shop sells these products — use them as hints for brand/product names you might hear: ${hints.join(", ")}.`
+    : "";
+  return `Transcribe EXACTLY what is said in this audio recording of a shopkeeper describing a sale. The speech may be Bengali, English, or a mix of both. Output ONLY the transcript text, nothing else — no commentary, no quotation marks, no labels.${hintLine}`;
+};
+
 function extractJson(text: string): Record<string, unknown> {
   const cleaned = text.trim().replace(/^```json/i, "").replace(/```$/, "").trim();
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
   return JSON.parse(start >= 0 ? cleaned.slice(start, end + 1) : cleaned);
+}
+
+// One call to Gemini to turn audio into text, BEFORE the existing Frog parse
+// step runs. Frog itself still cannot accept audio (see header comment).
+// Same res.ok guard-and-throw discipline as parse() below, prefixed with
+// "gemini" (vs. "gateway") so Dashboard logs show which provider failed.
+async function transcribe(audioBase64: string, audioMime: string, candidates: Candidate[]) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: transcribePrompt(candidates) },
+              { inline_data: { mime_type: audioMime, data: audioBase64 } },
+            ],
+          },
+        ],
+      }),
+    },
+  );
+  // Same reasoning as the Frog res.ok guard: a non-2xx here (bad key -> 400,
+  // quota -> 429, outage -> 5xx) must not be allowed to fall through to
+  // res.json() and read as an empty transcript.
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`gemini ${res.status}: ${detail.slice(0, 300)}`);
+  }
+  const body = await res.json();
+  const text = body?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (typeof text !== "string") return "";
+  // Gemini sometimes wraps the transcript in quotes or adds a trailing
+  // newline; strip both before treating it as the transcript.
+  return text.trim().replace(/^"([\s\S]*)"$/, "$1").trim();
 }
 
 // One OpenAI-compatible chat call through Frog. NOTE: no `temperature` is sent —
@@ -121,24 +185,56 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   let transcript: unknown;
+  let audioBase64: unknown;
+  let audioMime: unknown;
   let candidates: unknown;
   try {
     const body = await req.json();
     transcript = body.transcript;
+    audioBase64 = body.audio_base64;
+    audioMime = body.audio_mime;
     candidates = body.candidates;
   } catch (_e) {
     return json({ error: "invalid JSON body" }, 400);
   }
-  if (typeof transcript !== "string" || !transcript.trim() || !Array.isArray(candidates)) {
-    return json({ error: "transcript (non-empty string) and candidates are required" }, 400);
+
+  if (!Array.isArray(candidates)) {
+    return json({ error: "candidates (array) is required" }, 400);
   }
+
+  const hasTranscript = typeof transcript === "string" && transcript.trim().length > 0;
+  const hasAudio = typeof audioBase64 === "string" && audioBase64.trim().length > 0;
+
+  if (hasTranscript && hasAudio) {
+    return json({ error: "provide exactly one of transcript or audio_base64, not both" }, 400);
+  }
+  if (!hasTranscript && !hasAudio) {
+    return json({ error: "transcript (non-empty string) or audio_base64 is required" }, 400);
+  }
+  if (hasAudio && !GEMINI_API_KEY) {
+    return json({ error: "audio_base64 was provided but GEMINI_API_KEY is not configured" }, 400);
+  }
+
   try {
-    const raw = await parse(transcript, candidates as Candidate[]);
-    return json(normalize(raw, candidates as Candidate[], transcript), 200);
+    let resolvedTranscript: string;
+    if (hasAudio) {
+      const mime = typeof audioMime === "string" && audioMime.trim() ? audioMime : "audio/m4a";
+      const heard = await transcribe(audioBase64 as string, mime, candidates as Candidate[]);
+      if (!heard.trim()) {
+        // A silent/unintelligible clip is a real "nothing was said" result,
+        // not a failure — same discipline as an empty Frog items array.
+        return json({ heard_text: "", items: [] }, 200);
+      }
+      resolvedTranscript = heard;
+    } else {
+      resolvedTranscript = transcript as string;
+    }
+    const raw = await parse(resolvedTranscript, candidates as Candidate[]);
+    return json(normalize(raw, candidates as Candidate[], resolvedTranscript), 200);
   } catch (e) {
-    // Genuine failures (bad key, Frog outage, non-JSON reply) return 5xx so the
-    // app shows its error/retry state. A real empty result is still a 200 with
-    // items: [] from normalize().
+    // Genuine failures (bad key, Gemini/Frog outage, non-JSON reply) return 5xx
+    // so the app shows its error/retry state. A real empty result is still a
+    // 200 with items: [] from normalize() or the early return above.
     console.error("parse-sale failed:", e);
     return json({ error: "parse failed" }, 502);
   }
