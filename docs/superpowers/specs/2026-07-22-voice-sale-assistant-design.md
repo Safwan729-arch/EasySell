@@ -1,9 +1,39 @@
 # Voice Sale Assistant (speak a sale → cart) — Design
 
 **Date:** 2026-07-22
-**Feature owner:** Member A (Flutter + Supabase), with Member B seam (audio/intent prompt) and Member C seam (microphone capture)
-**Status:** Approved for planning
+**Feature owner:** Member A (Flutter + Supabase), with Member B seam (intent prompt) and Member C seam (speech capture)
+**Status:** Approved for planning — **amended 2026-07-22, see §0**
 **Branch:** `feat/voice-sale` (new, from `feat/customer-credit`) · **Rollback tag:** `checkpoint-pre-voice-sale`
+
+## 0. Amendment — on-device speech-to-text (supersedes the "audio to cloud" approach)
+
+The original design (§2, §3, §5) sent recorded **audio** to the cloud, on the
+premise the Frog gateway could transcribe it. The Task 0 spike (a `probe-audio`
+Edge Function, run 2026-07-22) proved it **cannot**: `/chat/completions` rejects
+an `input_audio` content block (`400: "Content blocks are expected to be either
+text or image_url type"`, gateway-level, any model) and there is no
+`/audio/transcriptions` endpoint (`404`).
+
+**Revised approach (user-approved):** the phone does speech-to-text **on-device**
+(Flutter `speech_to_text` plugin); only the resulting **transcript text** is sent
+to `parse-sale`, which does the understanding + closed-set matching against the
+shop's products. The pipeline is still *speak → cart → review → confirm*.
+
+**What this changes vs the body of this spec:**
+- `parse-sale` request is `{ transcript, candidates }`, not `{ audio_base64, … }`.
+  Its **response shape is unchanged**, so all the client domain logic (§4, and the
+  parser/decision/review-line layer) is reused as-is.
+- The Member C seam is a **speech recognizer** (`speech_to_text`), not an audio
+  recorder. It yields a transcript string, not audio bytes.
+- `VoiceSaleRepository.parse` takes a `transcript` string, not audio bytes.
+- No `VOICE_STRATEGY` / transcription-fallback machinery — there is one text call.
+- **Trade-off accepted:** transcription quality now depends on the device's
+  speech engine. On the S22 (online) English + Bengali are acceptable for the MVP;
+  a dedicated cloud transcriber (e.g. Whisper) remains a future upgrade that would
+  change only the ears stage, not the app.
+
+The sections below are retained for history; where they say "audio", read
+"transcript" per this amendment.
 
 ## 1. Goal
 

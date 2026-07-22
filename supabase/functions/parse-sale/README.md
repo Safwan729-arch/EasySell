@@ -1,44 +1,35 @@
 # parse-sale — deploy & run
 
-Voice sale Edge Function. Given a shopkeeper's spoken sentence (audio) + the
-shop's product candidates, it asks an LLM to transcribe the speech and turn it
+Voice sale Edge Function. Given a **transcript** of a shopkeeper's spoken
+sentence + the shop's product candidates, it asks an LLM to turn the sentence
 into sale line items matched against those candidates, and returns normalized
-JSON. Like `recognize-product` it calls **Frog API** — a single OpenAI-compatible
-gateway serving both OpenAI and Gemini models — so there is one base URL + one
-key. Keys stay in Supabase secrets (never on the device).
+JSON. Like `recognize-product` it calls **Frog API** — an OpenAI-compatible
+gateway — so there is one base URL + one key. Keys stay in Supabase secrets
+(never on the device).
 
-The sibling of `recognize-product`: same gateway, same key, same
-"never trust the model / never invent an id" normalization. Camera in → this is
-microphone in.
+## Why text in, not audio
 
-## How audio reaches the model — run the probe FIRST
-
-An OpenAI-compatible gateway may accept audio one of two ways. Deploy the
-throwaway `probe-audio` function, invoke it once, and read its `recommendation`
-to learn which your gateway supports, then set `VOICE_STRATEGY` accordingly:
-
-- `VOICE_STRATEGY=multimodal` (default) — one `/chat/completions` call with an
-  `input_audio` content part. Simplest.
-- `VOICE_STRATEGY=transcribe` — `/audio/transcriptions` first, then a text chat
-  call. Fallback when the gateway rejects audio inside chat/completions.
-
-Either way the response shape is identical, so the Flutter app never changes.
+Verified 2026-07-22 (probe-audio spike): **Frog does not accept audio.**
+`/chat/completions` rejects an `input_audio` content block
+(`400: "Content blocks are expected to be either text or image_url type"`) and
+there is no `/audio/transcriptions` endpoint (`404`). So the **speech→text step
+runs on-device** (Flutter `speech_to_text` plugin), and only the resulting text
+reaches this function. This function does the *understanding* (transcript →
+line items matched against the shop's products), which is plain text and works.
 
 ## One-time setup
 1. Install the Supabase CLI and log in: `supabase login`
 2. Link the project: `supabase link --project-ref <your-ref>`
-3. Set secrets. Only the key is required; the rest default to Frog values:
+3. Set secrets. Only the key is required; the model defaults to the same
+   `OPENAI_MODEL` the scan feature uses (e.g. `gpt-5.6-luna`), so no new model
+   secret is needed:
    ```
-   supabase secrets set FROG_API_KEY=xxxxx              # required (already set for recognize-product)
-   supabase secrets set VOICE_STRATEGY=multimodal       # or 'transcribe' — from the probe result
+   supabase secrets set FROG_API_KEY=xxxxx        # required (already set for recognize-product)
    ```
-   The chat model defaults to `OPENAI_MODEL` (the same slug the scan feature
-   uses, e.g. `GPT-5.6-Sol`), so no new model secret is needed. Optional
-   overrides if a default is rejected:
+   Optional overrides if a default is rejected:
    ```
    supabase secrets set FROG_BASE_URL=https://frogapi.app/v1
-   supabase secrets set VOICE_MODEL=GPT-5.6-Sol             # exact slug from the dashboard
-   supabase secrets set VOICE_TRANSCRIBE_MODEL=whisper-1    # only used by the 'transcribe' strategy
+   supabase secrets set VOICE_MODEL=gpt-5.6-luna    # exact lowercase slug from the Frog dashboard
    ```
 4. Deploy: `supabase functions deploy parse-sale`
 
@@ -47,8 +38,7 @@ Either way the response shape is identical, so the Flutter app never changes.
 Request:
 ```jsonc
 {
-  "audio_base64": "<audio bytes, base64>",
-  "audio_mime": "audio/m4a",
+  "transcript": "sold 2 pepsi and 3 chips",
   "candidates": [
     { "id": "uuid", "name": "Pepsi 1L", "brand": "Pepsi", "variant": "1L", "unit": "pcs" }
   ]
@@ -67,16 +57,18 @@ Response:
 ```
 
 Genuine failures (bad key, gateway outage, unparseable reply) return **502** so
-the app shows a retry state; a real "nothing recognized" is a **200** with an
-empty `items` array.
+the app shows a retry state; a real "nothing sale-like was said" is a **200**
+with an empty `items` array.
 
-## Smoke test
+## Smoke test (no audio needed — it takes text)
 ```
 curl -s -X POST "$SUPABASE_URL/functions/v1/parse-sale" \
   -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
   -H "Content-Type: application/json" \
-  -d "{\"audio_base64\":\"$(base64 -w0 sample.m4a)\",\"audio_mime\":\"audio/m4a\",\"candidates\":[{\"id\":\"p1\",\"name\":\"Pepsi 1L\",\"variant\":\"1L\"}]}"
+  -d '{"transcript":"sold 2 pepsi","candidates":[{"id":"p1","name":"Pepsi 1L","variant":"1L"},{"id":"p2","name":"Pepsi 500ml","variant":"500ml"}]}'
 ```
+Because "pepsi" alone does not say which size, a correct response returns BOTH
+candidates with similar confidence (the app then asks the user).
 
 ## Run the app with voice enabled
 ```
