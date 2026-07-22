@@ -1,0 +1,256 @@
+import 'package:ai_shopkeeper/core/config/theme.dart';
+import 'package:ai_shopkeeper/core/error/result.dart';
+import 'package:ai_shopkeeper/features/auth/data/auth_repository.dart';
+import 'package:ai_shopkeeper/features/inventory/domain/category.dart';
+import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
+import 'package:ai_shopkeeper/features/inventory/presentation/category_controller.dart';
+import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controller.dart';
+import 'package:ai_shopkeeper/features/inventory/presentation/inventory_list_screen.dart';
+import 'package:ai_shopkeeper/features/voice/data/speech_recognizer.dart';
+import 'package:ai_shopkeeper/features/voice/data/voice_sale_repository.dart';
+import 'package:ai_shopkeeper/features/voice/domain/voice_parse_result.dart';
+import 'package:ai_shopkeeper/features/voice/presentation/voice_controller.dart';
+import 'package:ai_shopkeeper/features/voice/presentation/voice_sale_sheet.dart';
+import 'package:ai_shopkeeper/l10n/app_localizations.dart';
+import 'package:ai_shopkeeper/shared/providers/locale_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+/// Fake recognizer that hands control of partial/final results to the test:
+/// `start()` just captures `onResult` instead of firing immediately, so a test
+/// can simulate the mic hearing words incrementally via [emit]. `initOk`
+/// mirrors a permission grant/denial for the mic-denied error test.
+class _FakeRecognizer implements SpeechRecognizerPort {
+  _FakeRecognizer({this.initOk = true});
+  final bool initOk;
+  void Function(String text, bool isFinal)? _onResult;
+
+  @override
+  Future<bool> initialize() async => initOk;
+
+  @override
+  Future<void> start({
+    required String localeId,
+    required void Function(String text, bool isFinal) onResult,
+  }) async {
+    _onResult = onResult;
+  }
+
+  void emit(String text, {bool isFinal = false}) =>
+      _onResult?.call(text, isFinal);
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> cancel() async {}
+}
+
+/// Fake repository: `implements` (not `extends`) so the real
+/// [VoiceSaleRepository]'s private Supabase client field never needs
+/// constructing -- same trick `voice_review_sheet_test.dart` uses.
+class _FakeVoiceRepo implements VoiceSaleRepository {
+  _FakeVoiceRepo(this._result);
+  final Result<VoiceParseResult> _result;
+
+  @override
+  Future<Result<VoiceParseResult>> parse({
+    required String transcript,
+    required List<Map<String, dynamic>> candidates,
+  }) async => _result;
+}
+
+Product _p(String id, {required String name}) =>
+    Product(id: id, shopId: 's', name: name, quantity: 10);
+
+ProviderContainer _container({
+  required _FakeRecognizer recognizer,
+  Result<VoiceParseResult>? parseResult,
+  List<Product> products = const [],
+}) {
+  return ProviderContainer(
+    overrides: [
+      speechRecognizerProvider.overrideWithValue(recognizer),
+      voiceSaleRepositoryProvider.overrideWithValue(
+        _FakeVoiceRepo(
+          parseResult ?? Result.success(VoiceParseResult(items: const [])),
+        ),
+      ),
+      productsStreamProvider.overrideWith((ref) => Stream.value(products)),
+    ],
+  );
+}
+
+Widget _harness(ProviderContainer container, {required Widget child}) =>
+    UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        theme: AppTheme.light,
+        locale: const Locale('en'),
+        supportedLocales: supportedAppLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: Scaffold(body: child),
+      ),
+    );
+
+void main() {
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+
+  testWidgets('idle shows the mic hint; tapping mic transitions to listening', (
+    tester,
+  ) async {
+    final recognizer = _FakeRecognizer();
+    final container = _container(recognizer: recognizer);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_harness(container, child: const VoiceSaleSheet()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hold and say what you sold'), findsOneWidget);
+    expect(find.byIcon(Icons.mic), findsOneWidget);
+
+    // Not pumpAndSettle: the listening pane's pulsing mic repeats forever, so
+    // pumpAndSettle would never observe animations settling.
+    await tester.tap(find.byIcon(Icons.mic));
+    await tester.pump();
+
+    expect(container.read(voiceControllerProvider).phase, VoicePhase.listening);
+    expect(find.text('Listening…'), findsOneWidget);
+    expect(find.byIcon(Icons.stop), findsOneWidget);
+  });
+
+  testWidgets('listening shows the live transcript growing from partials', (
+    tester,
+  ) async {
+    final recognizer = _FakeRecognizer();
+    final container = _container(recognizer: recognizer);
+    addTearDown(container.dispose);
+
+    await container.read(voiceControllerProvider.notifier).startListening();
+    // Not pumpAndSettle here either -- same repeating pulse animation.
+    await tester.pumpWidget(_harness(container, child: const VoiceSaleSheet()));
+    await tester.pump();
+
+    expect(find.text('sold'), findsNothing);
+
+    recognizer.emit('sold');
+    await tester.pump();
+    expect(find.text('sold'), findsOneWidget);
+
+    recognizer.emit('sold two pepsi');
+    await tester.pump();
+    expect(find.text('sold two pepsi'), findsOneWidget);
+    expect(find.text('sold'), findsNothing);
+  });
+
+  testWidgets(
+    'error phase with micDenied shows the mapped l10n string and Retry '
+    'resets to idle',
+    (tester) async {
+      final recognizer = _FakeRecognizer(initOk: false);
+      final container = _container(recognizer: recognizer);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _harness(container, child: const VoiceSaleSheet()),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pumpAndSettle();
+
+      expect(container.read(voiceControllerProvider).phase, VoicePhase.error);
+      expect(
+        find.text('Microphone access is off. Turn it on in Settings.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(voiceControllerProvider).phase, VoicePhase.idle);
+      expect(find.text('Hold and say what you sold'), findsOneWidget);
+    },
+  );
+
+  testWidgets('reviewing phase renders the review sheet\'s title', (
+    tester,
+  ) async {
+    final recognizer = _FakeRecognizer();
+    final parsed = VoiceParseResult(
+      items: [
+        VoiceItem(
+          heard: 'pepsi',
+          quantity: 2,
+          quantityAssumed: false,
+          matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+        ),
+      ],
+    );
+    final container = _container(
+      recognizer: recognizer,
+      parseResult: Result.success(parsed),
+      products: [_p('p1', name: 'Pepsi 500ml')],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(voiceControllerProvider.notifier);
+    await notifier.startListening();
+    recognizer.emit('sold 2 pepsi', isFinal: true);
+    await notifier.stopAndParse();
+
+    expect(container.read(voiceControllerProvider).phase, VoicePhase.reviewing);
+
+    await tester.pumpWidget(_harness(container, child: const VoiceSaleSheet()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Speak a sale'), findsOneWidget); // voice_title
+    expect(find.text('Add to cart'), findsOneWidget); // VoiceReviewSheet footer
+  });
+
+  group('entry point flag gating', () {
+    // FeatureFlags.voiceSaleEnabled is a compile-time `bool.fromEnvironment`
+    // read, which is fixed at compile time -- a widget test process can't
+    // flip it mid-run. `flutter test --dart-define=VOICE_SALE_ENABLED=true`
+    // would flip the *whole* compilation, not just this test, so a single
+    // `flutter test` invocation can only ever observe one value of the flag.
+    // This test instead pins down the behavior that actually matters for the
+    // default (and CI/release) build: with no dart-define passed -- the flag's
+    // documented default -- the host screen must build cleanly with the mic
+    // action entirely absent. A manual check that the flag flips the button
+    // on is recorded in task-12-report.md (`flutter test
+    // --dart-define=VOICE_SALE_ENABLED=true`).
+    testWidgets(
+      'with the flag at its default (off), the inventory screen builds '
+      'without a mic action',
+      (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            myShopProvider.overrideWith((ref) async => null),
+            productsStreamProvider.overrideWith(
+              (ref) => Stream.value(const <Product>[]),
+            ),
+            usedCategoriesProvider.overrideWith((ref) => const <Category>[]),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          _harness(container, child: const InventoryListScreen()),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.mic_none), findsNothing);
+        expect(find.byTooltip('Speak a sale'), findsNothing);
+      },
+    );
+  });
+}

@@ -16,6 +16,7 @@ import '../../../core/widgets/skeleton.dart';
 import '../../../shared/extensions/format.dart';
 import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../voice/presentation/voice_sale_sheet.dart';
 import '../domain/product.dart';
 import 'category_controller.dart';
 import 'inventory_controller.dart';
@@ -141,6 +142,14 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                     ),
                     const SizedBox(width: 8),
                   ],
+                  if (FeatureFlags.voiceSaleEnabled) ...[
+                    IconButton.filled(
+                      onPressed: () => showVoiceSaleSheet(context, ref),
+                      icon: const Icon(Icons.mic_none),
+                      tooltip: l10n.voice_title,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   IconButton.filled(
                     onPressed: () => context.push('/inventory/new'),
                     icon: const Icon(Icons.add),
@@ -177,7 +186,9 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                 selected: activeFilter,
                 labelOf: (f) => f.lowOnly
                     ? l10n.inventory_filterLowStock
-                    : (f.categoryId == null ? l10n.inventory_filterAll : f.label),
+                    : (f.categoryId == null
+                          ? l10n.inventory_filterAll
+                          : f.label),
                 onChanged: (f) => setState(() => _selected = f),
               ),
             ),
@@ -185,7 +196,9 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
               child: productsAsync.when(
                 loading: () => const _ListSkeleton(),
                 error: (e, _) => _ErrorState(
-                  message: e is Failure ? e.message : l10n.inventory_couldNotLoad,
+                  message: e is Failure
+                      ? e.message
+                      : l10n.inventory_couldNotLoad,
                   onRetry: () => ref.invalidate(productsStreamProvider),
                 ),
                 data: (products) {
@@ -402,7 +415,10 @@ class _ErrorState extends StatelessWidget {
             child: Text(message, textAlign: TextAlign.center),
           ),
           const SizedBox(height: 12),
-          FilledButton.tonal(onPressed: onRetry, child: Text(context.l10n.common_retry)),
+          FilledButton.tonal(
+            onPressed: onRetry,
+            child: Text(context.l10n.common_retry),
+          ),
         ],
       ),
     );
