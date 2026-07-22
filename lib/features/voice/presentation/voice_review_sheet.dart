@@ -15,18 +15,6 @@ import '../domain/voice_line.dart';
 import '../domain/voice_parse_result.dart';
 import 'voice_controller.dart';
 
-/// Presents [VoiceReviewSheet] as a modal bottom sheet -- mirrors the other
-/// `show*Sheet` entry points (`showAddToCartSheet`, `showProductPickerSheet`).
-Future<void> showVoiceReviewSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    builder: (_) => const VoiceReviewSheet(),
-  );
-}
-
 /// The last stop before a spoken sale touches the cart: one row per line the
 /// AI parsed, letting the shopkeeper fix a mishear, settle an ambiguous
 /// match, or drop something entirely before anything is committed. Every
@@ -98,7 +86,7 @@ class VoiceReviewSheet extends ConsumerWidget {
           Text(l10n.voice_title, style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
-            '${l10n.voice_heard} "${state.liveTranscript}"',
+            '${l10n.voice_heard} "${state.heardText ?? state.liveTranscript}"',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

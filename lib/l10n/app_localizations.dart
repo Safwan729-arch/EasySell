@@ -1835,7 +1835,7 @@ abstract class AppLocalizations {
   /// No description provided for @voice_hintIdle.
   ///
   /// In en, this message translates to:
-  /// **'Hold and say what you sold'**
+  /// **'Tap the mic and say what you sold'**
   String get voice_hintIdle;
 
   /// No description provided for @voice_recording.
@@ -1861,12 +1861,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Which one?'**
   String get voice_whichOne;
-
-  /// No description provided for @voice_notFound.
-  ///
-  /// In en, this message translates to:
-  /// **'Not found'**
-  String get voice_notFound;
 
   /// No description provided for @voice_pick.
   ///

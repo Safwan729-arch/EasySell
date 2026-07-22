@@ -1047,7 +1047,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get voice_title => 'বিক্রির কথা বলুন';
 
   @override
-  String get voice_hintIdle => 'চেপে ধরে বলুন কী বিক্রি হয়েছে';
+  String get voice_hintIdle => 'মাইকে ট্যাপ করে বলুন কী বিক্রি হয়েছে';
 
   @override
   String get voice_recording => 'শুনছি…';
@@ -1060,9 +1060,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get voice_whichOne => 'কোনটি?';
-
-  @override
-  String get voice_notFound => 'পাওয়া যায়নি';
 
   @override
   String get voice_pick => 'বেছে নিন';

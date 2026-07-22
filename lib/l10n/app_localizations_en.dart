@@ -1053,7 +1053,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voice_title => 'Speak a sale';
 
   @override
-  String get voice_hintIdle => 'Hold and say what you sold';
+  String get voice_hintIdle => 'Tap the mic and say what you sold';
 
   @override
   String get voice_recording => 'Listening…';
@@ -1066,9 +1066,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voice_whichOne => 'Which one?';
-
-  @override
-  String get voice_notFound => 'Not found';
 
   @override
   String get voice_pick => 'Pick';

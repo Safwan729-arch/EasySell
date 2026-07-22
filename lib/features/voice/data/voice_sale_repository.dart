@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,7 +13,7 @@ import '../domain/voice_parse_result.dart';
 /// Maps transport errors to user-facing failures. Top-level so it is directly
 /// unit-testable without constructing a Supabase client.
 Failure mapVoiceFailure(Object e) {
-  if (e is FunctionException) {
+  if (e is FunctionException || e is TimeoutException) {
     return const DatabaseFailure(
       'Could not understand that right now. Please try again.',
     );
@@ -36,10 +37,12 @@ class VoiceSaleRepository {
     required List<Map<String, dynamic>> candidates,
   }) async {
     try {
-      final res = await _client.functions.invoke(
-        'parse-sale',
-        body: {'transcript': transcript, 'candidates': candidates},
-      );
+      final res = await _client.functions
+          .invoke(
+            'parse-sale',
+            body: {'transcript': transcript, 'candidates': candidates},
+          )
+          .timeout(const Duration(seconds: 30));
       final data = res.data;
       final map = data is String ? jsonDecode(data) : data;
       return Result.success(

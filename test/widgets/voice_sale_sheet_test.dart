@@ -119,7 +119,7 @@ void main() {
     await tester.pumpWidget(_harness(container, child: const VoiceSaleSheet()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Hold and say what you sold'), findsOneWidget);
+    expect(find.text('Tap the mic and say what you sold'), findsOneWidget);
     expect(find.byIcon(Icons.mic), findsOneWidget);
 
     // Not pumpAndSettle: the listening pane's pulsing mic repeats forever, so
@@ -182,7 +182,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(container.read(voiceControllerProvider).phase, VoicePhase.idle);
-      expect(find.text('Hold and say what you sold'), findsOneWidget);
+      expect(find.text('Tap the mic and say what you sold'), findsOneWidget);
     },
   );
 

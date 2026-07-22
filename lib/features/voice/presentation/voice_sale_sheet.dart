@@ -9,7 +9,7 @@ import 'voice_controller.dart';
 import 'voice_review_sheet.dart';
 
 /// Presents [VoiceSaleSheet] as a modal bottom sheet -- mirrors the other
-/// `show*Sheet` entry points (`showAddToCartSheet`, `showVoiceReviewSheet`).
+/// `show*Sheet` entry points (`showAddToCartSheet`, `showProductPickerSheet`).
 /// A live recognizer must never keep listening once the sheet is gone, so
 /// dismissal by ANY route -- swipe, back button, or the phase reaching
 /// `reviewing` and the review sheet popping itself -- always resets the

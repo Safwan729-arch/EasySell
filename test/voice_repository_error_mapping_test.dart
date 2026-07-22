@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:ai_shopkeeper/core/error/failure.dart';
@@ -22,6 +23,17 @@ void main() {
 
     test('anything else becomes an UnexpectedFailure', () {
       expect(mapVoiceFailure(Exception('boom')), isA<UnexpectedFailure>());
+    });
+
+    test('a timeout becomes the same friendly DatabaseFailure as a function '
+        'error, with no jargon', () {
+      final f = mapVoiceFailure(TimeoutException('parse-sale timed out'));
+      expect(f, isA<DatabaseFailure>());
+      expect(
+        f.message,
+        'Could not understand that right now. Please try again.',
+      );
+      expect(f.message, isNot(contains('Timeout')));
     });
   });
 }

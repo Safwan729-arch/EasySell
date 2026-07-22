@@ -364,4 +364,35 @@ void main() {
 
     expect(find.textContaining('sold 2 pepsi'), findsOneWidget);
   });
+
+  testWidgets('renders heardText (what the parser saw), not the possibly-stale '
+      'liveTranscript', (tester) async {
+    final parsed = VoiceParseResult(
+      heardText: 'sold 2 pepsi',
+      items: [
+        VoiceItem(
+          heard: 'pepsi',
+          quantity: 2,
+          quantityAssumed: false,
+          matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+        ),
+      ],
+    );
+    // liveTranscript (from the recognizer) and heardText (what parse-sale
+    // actually worked from) deliberately differ here -- e.g. a late
+    // same-session recognizer callback mutated liveTranscript during
+    // `thinking`, after the parser had already been sent the earlier text.
+    final container = await _reviewingContainer(
+      transcript: 'sold 2 pepsi extra late words',
+      parsed: parsed,
+      products: [_p('p1', name: 'Pepsi 500ml')],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_harness(container));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('sold 2 pepsi extra late words'), findsNothing);
+    expect(find.textContaining('I heard "sold 2 pepsi"'), findsOneWidget);
+  });
 }
