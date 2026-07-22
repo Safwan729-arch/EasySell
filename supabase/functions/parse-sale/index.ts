@@ -123,7 +123,8 @@ async function transcribe(audioBase64: string, audioMime: string, candidates: Ca
   // same thing as silence — it means a safety block, quota oddity, or an API
   // shape change, and must surface as a 502 (retry), never a silent "".
   const parts = body?.candidates?.[0]?.content?.parts;
-  if (!Array.isArray(body?.candidates) || body.candidates.length === 0 || !Array.isArray(parts)) {
+  if (!Array.isArray(body?.candidates) || body.candidates.length === 0 ||
+      !Array.isArray(parts) || parts.length === 0) {
     throw new Error(`gemini: unexpected response shape: ${JSON.stringify(body).slice(0, 300)}`);
   }
   // gemini-2.5 models can default to internal "thinking": parts[0] may be a
