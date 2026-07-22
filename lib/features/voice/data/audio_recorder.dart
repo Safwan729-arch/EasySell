@@ -73,7 +73,7 @@ class RecordAudioRecorder implements AudioRecorderPort {
       if (!await file.exists()) return null;
       final bytes = await file.readAsBytes();
       if (bytes.isEmpty) return null;
-      return (bytes: bytes, mime: 'audio/m4a');
+      return (bytes: bytes, mime: 'audio/aac');
     } finally {
       await _deleteQuietly(file);
     }

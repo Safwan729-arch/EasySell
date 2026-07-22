@@ -28,12 +28,18 @@ const _unset = Object();
 /// Fake recorder: records which calls it received and hands back a
 /// configurable `stop()` result (including `null`, for "nothing captured").
 class _FakeAudioRecorder implements AudioRecorderPort {
-  _FakeAudioRecorder({this.permissionOk = true, Object? stopResult = _unset})
-    : stopResult = identical(stopResult, _unset)
-          ? _defaultRecording
-          : stopResult as ({Uint8List bytes, String mime})?;
+  _FakeAudioRecorder({
+    this.permissionOk = true,
+    Object? stopResult = _unset,
+    this.throwOnStart = false,
+    this.throwOnStop = false,
+  }) : stopResult = identical(stopResult, _unset)
+           ? _defaultRecording
+           : stopResult as ({Uint8List bytes, String mime})?;
 
   final bool permissionOk;
+  final bool throwOnStart;
+  final bool throwOnStop;
   ({Uint8List bytes, String mime})? stopResult;
   bool started = false;
   bool stopped = false;
@@ -43,10 +49,14 @@ class _FakeAudioRecorder implements AudioRecorderPort {
   Future<bool> hasPermission() async => permissionOk;
 
   @override
-  Future<void> start() async => started = true;
+  Future<void> start() async {
+    if (throwOnStart) throw Exception('mic busy');
+    started = true;
+  }
 
   @override
   Future<({Uint8List bytes, String mime})?> stop() async {
+    if (throwOnStop) throw Exception('stop failed');
     stopped = true;
     return stopResult;
   }
@@ -157,6 +167,37 @@ void main() {
 
       expect(c.read(voiceControllerProvider).phase, VoicePhase.listening);
       expect(recorder.started, isTrue);
+    });
+
+    test('startListening: recorder.start() throws -> error noSpeech and the '
+        'recorder is not left started', () async {
+      final recorder = _FakeAudioRecorder(throwOnStart: true);
+      final c = _makeContainer(
+        recorder: recorder,
+        repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
+      );
+
+      await c.read(voiceControllerProvider.notifier).startListening();
+
+      final state = c.read(voiceControllerProvider);
+      expect(state.phase, VoicePhase.error);
+      expect(state.errorMessage, 'noSpeech');
+      expect(recorder.started, isFalse);
+    });
+
+    test('stopAndParse: recorder.stop() throws -> error noSpeech and parse is '
+        'never called', () async {
+      final recorder = _FakeAudioRecorder(throwOnStop: true);
+      final repo = _FakeVoiceRepo(const Result.success(VoiceParseResult()));
+      final c = _makeContainer(recorder: recorder, repo: repo);
+
+      await c.read(voiceControllerProvider.notifier).startListening();
+      await c.read(voiceControllerProvider.notifier).stopAndParse();
+
+      final state = c.read(voiceControllerProvider);
+      expect(state.phase, VoicePhase.error);
+      expect(state.errorMessage, 'noSpeech');
+      expect(repo.lastAudioBytes, isNull);
     });
 
     test('stopAndParse: recorder captured nothing -> error noSpeech', () async {

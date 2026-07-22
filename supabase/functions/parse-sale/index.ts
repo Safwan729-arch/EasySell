@@ -1,10 +1,11 @@
 // Supabase Edge Function: parse-sale
-// Voice sale parser. Accepts either a TRANSCRIPT (on-device speech-to-text,
-// our curl-testable path) or raw AUDIO (audio_base64 + audio_mime). Audio is
-// transcribed by calling the Gemini API directly — Gemini, not Frog, does the
-// "ears" here — then the resulting text is fed into the EXISTING Frog/GPT
-// parse step below, unchanged. The shop's product candidates are matched
-// against the sentence and returned as normalized JSON.
+// Voice sale parser. Accepts either a TRANSCRIPT (a curl-testable path kept
+// for direct debugging — the app itself always sends audio) or raw AUDIO
+// (audio_base64 + audio_mime). Audio is transcribed by calling the Gemini API
+// directly — Gemini, not Frog, does the "ears" here — then the resulting text
+// is fed into the EXISTING Frog/GPT parse step below, unchanged. The shop's
+// product candidates are matched against the sentence and returned as
+// normalized JSON.
 //
 // Why Gemini, not Frog, for audio: the Frog gateway does NOT accept audio
 // input — verified 2026-07-22, it rejects an input_audio content block with
@@ -232,7 +233,7 @@ Deno.serve(async (req) => {
   try {
     let resolvedTranscript: string;
     if (hasAudio) {
-      const mime = typeof audioMime === "string" && audioMime.trim() ? audioMime : "audio/m4a";
+      const mime = typeof audioMime === "string" && audioMime.trim() ? audioMime : "audio/aac";
       const heard = await transcribe(audioBase64 as string, mime, candidates as Candidate[]);
       if (!heard.trim()) {
         // A silent/unintelligible clip is a real "nothing was said" result,

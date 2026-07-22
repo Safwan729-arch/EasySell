@@ -1,4 +1,5 @@
 import 'dart:async' show unawaited;
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -81,7 +82,16 @@ class VoiceController extends Notifier<VoiceSaleState> {
     }
 
     state = state.copyWith(phase: VoicePhase.listening);
-    await recorder.start();
+    try {
+      await recorder.start();
+    } catch (_) {
+      // The `record` plugin throws readily (mic held by another app, encoder
+      // failure); nothing was captured, so this is the same user-facing
+      // outcome as "no speech" -- and it's truthful, since nothing was heard.
+      unawaited(recorder.cancel());
+      if (_session != session) return; // superseded while awaiting start()
+      state = state.copyWith(phase: VoicePhase.error, errorMessage: 'noSpeech');
+    }
   }
 
   Future<void> stopAndParse() async {
@@ -90,7 +100,17 @@ class VoiceController extends Notifier<VoiceSaleState> {
     final session = _session;
 
     final recorder = ref.read(audioRecorderProvider);
-    final recording = await recorder.stop();
+    ({Uint8List bytes, String mime})? recording;
+    try {
+      recording = await recorder.stop();
+    } catch (_) {
+      // Same reasoning as the start() catch above: a stop() throw means
+      // nothing usable was captured, so it's a "no speech" outcome, not a
+      // crash. No parse call happens.
+      if (_session != session) return;
+      state = state.copyWith(phase: VoicePhase.error, errorMessage: 'noSpeech');
+      return;
+    }
     if (_session != session) return;
 
     if (recording == null) {

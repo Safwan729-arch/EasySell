@@ -66,7 +66,7 @@ Audio in:
 ```jsonc
 {
   "audio_base64": "<base64-encoded audio bytes, no data: prefix>",
-  "audio_mime": "audio/m4a",           // optional, defaults to "audio/m4a"
+  "audio_mime": "audio/aac",           // optional, defaults to "audio/aac"
   "candidates": [
     { "id": "uuid", "name": "Pepsi 1L", "brand": "Pepsi", "variant": "1L", "unit": "pcs" }
   ]
@@ -112,7 +112,7 @@ choke on shell-escaping a huge string:
 ```bash
 python3 -c "import base64,json; print(json.dumps({
   'audio_base64': base64.b64encode(open('sample.m4a','rb').read()).decode(),
-  'audio_mime': 'audio/m4a',
+  'audio_mime': 'audio/aac',
   'candidates': [
     {'id': 'p1', 'name': 'Pepsi 1L', 'variant': '1L'},
     {'id': 'p2', 'name': 'Pepsi 500ml', 'variant': '500ml'}
