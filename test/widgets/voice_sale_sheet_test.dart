@@ -22,11 +22,14 @@ import 'package:google_fonts/google_fonts.dart';
 /// Fake recognizer that hands control of partial/final results to the test:
 /// `start()` just captures `onResult` instead of firing immediately, so a test
 /// can simulate the mic hearing words incrementally via [emit]. `initOk`
-/// mirrors a permission grant/denial for the mic-denied error test.
+/// mirrors a permission grant/denial for the mic-denied error test. Records
+/// whether [cancel] was ever called so a test can prove a live recognizer was
+/// actually torn down (not just that the UI stopped rendering it).
 class _FakeRecognizer implements SpeechRecognizerPort {
   _FakeRecognizer({this.initOk = true});
   final bool initOk;
   void Function(String text, bool isFinal)? _onResult;
+  bool canceled = false;
 
   @override
   Future<bool> initialize() async => initOk;
@@ -46,7 +49,9 @@ class _FakeRecognizer implements SpeechRecognizerPort {
   Future<void> stop() async {}
 
   @override
-  Future<void> cancel() async {}
+  Future<void> cancel() async {
+    canceled = true;
+  }
 }
 
 /// Fake repository: `implements` (not `extends`) so the real
@@ -215,6 +220,61 @@ void main() {
     expect(find.text('Speak a sale'), findsOneWidget); // voice_title
     expect(find.text('Add to cart'), findsOneWidget); // VoiceReviewSheet footer
   });
+
+  testWidgets(
+    'showVoiceSaleSheet resets the controller and cancels the recognizer '
+    'when the sheet is dismissed without completing the flow',
+    (tester) async {
+      final recognizer = _FakeRecognizer();
+      final container = _container(recognizer: recognizer);
+      addTearDown(container.dispose);
+
+      // Goes through the real showVoiceSaleSheet entry point (not
+      // VoiceSaleSheet pumped directly) so the `.whenComplete(reset)` wiring
+      // itself is exercised, not bypassed.
+      await tester.pumpWidget(
+        _harness(
+          container,
+          child: Consumer(
+            builder: (context, ref, _) => ElevatedButton(
+              onPressed: () => showVoiceSaleSheet(context, ref),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      // Enter `listening` with the fake recognizer live -- not
+      // pumpAndSettle: the listening pane's pulsing mic repeats forever.
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump();
+
+      expect(
+        container.read(voiceControllerProvider).phase,
+        VoicePhase.listening,
+      );
+      expect(recognizer.canceled, isFalse);
+
+      // Dismiss the sheet by popping its route directly -- deterministic,
+      // and exercises the exact same Future the sheet's swipe-to-dismiss and
+      // back button resolve through.
+      Navigator.of(tester.element(find.byIcon(Icons.stop))).pop();
+      await tester.pumpAndSettle();
+
+      expect(container.read(voiceControllerProvider).phase, VoicePhase.idle);
+      expect(container.read(voiceControllerProvider).liveTranscript, '');
+      expect(
+        recognizer.canceled,
+        isTrue,
+        reason:
+            'showVoiceSaleSheet must reset() on dismissal so a live '
+            'recognizer never keeps listening in the background',
+      );
+    },
+  );
 
   group('entry point flag gating', () {
     // FeatureFlags.voiceSaleEnabled is a compile-time `bool.fromEnvironment`

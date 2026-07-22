@@ -269,6 +269,11 @@ class _ErrorPane extends StatelessWidget {
     'noSpeech' => l10n.voice_errNoSpeech,
     'noMatch' => l10n.voice_errNoMatch,
     final other? => other,
+    // Unreachable in practice -- every real transition to `error` sets a
+    // non-null errorMessage (a magic key or a repository Failure.message).
+    // Kept only so the switch stays exhaustive over String?; deliberately
+    // returns the same copy as the 'noMatch' case above rather than implying
+    // some distinct behavior.
     null => l10n.voice_errNoMatch,
   };
 
