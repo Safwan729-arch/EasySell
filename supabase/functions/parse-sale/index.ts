@@ -119,10 +119,23 @@ async function transcribe(audioBase64: string, audioMime: string, candidates: Ca
     throw new Error(`gemini ${res.status}: ${detail.slice(0, 300)}`);
   }
   const body = await res.json();
-  const text = body?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (typeof text !== "string") return "";
+  // A missing/empty candidates array or a non-array parts list is NOT the
+  // same thing as silence — it means a safety block, quota oddity, or an API
+  // shape change, and must surface as a 502 (retry), never a silent "".
+  const parts = body?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(body?.candidates) || body.candidates.length === 0 || !Array.isArray(parts)) {
+    throw new Error(`gemini: unexpected response shape: ${JSON.stringify(body).slice(0, 300)}`);
+  }
+  // gemini-2.5 models can default to internal "thinking": parts[0] may be a
+  // thought segment, with the real answer in a later part. Join every part's
+  // text EXCEPT parts flagged `thought: true` — never blindly read parts[0].
+  const text = parts
+    .filter((p: Record<string, unknown>) => !p?.thought)
+    .map((p: Record<string, unknown>) => (typeof p?.text === "string" ? p.text : ""))
+    .join(" ");
   // Gemini sometimes wraps the transcript in quotes or adds a trailing
-  // newline; strip both before treating it as the transcript.
+  // newline; strip both before treating it as the transcript. An empty
+  // result AFTER this is real silence -> the short-circuit 200 below.
   return text.trim().replace(/^"([\s\S]*)"$/, "$1").trim();
 }
 

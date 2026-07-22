@@ -91,7 +91,10 @@ returning an empty/whitespace transcript short-circuits to
 Genuine failures (bad key, gateway/Gemini outage, unparseable reply) return
 **502** so the app shows a retry state; missing/duplicate input fields
 (neither or both of `transcript`/`audio_base64`, missing `candidates`, or
-audio sent with no `GEMINI_API_KEY` configured) return **400**.
+audio sent with no `GEMINI_API_KEY` configured) return **400**. An
+unexpected Gemini response shape (missing/empty `candidates`, or a
+non-array `parts` list — e.g. a safety block or an API change) is also a
+**502** (retry) — it is never treated as a silent empty transcript.
 
 ## Smoke test — text (no audio needed — it takes text)
 ```
