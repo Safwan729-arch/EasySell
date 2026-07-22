@@ -186,6 +186,92 @@ void main() {
     );
   });
 
+  testWidgets(
+    'choosing a candidate keeps the chips visible, grows a stepper, and the '
+    'stepper still mutates the line',
+    (tester) async {
+      final parsed = VoiceParseResult(
+        items: [
+          VoiceItem(
+            heard: 'pepsi',
+            quantity: 1,
+            quantityAssumed: true,
+            matches: const [
+              VoiceMatch(productId: 'p1', confidence: 0.6),
+              VoiceMatch(productId: 'p2', confidence: 0.55),
+            ],
+          ),
+        ],
+      );
+      final container = await _reviewingContainer(
+        parsed: parsed,
+        products: [
+          _p('p1', name: 'Pepsi 500ml'),
+          _p('p2', name: 'Pepsi 1L'),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_harness(container));
+      await tester.pumpAndSettle();
+
+      // Unsettled yet -- no stepper (no +/- icons) should exist.
+      expect(find.byIcon(Icons.add), findsNothing);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Pepsi 1L'));
+      await tester.pumpAndSettle();
+
+      // Settled now: both chips remain (Pepsi 1L selected) AND a stepper
+      // appears -- the user can still switch products or fix the quantity.
+      expect(find.widgetWithText(ChoiceChip, 'Pepsi 500ml'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, 'Pepsi 1L'), findsOneWidget);
+      final chip = tester.widget<ChoiceChip>(
+        find.widgetWithText(ChoiceChip, 'Pepsi 1L'),
+      );
+      expect(chip.selected, isTrue);
+      expect(find.byIcon(Icons.add), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(voiceControllerProvider).lines.single.quantity,
+        greaterThan(1),
+      );
+    },
+  );
+
+  testWidgets('a settled line whose product vanished from the products stream '
+      'disables the button and falls back to the not-found row', (
+    tester,
+  ) async {
+    final parsed = VoiceParseResult(
+      items: [
+        VoiceItem(
+          heard: 'pepsi',
+          quantity: 2,
+          quantityAssumed: false,
+          matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+        ),
+      ],
+    );
+    // p1 is never present in the products stream (e.g. deleted mid-review).
+    final container = await _reviewingContainer(
+      parsed: parsed,
+      products: const [],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_harness(container));
+    await tester.pumpAndSettle();
+
+    expect(_addToCartEnabled(tester), isFalse);
+    // Renders as the not-found row (heard text + Pick + remove), not a
+    // stepper for a product that no longer exists.
+    expect(find.text('"pepsi"'), findsOneWidget);
+    expect(find.byIcon(Icons.add), findsNothing);
+  });
+
   testWidgets('removing a not-found line unblocks the rest', (tester) async {
     final parsed = VoiceParseResult(
       items: [
