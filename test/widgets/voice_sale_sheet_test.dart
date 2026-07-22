@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:ai_shopkeeper/core/config/theme.dart';
 import 'package:ai_shopkeeper/core/error/result.dart';
 import 'package:ai_shopkeeper/features/auth/data/auth_repository.dart';
@@ -6,7 +8,7 @@ import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/category_controller.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controller.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/inventory_list_screen.dart';
-import 'package:ai_shopkeeper/features/voice/data/speech_recognizer.dart';
+import 'package:ai_shopkeeper/features/voice/data/audio_recorder.dart';
 import 'package:ai_shopkeeper/features/voice/data/voice_sale_repository.dart';
 import 'package:ai_shopkeeper/features/voice/domain/voice_parse_result.dart';
 import 'package:ai_shopkeeper/features/voice/presentation/voice_controller.dart';
@@ -19,39 +21,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Fake recognizer that hands control of partial/final results to the test:
-/// `start()` just captures `onResult` instead of firing immediately, so a test
-/// can simulate the mic hearing words incrementally via [emit]. `initOk`
-/// mirrors a permission grant/denial for the mic-denied error test. Records
-/// whether [cancel] was ever called so a test can prove a live recognizer was
-/// actually torn down (not just that the UI stopped rendering it).
-class _FakeRecognizer implements SpeechRecognizerPort {
-  _FakeRecognizer({this.initOk = true});
-  final bool initOk;
-  void Function(String text, bool isFinal)? _onResult;
+/// Fake recorder: `permissionOk` mirrors a mic permission grant/denial for
+/// the mic-denied error test. Records whether [cancel] was ever called so a
+/// test can prove a live recording was actually torn down (not just that the
+/// UI stopped rendering it). `stop()` hands back a fixed, non-empty
+/// recording by default so the happy-path phases (`thinking` ->
+/// `reviewing`) can proceed without any test needing to fabricate audio.
+class _FakeAudioRecorder implements AudioRecorderPort {
+  _FakeAudioRecorder({this.permissionOk = true});
+  final bool permissionOk;
   bool canceled = false;
 
   @override
-  Future<bool> initialize() async => initOk;
+  Future<bool> hasPermission() async => permissionOk;
 
   @override
-  Future<void> start({
-    required String localeId,
-    required void Function(String text, bool isFinal) onResult,
-  }) async {
-    _onResult = onResult;
-  }
-
-  void emit(String text, {bool isFinal = false}) =>
-      _onResult?.call(text, isFinal);
+  Future<void> start() async {}
 
   @override
-  Future<void> stop() async {}
+  Future<({Uint8List bytes, String mime})?> stop() async =>
+      (bytes: Uint8List.fromList(const [1, 2, 3]), mime: 'audio/m4a');
 
   @override
   Future<void> cancel() async {
     canceled = true;
   }
+
+  @override
+  Future<void> dispose() async {}
 }
 
 /// Fake repository: `implements` (not `extends`) so the real
@@ -63,7 +60,8 @@ class _FakeVoiceRepo implements VoiceSaleRepository {
 
   @override
   Future<Result<VoiceParseResult>> parse({
-    required String transcript,
+    required Uint8List audioBytes,
+    required String audioMime,
     required List<Map<String, dynamic>> candidates,
   }) async => _result;
 }
@@ -72,13 +70,13 @@ Product _p(String id, {required String name}) =>
     Product(id: id, shopId: 's', name: name, quantity: 10);
 
 ProviderContainer _container({
-  required _FakeRecognizer recognizer,
+  required _FakeAudioRecorder recorder,
   Result<VoiceParseResult>? parseResult,
   List<Product> products = const [],
 }) {
   return ProviderContainer(
     overrides: [
-      speechRecognizerProvider.overrideWithValue(recognizer),
+      audioRecorderProvider.overrideWithValue(recorder),
       voiceSaleRepositoryProvider.overrideWithValue(
         _FakeVoiceRepo(
           parseResult ?? Result.success(VoiceParseResult(items: const [])),
@@ -112,8 +110,8 @@ void main() {
   testWidgets('idle shows the mic hint; tapping mic transitions to listening', (
     tester,
   ) async {
-    final recognizer = _FakeRecognizer();
-    final container = _container(recognizer: recognizer);
+    final recorder = _FakeAudioRecorder();
+    final container = _container(recorder: recorder);
     addTearDown(container.dispose);
 
     await tester.pumpWidget(_harness(container, child: const VoiceSaleSheet()));
@@ -132,36 +130,12 @@ void main() {
     expect(find.byIcon(Icons.stop), findsOneWidget);
   });
 
-  testWidgets('listening shows the live transcript growing from partials', (
-    tester,
-  ) async {
-    final recognizer = _FakeRecognizer();
-    final container = _container(recognizer: recognizer);
-    addTearDown(container.dispose);
-
-    await container.read(voiceControllerProvider.notifier).startListening();
-    // Not pumpAndSettle here either -- same repeating pulse animation.
-    await tester.pumpWidget(_harness(container, child: const VoiceSaleSheet()));
-    await tester.pump();
-
-    expect(find.text('sold'), findsNothing);
-
-    recognizer.emit('sold');
-    await tester.pump();
-    expect(find.text('sold'), findsOneWidget);
-
-    recognizer.emit('sold two pepsi');
-    await tester.pump();
-    expect(find.text('sold two pepsi'), findsOneWidget);
-    expect(find.text('sold'), findsNothing);
-  });
-
   testWidgets(
     'error phase with micDenied shows the mapped l10n string and Retry '
     'resets to idle',
     (tester) async {
-      final recognizer = _FakeRecognizer(initOk: false);
-      final container = _container(recognizer: recognizer);
+      final recorder = _FakeAudioRecorder(permissionOk: false);
+      final container = _container(recorder: recorder);
       addTearDown(container.dispose);
 
       await tester.pumpWidget(
@@ -189,7 +163,7 @@ void main() {
   testWidgets('reviewing phase renders the review sheet\'s title', (
     tester,
   ) async {
-    final recognizer = _FakeRecognizer();
+    final recorder = _FakeAudioRecorder();
     final parsed = VoiceParseResult(
       items: [
         VoiceItem(
@@ -201,7 +175,7 @@ void main() {
       ],
     );
     final container = _container(
-      recognizer: recognizer,
+      recorder: recorder,
       parseResult: Result.success(parsed),
       products: [_p('p1', name: 'Pepsi 500ml')],
     );
@@ -209,7 +183,6 @@ void main() {
 
     final notifier = container.read(voiceControllerProvider.notifier);
     await notifier.startListening();
-    recognizer.emit('sold 2 pepsi', isFinal: true);
     await notifier.stopAndParse();
 
     expect(container.read(voiceControllerProvider).phase, VoicePhase.reviewing);
@@ -222,11 +195,11 @@ void main() {
   });
 
   testWidgets(
-    'showVoiceSaleSheet resets the controller and cancels the recognizer '
+    'showVoiceSaleSheet resets the controller and cancels the recorder '
     'when the sheet is dismissed without completing the flow',
     (tester) async {
-      final recognizer = _FakeRecognizer();
-      final container = _container(recognizer: recognizer);
+      final recorder = _FakeAudioRecorder();
+      final container = _container(recorder: recorder);
       addTearDown(container.dispose);
 
       // Goes through the real showVoiceSaleSheet entry point (not
@@ -247,8 +220,8 @@ void main() {
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
 
-      // Enter `listening` with the fake recognizer live -- not
-      // pumpAndSettle: the listening pane's pulsing mic repeats forever.
+      // Enter `listening` with the fake recorder live -- not pumpAndSettle:
+      // the listening pane's pulsing mic repeats forever.
       await tester.tap(find.byIcon(Icons.mic));
       await tester.pump();
 
@@ -256,7 +229,7 @@ void main() {
         container.read(voiceControllerProvider).phase,
         VoicePhase.listening,
       );
-      expect(recognizer.canceled, isFalse);
+      expect(recorder.canceled, isFalse);
 
       // Dismiss the sheet by popping its route directly -- deterministic,
       // and exercises the exact same Future the sheet's swipe-to-dismiss and
@@ -265,13 +238,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(container.read(voiceControllerProvider).phase, VoicePhase.idle);
-      expect(container.read(voiceControllerProvider).liveTranscript, '');
       expect(
-        recognizer.canceled,
+        recorder.canceled,
         isTrue,
         reason:
             'showVoiceSaleSheet must reset() on dismissal so a live '
-            'recognizer never keeps listening in the background',
+            'recording never keeps running in the background',
       );
     },
   );

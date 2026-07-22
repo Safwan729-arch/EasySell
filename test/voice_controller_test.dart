@@ -1,65 +1,81 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:ai_shopkeeper/core/error/failure.dart';
 import 'package:ai_shopkeeper/core/error/result.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controller.dart';
-import 'package:ai_shopkeeper/features/voice/data/speech_recognizer.dart';
+import 'package:ai_shopkeeper/features/voice/data/audio_recorder.dart';
 import 'package:ai_shopkeeper/features/voice/data/voice_sale_repository.dart';
 import 'package:ai_shopkeeper/features/voice/domain/voice_parse_result.dart';
 import 'package:ai_shopkeeper/features/voice/presentation/voice_controller.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Fake recognizer: `start` just records what it was called with and stashes
-/// the callback so a test can fire partial/final results whenever it likes.
-class _FakeRecognizer implements SpeechRecognizerPort {
-  _FakeRecognizer({this.initOk = true});
+/// The bytes/mime a recorder hands back on a successful `stop()` -- reused as
+/// the default `stopResult` below so most tests don't need to think about it.
+final _defaultRecording = (
+  bytes: Uint8List.fromList(const [1, 2, 3]),
+  mime: 'audio/m4a',
+);
 
-  final bool initOk;
-  String? capturedLocale;
+/// Sentinel distinguishing "the caller didn't pass `stopResult`" from
+/// "the caller explicitly passed `null`" -- `stopResult: null ?? default`
+/// would silently discard an intentional null (the "nothing captured" case),
+/// so a plain `??` default can't be used here.
+const _unset = Object();
+
+/// Fake recorder: records which calls it received and hands back a
+/// configurable `stop()` result (including `null`, for "nothing captured").
+class _FakeAudioRecorder implements AudioRecorderPort {
+  _FakeAudioRecorder({this.permissionOk = true, Object? stopResult = _unset})
+    : stopResult = identical(stopResult, _unset)
+          ? _defaultRecording
+          : stopResult as ({Uint8List bytes, String mime})?;
+
+  final bool permissionOk;
+  ({Uint8List bytes, String mime})? stopResult;
+  bool started = false;
   bool stopped = false;
   bool cancelled = false;
-  void Function(String text, bool isFinal)? _onResult;
 
   @override
-  Future<bool> initialize() async => initOk;
+  Future<bool> hasPermission() async => permissionOk;
 
   @override
-  Future<void> start({
-    required String localeId,
-    required void Function(String text, bool isFinal) onResult,
-  }) async {
-    capturedLocale = localeId;
-    _onResult = onResult;
+  Future<void> start() async => started = true;
+
+  @override
+  Future<({Uint8List bytes, String mime})?> stop() async {
+    stopped = true;
+    return stopResult;
   }
-
-  @override
-  Future<void> stop() async => stopped = true;
 
   @override
   Future<void> cancel() async => cancelled = true;
 
-  void emit(String text, {bool isFinal = false}) =>
-      _onResult?.call(text, isFinal);
+  @override
+  Future<void> dispose() async {}
 }
 
 /// Fake repository: `implements` (not `extends`) so the private `_client`
 /// field of the real [VoiceSaleRepository] never needs constructing. Also
-/// records the last transcript it was called with, for tests that need to
-/// assert what was actually sent to `parse-sale`.
+/// records the last audio it was called with, for tests that need to assert
+/// what was actually sent to `parse-sale`.
 class _FakeVoiceRepo implements VoiceSaleRepository {
   _FakeVoiceRepo(this._result);
   final Result<VoiceParseResult> _result;
-  String? lastTranscript;
+  Uint8List? lastAudioBytes;
+  String? lastAudioMime;
 
   @override
   Future<Result<VoiceParseResult>> parse({
-    required String transcript,
+    required Uint8List audioBytes,
+    required String audioMime,
     required List<Map<String, dynamic>> candidates,
   }) async {
-    lastTranscript = transcript;
+    lastAudioBytes = audioBytes;
+    lastAudioMime = audioMime;
     return _result;
   }
 }
@@ -75,7 +91,8 @@ class _PendingVoiceRepo implements VoiceSaleRepository {
 
   @override
   Future<Result<VoiceParseResult>> parse({
-    required String transcript,
+    required Uint8List audioBytes,
+    required String audioMime,
     required List<Map<String, dynamic>> candidates,
   }) {
     called = true;
@@ -85,7 +102,7 @@ class _PendingVoiceRepo implements VoiceSaleRepository {
 
 /// Pumps the microtask queue until [repo]'s `parse` has actually been
 /// invoked -- i.e. the controller is genuinely mid-flight (phase `thinking`),
-/// not merely somewhere in `recognizer.stop()`.
+/// not merely somewhere in `recorder.stop()`.
 Future<void> _untilParseCalled(_PendingVoiceRepo repo) async {
   while (!repo.called) {
     await Future<void>.delayed(Duration.zero);
@@ -96,13 +113,13 @@ Product _product(String id) =>
     Product(id: id, shopId: 's', name: 'Product $id');
 
 ProviderContainer _makeContainer({
-  required SpeechRecognizerPort recognizer,
+  required AudioRecorderPort recorder,
   required VoiceSaleRepository repo,
   List<Product> products = const [],
 }) {
   final container = ProviderContainer(
     overrides: [
-      speechRecognizerProvider.overrideWithValue(recognizer),
+      audioRecorderProvider.overrideWithValue(recorder),
       voiceSaleRepositoryProvider.overrideWithValue(repo),
       productsStreamProvider.overrideWith((ref) => Stream.value(products)),
     ],
@@ -112,22 +129,11 @@ ProviderContainer _makeContainer({
 }
 
 void main() {
-  group('recognizerLocaleFor', () {
-    test('bn maps to bn_BD', () {
-      expect(recognizerLocaleFor(const Locale('bn')), 'bn_BD');
-    });
-
-    test('en (and anything else) maps to en_US', () {
-      expect(recognizerLocaleFor(const Locale('en')), 'en_US');
-      expect(recognizerLocaleFor(const Locale('fr')), 'en_US');
-    });
-  });
-
   group('VoiceController', () {
     test('startListening: mic denied -> error micDenied', () async {
-      final recognizer = _FakeRecognizer(initOk: false);
+      final recorder = _FakeAudioRecorder(permissionOk: false);
       final c = _makeContainer(
-        recognizer: recognizer,
+        recorder: recorder,
         repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
       );
 
@@ -136,49 +142,42 @@ void main() {
       final state = c.read(voiceControllerProvider);
       expect(state.phase, VoicePhase.error);
       expect(state.errorMessage, 'micDenied');
+      expect(recorder.started, isFalse);
     });
 
-    test('partial results update liveTranscript while listening', () async {
-      final recognizer = _FakeRecognizer();
+    test('startListening: permission granted -> phase listening and the '
+        'recorder is started', () async {
+      final recorder = _FakeAudioRecorder();
       final c = _makeContainer(
-        recognizer: recognizer,
+        recorder: recorder,
         repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
       );
 
       await c.read(voiceControllerProvider.notifier).startListening();
+
       expect(c.read(voiceControllerProvider).phase, VoicePhase.listening);
-      expect(recognizer.capturedLocale, 'en_US');
-
-      recognizer.emit('sold two');
-      expect(c.read(voiceControllerProvider).liveTranscript, 'sold two');
-
-      recognizer.emit('sold two pepsi', isFinal: true);
-      expect(c.read(voiceControllerProvider).liveTranscript, 'sold two pepsi');
+      expect(recorder.started, isTrue);
     });
 
-    test(
-      'stopAndParse: empty/whitespace transcript -> error noSpeech',
-      () async {
-        final recognizer = _FakeRecognizer();
-        final c = _makeContainer(
-          recognizer: recognizer,
-          repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
-        );
+    test('stopAndParse: recorder captured nothing -> error noSpeech', () async {
+      final recorder = _FakeAudioRecorder(stopResult: null);
+      final c = _makeContainer(
+        recorder: recorder,
+        repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
+      );
 
-        await c.read(voiceControllerProvider.notifier).startListening();
-        recognizer.emit('   ');
-        await c.read(voiceControllerProvider.notifier).stopAndParse();
+      await c.read(voiceControllerProvider.notifier).startListening();
+      await c.read(voiceControllerProvider.notifier).stopAndParse();
 
-        final state = c.read(voiceControllerProvider);
-        expect(state.phase, VoicePhase.error);
-        expect(state.errorMessage, 'noSpeech');
-        expect(recognizer.stopped, isTrue);
-      },
-    );
+      final state = c.read(voiceControllerProvider);
+      expect(state.phase, VoicePhase.error);
+      expect(state.errorMessage, 'noSpeech');
+      expect(recorder.stopped, isTrue);
+    });
 
     test('stopAndParse happy path: reviewing with lines and a clear winner is '
         'addable', () async {
-      final recognizer = _FakeRecognizer();
+      final recorder = _FakeAudioRecorder();
       final parsed = VoiceParseResult(
         heardText: 'sold 2 pepsi',
         items: [
@@ -190,14 +189,14 @@ void main() {
           ),
         ],
       );
+      final repo = _FakeVoiceRepo(Result.success(parsed));
       final c = _makeContainer(
-        recognizer: recognizer,
-        repo: _FakeVoiceRepo(Result.success(parsed)),
+        recorder: recorder,
+        repo: repo,
         products: [_product('p1')],
       );
 
       await c.read(voiceControllerProvider.notifier).startListening();
-      recognizer.emit('sold 2 pepsi', isFinal: true);
       await c.read(voiceControllerProvider.notifier).stopAndParse();
 
       final state = c.read(voiceControllerProvider);
@@ -207,17 +206,19 @@ void main() {
       expect(state.lines.single.chosenProductId, 'p1');
       expect(state.canAdd, isTrue);
       expect(state.errorMessage, isNull);
+      // The exact bytes/mime the recorder captured must be what's shipped.
+      expect(repo.lastAudioBytes, recorder.stopResult!.bytes);
+      expect(repo.lastAudioMime, recorder.stopResult!.mime);
     });
 
     test('stopAndParse: zero lines -> error noMatch', () async {
-      final recognizer = _FakeRecognizer();
+      final recorder = _FakeAudioRecorder();
       final c = _makeContainer(
-        recognizer: recognizer,
+        recorder: recorder,
         repo: _FakeVoiceRepo(const Result.success(VoiceParseResult(items: []))),
       );
 
       await c.read(voiceControllerProvider.notifier).startListening();
-      recognizer.emit('gibberish', isFinal: true);
       await c.read(voiceControllerProvider.notifier).stopAndParse();
 
       final state = c.read(voiceControllerProvider);
@@ -229,17 +230,16 @@ void main() {
     test(
       'stopAndParse: repository failure surfaces the failure message',
       () async {
-        final recognizer = _FakeRecognizer();
+        final recorder = _FakeAudioRecorder();
         const failure = NetworkFailure(
           'No internet connection. Please try again.',
         );
         final c = _makeContainer(
-          recognizer: recognizer,
+          recorder: recorder,
           repo: _FakeVoiceRepo(const Result.failure(failure)),
         );
 
         await c.read(voiceControllerProvider.notifier).startListening();
-        recognizer.emit('sold 2 pepsi', isFinal: true);
         await c.read(voiceControllerProvider.notifier).stopAndParse();
 
         final state = c.read(voiceControllerProvider);
@@ -249,8 +249,8 @@ void main() {
     );
 
     test('choose/setQuantity/removeLine mutate the right line; reset returns '
-        'to idle empty state', () async {
-      final recognizer = _FakeRecognizer();
+        'to idle empty state and cancels the recorder', () async {
+      final recorder = _FakeAudioRecorder();
       final parsed = VoiceParseResult(
         items: [
           VoiceItem(
@@ -265,13 +265,12 @@ void main() {
         ],
       );
       final c = _makeContainer(
-        recognizer: recognizer,
+        recorder: recorder,
         repo: _FakeVoiceRepo(Result.success(parsed)),
         products: [_product('p1'), _product('p2')],
       );
 
       await c.read(voiceControllerProvider.notifier).startListening();
-      recognizer.emit('pepsi', isFinal: true);
       await c.read(voiceControllerProvider.notifier).stopAndParse();
 
       // A coin flip arrives unsettled -- the gate must block adding.
@@ -296,26 +295,26 @@ void main() {
       final state = c.read(voiceControllerProvider);
       expect(state.phase, VoicePhase.idle);
       expect(state.lines, isEmpty);
-      expect(state.liveTranscript, isEmpty);
       expect(state.heardText, isNull);
       expect(state.errorMessage, isNull);
+      expect(recorder.cancelled, isTrue);
     });
 
     test('reset() during an in-flight parse discards the stale result -- final '
         'state stays idle/empty', () async {
-      final recognizer = _FakeRecognizer();
+      final recorder = _FakeAudioRecorder();
       final repo = _PendingVoiceRepo();
-      final c = _makeContainer(recognizer: recognizer, repo: repo);
+      final c = _makeContainer(recorder: recorder, repo: repo);
       final notifier = c.read(voiceControllerProvider.notifier);
 
       await notifier.startListening();
-      recognizer.emit('sold 2 pepsi', isFinal: true);
       final pending = notifier.stopAndParse(); // not awaited: parse hangs
       await _untilParseCalled(repo); // genuinely mid-flight now
       expect(c.read(voiceControllerProvider).phase, VoicePhase.thinking);
 
       notifier.reset();
       expect(c.read(voiceControllerProvider).phase, VoicePhase.idle);
+      expect(recorder.cancelled, isTrue);
 
       // Resolve the stale parse only now -- after reset() already moved on.
       repo.completer.complete(
@@ -340,47 +339,22 @@ void main() {
       expect(state.errorMessage, isNull);
     });
 
-    test('a late partial after reset() does not change state, and cancel() was '
-        'called on the recognizer', () async {
-      final recognizer = _FakeRecognizer();
-      final c = _makeContainer(
-        recognizer: recognizer,
-        repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
-      );
-      final notifier = c.read(voiceControllerProvider.notifier);
-
-      await notifier.startListening();
-      recognizer.emit('sold two');
-      expect(c.read(voiceControllerProvider).liveTranscript, 'sold two');
-
-      notifier.reset();
-      expect(recognizer.cancelled, isTrue);
-
-      // A partial from the dead session must be ignored.
-      recognizer.emit('sold two pepsi');
-      final state = c.read(voiceControllerProvider);
-      expect(state.phase, VoicePhase.idle);
-      expect(state.liveTranscript, isEmpty);
-    });
-
     test(
       'startListening() for a new session while an old parse is in flight: '
       'the old result is discarded and the new session is unaffected',
       () async {
-        final recognizer = _FakeRecognizer();
+        final recorder = _FakeAudioRecorder();
         final repo = _PendingVoiceRepo();
-        final c = _makeContainer(recognizer: recognizer, repo: repo);
+        final c = _makeContainer(recorder: recorder, repo: repo);
         final notifier = c.read(voiceControllerProvider.notifier);
 
         await notifier.startListening();
-        recognizer.emit('sold 2 pepsi', isFinal: true);
         final pending = notifier.stopAndParse(); // session 1, hangs
         await _untilParseCalled(repo); // genuinely mid-flight now
 
         // The user starts over before the first parse ever resolves.
         await notifier.startListening();
         expect(c.read(voiceControllerProvider).phase, VoicePhase.listening);
-        expect(c.read(voiceControllerProvider).liveTranscript, isEmpty);
 
         // Now let the stale (session 1) parse resolve.
         repo.completer.complete(
@@ -410,9 +384,9 @@ void main() {
     );
 
     test('stopAndParse() when not listening is a no-op', () async {
-      final recognizer = _FakeRecognizer();
+      final recorder = _FakeAudioRecorder();
       final c = _makeContainer(
-        recognizer: recognizer,
+        recorder: recorder,
         repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
       );
 
@@ -421,23 +395,7 @@ void main() {
 
       expect(c.read(voiceControllerProvider).phase, before.phase);
       expect(c.read(voiceControllerProvider).phase, VoicePhase.idle);
-      expect(recognizer.stopped, isFalse);
+      expect(recorder.stopped, isFalse);
     });
-
-    test(
-      'an isFinal: true result updates the transcript actually sent to parse',
-      () async {
-        final recognizer = _FakeRecognizer();
-        final repo = _FakeVoiceRepo(const Result.success(VoiceParseResult()));
-        final c = _makeContainer(recognizer: recognizer, repo: repo);
-
-        await c.read(voiceControllerProvider.notifier).startListening();
-        recognizer.emit('sold two'); // partial
-        recognizer.emit('sold two pepsi', isFinal: true); // final
-        await c.read(voiceControllerProvider.notifier).stopAndParse();
-
-        expect(repo.lastTranscript, 'sold two pepsi');
-      },
-    );
   });
 }

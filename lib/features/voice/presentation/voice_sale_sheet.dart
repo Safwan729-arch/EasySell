@@ -10,7 +10,7 @@ import 'voice_review_sheet.dart';
 
 /// Presents [VoiceSaleSheet] as a modal bottom sheet -- mirrors the other
 /// `show*Sheet` entry points (`showAddToCartSheet`, `showProductPickerSheet`).
-/// A live recognizer must never keep listening once the sheet is gone, so
+/// A live recorder must never keep recording once the sheet is gone, so
 /// dismissal by ANY route -- swipe, back button, or the phase reaching
 /// `reviewing` and the review sheet popping itself -- always resets the
 /// controller via `whenComplete` (harmless if already reset: [VoiceController.reset]
@@ -26,7 +26,7 @@ Future<void> showVoiceSaleSheet(BuildContext context, WidgetRef ref) {
 }
 
 /// Hosts the whole voice-sale flow in one bottom sheet, switching on
-/// [VoiceSaleState.phase]: mic idle, live-listening transcript, a thinking
+/// [VoiceSaleState.phase]: mic idle, listening/recording, a thinking
 /// placeholder while `parse-sale` runs, the review step (delegates entirely to
 /// [VoiceReviewSheet], which closes the sheet itself once a sale is added),
 /// and an error state with retry. This widget only renders whatever
@@ -42,10 +42,7 @@ class VoiceSaleSheet extends ConsumerWidget {
 
     return switch (state.phase) {
       VoicePhase.idle => _IdlePane(onStart: notifier.startListening),
-      VoicePhase.listening => _ListeningPane(
-        transcript: state.liveTranscript,
-        onStop: notifier.stopAndParse,
-      ),
+      VoicePhase.listening => _ListeningPane(onStop: notifier.stopAndParse),
       VoicePhase.thinking => const _ThinkingPane(),
       VoicePhase.reviewing => const VoiceReviewSheet(),
       VoicePhase.error => _ErrorPane(
@@ -143,9 +140,8 @@ class _IdlePane extends StatelessWidget {
 }
 
 class _ListeningPane extends StatelessWidget {
-  const _ListeningPane({required this.transcript, required this.onStop});
+  const _ListeningPane({required this.onStop});
 
-  final String transcript;
   final VoidCallback onStop;
 
   @override
@@ -159,18 +155,6 @@ class _ListeningPane extends StatelessWidget {
           const _PulsingMic(),
           const SizedBox(height: 20),
           Text(l10n.voice_recording, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 12),
-          // Grows live as partial results land -- see VoiceController.startListening.
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 44),
-            child: Text(
-              transcript,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
           const SizedBox(height: 24),
           _RoundIconButton(
             icon: Icons.stop,

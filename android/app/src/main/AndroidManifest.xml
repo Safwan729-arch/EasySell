@@ -6,9 +6,10 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.CAMERA"/>
 
-    <!-- speech_to_text: on-device speech recognition for the voice sale
-         assistant (spec §0). RECORD_AUDIO is required for microphone access;
-         the BLUETOOTH permissions let recognition use a connected headset. -->
+    <!-- Microphone capture for the voice sale assistant (spec §0.1): the
+         recorded audio is uploaded for server-side transcription. RECORD_AUDIO
+         is required for microphone access; the BLUETOOTH permissions let
+         recording use a connected headset. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
@@ -55,11 +56,6 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
-        </intent>
-        <!-- speech_to_text: required on Android SDK 30+ (this app's targetSdk)
-             so the recognizer service isn't hidden by package visibility. -->
-        <intent>
-            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>

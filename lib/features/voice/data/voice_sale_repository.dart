@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,23 +25,29 @@ Failure mapVoiceFailure(Object e) {
   return const UnexpectedFailure('Something went wrong. Please try again.');
 }
 
-/// Calls the `parse-sale` Edge Function. The phone transcribes speech to text
-/// on-device; this sends the TEXT transcript (the gateway cannot accept audio).
-/// Matches transcript against the shop's own products (spec §0).
+/// Calls the `parse-sale` Edge Function with recorded audio. The gateway now
+/// transcribes (Gemini) and parses (GPT) server-side, so the phone just ships
+/// the raw recording (spec §0.1) plus the shop's own products as matching
+/// candidates -- no on-device transcription happens anymore.
 class VoiceSaleRepository {
   VoiceSaleRepository(this._client);
 
   final SupabaseClient _client;
 
   Future<Result<VoiceParseResult>> parse({
-    required String transcript,
+    required Uint8List audioBytes,
+    required String audioMime,
     required List<Map<String, dynamic>> candidates,
   }) async {
     try {
       final res = await _client.functions
           .invoke(
             'parse-sale',
-            body: {'transcript': transcript, 'candidates': candidates},
+            body: {
+              'audio_base64': base64Encode(audioBytes),
+              'audio_mime': audioMime,
+              'candidates': candidates,
+            },
           )
           .timeout(const Duration(seconds: 30));
       final data = res.data;

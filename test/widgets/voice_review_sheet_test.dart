@@ -1,8 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:ai_shopkeeper/core/config/theme.dart';
 import 'package:ai_shopkeeper/core/error/result.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controller.dart';
-import 'package:ai_shopkeeper/features/voice/data/speech_recognizer.dart';
+import 'package:ai_shopkeeper/features/voice/data/audio_recorder.dart';
 import 'package:ai_shopkeeper/features/voice/data/voice_sale_repository.dart';
 import 'package:ai_shopkeeper/features/voice/domain/voice_parse_result.dart';
 import 'package:ai_shopkeeper/features/voice/presentation/voice_controller.dart';
@@ -15,29 +17,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Fake recognizer that hands [transcript] straight to `onResult` as a final
-/// result the instant `start()` is called, so `startListening()` leaves the
-/// controller with a ready-to-parse transcript without any manual `emit`
-/// plumbing. Trimmed from `test/voice_controller_test.dart`'s version to just
-/// what this harness needs.
-class _FakeRecognizer implements SpeechRecognizerPort {
-  _FakeRecognizer(this.transcript);
-  final String transcript;
+/// Fake recorder that hands back a fixed, non-empty recording the instant
+/// `stop()` is called, so `startListening()` -> `stopAndParse()` leaves the
+/// controller reviewing without any manual plumbing. Trimmed from
+/// `test/voice_controller_test.dart`'s version to just what this harness
+/// needs.
+class _FakeAudioRecorder implements AudioRecorderPort {
+  @override
+  Future<bool> hasPermission() async => true;
 
   @override
-  Future<bool> initialize() async => true;
+  Future<void> start() async {}
 
   @override
-  Future<void> start({
-    required String localeId,
-    required void Function(String text, bool isFinal) onResult,
-  }) async => onResult(transcript, true);
-
-  @override
-  Future<void> stop() async {}
+  Future<({Uint8List bytes, String mime})?> stop() async =>
+      (bytes: Uint8List.fromList(const [1, 2, 3]), mime: 'audio/m4a');
 
   @override
   Future<void> cancel() async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 /// Fake repository: `implements` (not `extends`) so the real
@@ -49,7 +49,8 @@ class _FakeVoiceRepo implements VoiceSaleRepository {
 
   @override
   Future<Result<VoiceParseResult>> parse({
-    required String transcript,
+    required Uint8List audioBytes,
+    required String audioMime,
     required List<Map<String, dynamic>> candidates,
   }) async => _result;
 }
@@ -57,20 +58,19 @@ class _FakeVoiceRepo implements VoiceSaleRepository {
 Product _p(String id, {required String name}) =>
     Product(id: id, shopId: 's', name: name, quantity: 10);
 
-/// Wires a container for the voice feature (fake recognizer + repository,
-/// fake products stream) and drives the REAL [VoiceController] through
+/// Wires a container for the voice feature (fake recorder + repository, fake
+/// products stream) and drives the REAL [VoiceController] through
 /// `startListening` -> `stopAndParse`, landing on `reviewing` with exactly
 /// the lines [parsed] produces. Widget tests then pump [VoiceReviewSheet]
 /// against this container, so they exercise real state transitions rather
 /// than a mocked controller.
 Future<ProviderContainer> _reviewingContainer({
-  String transcript = 'sold something',
   required VoiceParseResult parsed,
   List<Product> products = const [],
 }) async {
   final container = ProviderContainer(
     overrides: [
-      speechRecognizerProvider.overrideWithValue(_FakeRecognizer(transcript)),
+      audioRecorderProvider.overrideWithValue(_FakeAudioRecorder()),
       voiceSaleRepositoryProvider.overrideWithValue(
         _FakeVoiceRepo(Result.success(parsed)),
       ),
@@ -341,32 +341,8 @@ void main() {
     expect(find.text('Assumed 1 — check this'), findsOneWidget);
   });
 
-  testWidgets('the transcript renders', (tester) async {
-    final parsed = VoiceParseResult(
-      items: [
-        VoiceItem(
-          heard: 'pepsi',
-          quantity: 2,
-          quantityAssumed: false,
-          matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
-        ),
-      ],
-    );
-    final container = await _reviewingContainer(
-      transcript: 'sold 2 pepsi',
-      parsed: parsed,
-      products: [_p('p1', name: 'Pepsi 500ml')],
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(_harness(container));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('sold 2 pepsi'), findsOneWidget);
-  });
-
-  testWidgets('renders heardText (what the parser saw), not the possibly-stale '
-      'liveTranscript', (tester) async {
+  testWidgets('the server transcript (heardText) renders in the "I heard" '
+      'line', (tester) async {
     final parsed = VoiceParseResult(
       heardText: 'sold 2 pepsi',
       items: [
@@ -378,12 +354,7 @@ void main() {
         ),
       ],
     );
-    // liveTranscript (from the recognizer) and heardText (what parse-sale
-    // actually worked from) deliberately differ here -- e.g. a late
-    // same-session recognizer callback mutated liveTranscript during
-    // `thinking`, after the parser had already been sent the earlier text.
     final container = await _reviewingContainer(
-      transcript: 'sold 2 pepsi extra late words',
       parsed: parsed,
       products: [_p('p1', name: 'Pepsi 500ml')],
     );
@@ -392,7 +363,6 @@ void main() {
     await tester.pumpWidget(_harness(container));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('sold 2 pepsi extra late words'), findsNothing);
     expect(find.textContaining('I heard "sold 2 pepsi"'), findsOneWidget);
   });
 }

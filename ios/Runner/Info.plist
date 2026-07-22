@@ -28,8 +28,6 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Ai Shopkeeper needs microphone access to hear you when you record a sale by voice.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Ai Shopkeeper uses speech recognition to turn your spoken sale into text on this device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

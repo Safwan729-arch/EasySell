@@ -86,7 +86,7 @@ class VoiceReviewSheet extends ConsumerWidget {
           Text(l10n.voice_title, style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
-            '${l10n.voice_heard} "${state.heardText ?? state.liveTranscript}"',
+            '${l10n.voice_heard} "${state.heardText ?? ''}"',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
