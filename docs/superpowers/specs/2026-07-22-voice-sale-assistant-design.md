@@ -35,6 +35,27 @@ shop's products. The pipeline is still *speak → cart → review → confirm*.
 The sections below are retained for history; where they say "audio", read
 "transcript" per this amendment.
 
+## 0.1 Second amendment — hybrid ears: Gemini transcribes, GPT parses
+
+On-device recognition proved too inaccurate in real use (S22, 2026-07-22),
+especially on product vocabulary. **Revised ears (user-approved):** the phone
+records audio again; `parse-sale` accepts `audio_base64` and, server-side,
+first calls the **Gemini API directly** (free AI Studio key, `GEMINI_API_KEY`
+secret — NOT via Frog, which still rejects audio) to transcribe, passing the
+shop's product names as context hints so brand names are heard correctly; the
+transcript then flows into the **unchanged** Frog/GPT parsing step. One round
+trip from the app; the `{heard_text, items[]}` response is unchanged.
+
+- `parse-sale` accepts `transcript` OR `audio_base64` (+`audio_mime`); the
+  text path stays for curl smoke tests.
+- The app's ears become an audio-recorder seam (`record` package); the
+  `speech_to_text` recognizer seam is **removed** (git history preserves it;
+  revert this wave to restore on-device ears). Mic permissions already exist.
+- UX change: no live transcript while listening (cloud ears can't stream);
+  the review sheet's "I heard" comes from the server's `heard_text`.
+- Trade-offs accepted: two providers chained (two failure points, ~1s slower);
+  Gemini free-tier rate limits (fine for one shop, not for fleets).
+
 ## 1. Goal
 
 Let a shopkeeper **say what they sold** and have the app stage it for checkout:

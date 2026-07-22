@@ -1845,3 +1845,72 @@ Verification and commit conventions as in every prior task.
 
 15 → 16 → 17 → 11 (review sheet) → 12 (mic sheet + entry point) → 14 (on-device
 calibration, now including STT quality in Bengali on the S22).
+
+---
+
+# WAVE 3 TASKS (spec §0.1: Gemini transcribes, GPT parses)
+
+### Task 18: parse-sale gains a Gemini transcription step (audio in)
+
+**Files:**
+- Modify: `supabase/functions/parse-sale/index.ts`, `supabase/functions/parse-sale/README.md`
+
+Accept `transcript` OR `audio_base64` (+ optional `audio_mime`, default `audio/m4a`).
+When audio arrives: call the Gemini API directly (NOT Frog) to transcribe, then feed
+the transcript into the EXISTING Frog/GPT parse step unchanged.
+
+- Endpoint: `POST https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent`
+  with header `x-goog-api-key: GEMINI_API_KEY` (header, not URL query — keys must not
+  land in request logs). `MODEL` from env `GEMINI_TRANSCRIBE_MODEL`, default
+  `gemini-2.5-flash` (free tier, audio-capable).
+- Request body: one user content with two parts — a text part (transcription prompt)
+  and `inline_data: { mime_type: <audio_mime>, data: <audio_base64> }`.
+- Transcription prompt: transcribe EXACTLY what is said; language may be Bengali,
+  English, or mixed; output ONLY the transcript, no commentary; include the shop's
+  product names (from candidates) as context hints so brand names are heard right.
+- Empty/whitespace transcript from Gemini → return `{ heard_text: "", items: [] }`
+  (200) without calling Frog.
+- Non-2xx from Gemini → throw with `gemini <status>: <body slice>` so the existing
+  catch returns 502 (same discipline as the Frog `res.ok` guard).
+- Validation: exactly one of `transcript` / `audio_base64` is required; missing both
+  or GEMINI_API_KEY unset when audio arrives → 400 with a clear message.
+- README: document the new secret, the hybrid flow, and an audio smoke-test example
+  alongside the existing text one.
+
+### Task 19: audio recorder seam (replaces the speech recognizer)
+
+**Files:**
+- Create: `lib/features/voice/data/audio_recorder.dart`
+- Delete: `lib/features/voice/data/speech_recognizer.dart` (git history preserves it)
+- Modify: `pubspec.yaml` (`flutter pub add record`; add `path_provider` ONLY if the
+  installed record version requires a file path and it is not already a dependency)
+
+`AudioRecorderPort`: `Future<bool> hasPermission()`, `Future<void> start()`,
+`Future<({Uint8List bytes, String mime})?> stop()` (null when nothing captured),
+`Future<void> cancel()`, `Future<void> dispose()`. Implement with the `record`
+package (AAC/m4a). Consult the INSTALLED version's README for the exact start/stop
+API. Riverpod `Provider` with `ref.onDispose` calling dispose. Mic permissions
+already exist in both platform manifests (added in Task 16) — verify, do not
+duplicate. speech_to_text stays in pubspec ONLY if something else uses it;
+otherwise remove it.
+
+### Task 20: rewire controller + sheets to recorded audio
+
+**Files:**
+- Modify: `lib/features/voice/data/voice_sale_repository.dart` (parse takes
+  `audioBytes` + `audioMime` again — body `{audio_base64, audio_mime, candidates}`;
+  transcript variant removed from the app side),
+  `lib/features/voice/presentation/voice_controller.dart` (recorder instead of
+  recognizer: startListening→start recording; stopAndParse→stop→bytes→parse; NO
+  liveTranscript updates — the field may remain but stays empty; session guards and
+  reset-cancels semantics preserved), `voice_sale_sheet.dart` (listening pane: pulse +
+  "Listening…" WITHOUT live transcript), all affected tests (controller, both sheet
+  tests — fakes become recorder fakes; dismissal-mid-listen must now assert
+  `recorder.cancel()`).
+- The review sheet's "I heard" already prefers `heardText` — verify it renders the
+  server transcript.
+
+Verification for every task: `flutter analyze` clean; full `flutter test` with only
+the known pre-existing `history_sale_tap_test.dart` failure; format only touched
+files. After Task 18 the USER redeploys parse-sale and smoke-tests text + audio;
+after Task 20 the USER rebuilds the app on the S22.
