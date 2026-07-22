@@ -1676,3 +1676,172 @@ git commit -m "chore(voice): calibrate thresholds against real speech"
 - [ ] Every scenario in Task 14 verified on a physical device
 - [ ] No API key committed anywhere in the repo
 - [ ] `record_sale_cart` unchanged — voice only stages into the cart
+
+---
+
+# AMENDED TASKS (post-pivot: on-device speech-to-text — spec §0)
+
+The Task 0 spike proved Frog rejects audio; the user chose on-device
+speech-to-text. Tasks 7 and 13 are superseded (parse-sale is text-in, already
+committed). Tasks 8/9 are replaced by Tasks 16/17 below. Tasks 11/12 remain
+valid as written, with "transcript" read for "audio" and the mic sheet's
+`recording` phase renamed `listening` (it can show the live partial transcript,
+a UX win of on-device recognition).
+
+### Task 15: Rework VoiceSaleRepository to transcript-in
+
+**Files:**
+- Modify: `lib/features/voice/data/voice_sale_repository.dart`
+- Test: `test/voice_repository_error_mapping_test.dart` (unchanged assertions)
+
+- [ ] **Step 1: Change the parse signature**
+
+Replace the `parse` method's parameters and body keys — audio is gone:
+
+```dart
+  Future<Result<VoiceParseResult>> parse({
+    required String transcript,
+    required List<Map<String, dynamic>> candidates,
+  }) async {
+    try {
+      final res = await _client.functions.invoke(
+        'parse-sale',
+        body: {'transcript': transcript, 'candidates': candidates},
+      );
+```
+
+Remove the now-unused `dart:convert` / `dart:typed_data` imports if nothing else
+uses them. Update the class doc comment: the phone transcribes on-device; this
+sends TEXT because the gateway cannot accept audio (spec §0).
+
+- [ ] **Step 2: Verify**
+
+Run: `flutter analyze && flutter test`
+Expected: analyze clean; full suite green except the known pre-existing
+`history_sale_tap_test.dart` failure.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add lib/features/voice/data/voice_sale_repository.dart
+git commit -m "refactor(voice): repository sends transcript, not audio (spec §0)"
+```
+
+### Task 16: Speech recognizer seam (MEMBER C, replaces Task 8)
+
+**Files:**
+- Create: `lib/features/voice/data/speech_recognizer.dart`
+- Modify: `pubspec.yaml`, `android/app/src/main/AndroidManifest.xml`, `ios/Runner/Info.plist`
+
+- [ ] **Step 1: Add the package**
+
+Run: `flutter pub add speech_to_text`
+Do not hand-write a version; let pub resolve it.
+
+- [ ] **Step 2: Platform permissions**
+
+Consult the INSTALLED package's README for the exact requirements and follow it.
+Expected shape: Android needs `RECORD_AUDIO` (+ a `<queries>` entry for the
+recognition service on newer SDKs); iOS needs `NSMicrophoneUsageDescription`
+AND `NSSpeechRecognitionUsageDescription`.
+
+- [ ] **Step 3: Write the seam**
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+
+/// MEMBER C seam: on-device speech-to-text. The gateway cannot accept audio
+/// (spec §0), so the phone listens and only the transcript leaves the device.
+/// Kept behind this tiny interface so a richer engine can replace it without
+/// touching the controller or UI.
+abstract class SpeechRecognizerPort {
+  /// Prepares the engine and triggers the permission prompt. False when the
+  /// user refused the mic or the device has no recognizer.
+  Future<bool> initialize();
+
+  /// Begin listening. [onResult] fires repeatedly with the partial transcript
+  /// and once more with `isFinal: true` when recognition settles.
+  Future<void> start({
+    required String localeId,
+    required void Function(String text, bool isFinal) onResult,
+  });
+
+  Future<void> stop();
+  Future<void> cancel();
+}
+
+class SpeechToTextRecognizer implements SpeechRecognizerPort {
+  final _engine = SpeechToText();
+
+  @override
+  Future<bool> initialize() => _engine.initialize();
+
+  @override
+  Future<void> start({
+    required String localeId,
+    required void Function(String text, bool isFinal) onResult,
+  }) =>
+      _engine.listen(
+        localeId: localeId,
+        onResult: (r) => onResult(r.recognizedWords, r.finalResult),
+      );
+
+  @override
+  Future<void> stop() => _engine.stop();
+
+  @override
+  Future<void> cancel() => _engine.cancel();
+}
+
+final speechRecognizerProvider = Provider<SpeechRecognizerPort>((ref) {
+  return SpeechToTextRecognizer();
+});
+```
+
+Adapt method names to the installed package's actual API if they differ — the
+seam's surface (initialize/start/stop/cancel + partial results) is the contract.
+
+- [ ] **Step 4: Verify + commit**
+
+Run: `flutter analyze` → clean.
+
+```bash
+git add pubspec.yaml pubspec.lock lib/features/voice/data/speech_recognizer.dart \
+  android/app/src/main/AndroidManifest.xml ios/Runner/Info.plist
+git commit -m "feat(voice): on-device speech recognizer behind a Member C seam"
+```
+
+### Task 17: Voice controller (replaces Task 9)
+
+**Files:**
+- Create: `lib/features/voice/presentation/voice_controller.dart`
+- Test: `test/voice_controller_test.dart`
+
+Same architecture as the original Task 9, with the ears swapped:
+
+- `VoicePhase { idle, listening, thinking, reviewing, error }`
+- `VoiceSaleState` additionally carries `liveTranscript` (updated from partial
+  results while listening — the sheet shows words as they are recognized).
+- `startListening()`: `initialize()`; on false → error `micDenied`. Then
+  `start(localeId: ..., onResult: ...)`, phase `listening`, partials update
+  `liveTranscript`.
+- Locale: derive `localeId` from the app's locale provider
+  (`lib/shared/providers/locale_provider.dart`): Bengali → `bn_BD`,
+  English → `en_US`. Read the provider's actual API first.
+- `stopAndParse()`: `stop()`; empty/whitespace transcript → error `noSpeech`.
+  Otherwise phase `thinking`, then
+  `repository.parse(transcript: ..., candidates: buildCandidates(products, includeUnit: true))`,
+  then `buildVoiceLines` → phase `reviewing` (or error `noMatch` when no lines).
+- `choose` / `setQuantity` / `removeLine` / `reset` exactly as original Task 9.
+- Tests: pure state transitions with a fake `SpeechRecognizerPort` and fake
+  repository via provider overrides — cover: denied init → micDenied; partials
+  accumulate; empty transcript → noSpeech; happy path → reviewing with lines;
+  repository failure → error with the failure message.
+
+Verification and commit conventions as in every prior task.
+
+### Execution order for the remaining wave
+
+15 → 16 → 17 → 11 (review sheet) → 12 (mic sheet + entry point) → 14 (on-device
+calibration, now including STT quality in Bengali on the S22).
