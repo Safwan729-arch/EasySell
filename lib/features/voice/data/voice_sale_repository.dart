@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,26 +23,22 @@ Failure mapVoiceFailure(Object e) {
   return const UnexpectedFailure('Something went wrong. Please try again.');
 }
 
-/// Calls the `parse-sale` Edge Function, which holds the gateway key and turns
-/// spoken audio into matched line items against the shop's own products.
+/// Calls the `parse-sale` Edge Function. The phone transcribes speech to text
+/// on-device; this sends the TEXT transcript (the gateway cannot accept audio).
+/// Matches transcript against the shop's own products (spec §0).
 class VoiceSaleRepository {
   VoiceSaleRepository(this._client);
 
   final SupabaseClient _client;
 
   Future<Result<VoiceParseResult>> parse({
-    required Uint8List audioBytes,
-    required String audioMime,
+    required String transcript,
     required List<Map<String, dynamic>> candidates,
   }) async {
     try {
       final res = await _client.functions.invoke(
         'parse-sale',
-        body: {
-          'audio_base64': base64Encode(audioBytes),
-          'audio_mime': audioMime,
-          'candidates': candidates,
-        },
+        body: {'transcript': transcript, 'candidates': candidates},
       );
       final data = res.data;
       final map = data is String ? jsonDecode(data) : data;
