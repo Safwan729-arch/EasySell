@@ -32,10 +32,12 @@ Either way the response shape is identical, so the Flutter app never changes.
    supabase secrets set FROG_API_KEY=xxxxx              # required (already set for recognize-product)
    supabase secrets set VOICE_STRATEGY=multimodal       # or 'transcribe' — from the probe result
    ```
-   Optional overrides if a default slug is rejected:
+   The chat model defaults to `OPENAI_MODEL` (the same slug the scan feature
+   uses, e.g. `GPT-5.6-Sol`), so no new model secret is needed. Optional
+   overrides if a default is rejected:
    ```
    supabase secrets set FROG_BASE_URL=https://frogapi.app/v1
-   supabase secrets set VOICE_MODEL=Gemini-3.1-Pro          # exact slug from the dashboard
+   supabase secrets set VOICE_MODEL=GPT-5.6-Sol             # exact slug from the dashboard
    supabase secrets set VOICE_TRANSCRIBE_MODEL=whisper-1    # only used by the 'transcribe' strategy
    ```
 4. Deploy: `supabase functions deploy parse-sale`

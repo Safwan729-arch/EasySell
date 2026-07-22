@@ -22,8 +22,11 @@ const BASE_URL = (Deno.env.get("FROG_BASE_URL") ?? "https://frogapi.app/v1").rep
 const API_KEY = Deno.env.get("FROG_API_KEY") ?? "";
 // Reuse the same model config the scan feature already relies on, so this probes
 // what the app would actually call. Overridable per-request.
+// Prefer the SAME model the scan feature uses (OPENAI_MODEL, e.g. GPT-5.6-Sol)
+// so we probe what the app would actually call. Gemini was only the old default
+// and it kept coming back "under maintenance".
 const DEFAULT_CHAT_MODEL =
-  Deno.env.get("VOICE_MODEL") ?? Deno.env.get("GEMINI_MODEL") ?? "Gemini-3.1-Pro";
+  Deno.env.get("VOICE_MODEL") ?? Deno.env.get("OPENAI_MODEL") ?? "GPT-5.6-Sol";
 const DEFAULT_TRANSCRIBE_MODEL = Deno.env.get("VOICE_TRANSCRIBE_MODEL") ?? "whisper-1";
 
 // A ~0.15s silent 8-bit mono 8kHz WAV. Just enough to exercise the endpoints.
@@ -104,12 +107,22 @@ Deno.serve(async (req) => {
     tryTranscribe(audioB64, mime, transcribeModel),
   ]);
 
-  // Recommend the strategy the app should use.
-  let recommendation = "NEITHER — the gateway rejected audio both ways; a different provider is needed. Escalate before building parse-sale.";
+  // Recommend the strategy the app should use. Distinguish a genuine audio
+  // refusal from a transient model-maintenance blip (503) so a temporarily-down
+  // model is not mistaken for "no audio support".
+  const mmStatus = (multimodal as { http_status?: number }).http_status;
+  const mmSnippet = (multimodal as { body_snippet?: string }).body_snippet ?? "";
+  const mmMaintenance = mmStatus === 503 || /maintenance/i.test(mmSnippet);
+
+  let recommendation: string;
   if (multimodal.accepted_audio) {
     recommendation = "VOICE_STRATEGY=multimodal — one chat call with an input_audio part works. Simplest.";
   } else if (transcribe.accepted_audio) {
     recommendation = "VOICE_STRATEGY=transcribe — chat/completions rejected audio, but /audio/transcriptions works. Use the two-step fallback.";
+  } else if (mmMaintenance) {
+    recommendation = "INCONCLUSIVE — the chat model was under maintenance (503), not an audio refusal. Retry in a few minutes; if it persists, try another model via {\"chat_model\":\"...\"}.";
+  } else {
+    recommendation = "NEITHER — the gateway genuinely rejected audio both ways. Escalate before building parse-sale.";
   }
 
   return pretty({

@@ -27,9 +27,10 @@ interface Candidate {
 // overridable via secrets; only FROG_API_KEY must be set.
 const BASE_URL = (Deno.env.get("FROG_BASE_URL") ?? "https://frogapi.app/v1").replace(/\/+$/, "");
 const API_KEY = Deno.env.get("FROG_API_KEY") ?? "";
-// Which model turns speech into structured intent. Model slugs retire, so keep
-// this overridable via a secret rather than hardcoded.
-const MODEL = Deno.env.get("VOICE_MODEL") ?? Deno.env.get("GEMINI_MODEL") ?? "Gemini-3.1-Pro";
+// Which model turns speech into structured intent. Defaults to the SAME model
+// the scan feature uses (OPENAI_MODEL, e.g. GPT-5.6-Sol) so voice needs no new
+// secret. Model slugs retire, so keep this overridable via a secret.
+const MODEL = Deno.env.get("VOICE_MODEL") ?? Deno.env.get("OPENAI_MODEL") ?? "GPT-5.6-Sol";
 // Only used by the "transcribe" strategy.
 const TRANSCRIBE_MODEL = Deno.env.get("VOICE_TRANSCRIBE_MODEL") ?? "whisper-1";
 const STRATEGY = (Deno.env.get("VOICE_STRATEGY") ?? "multimodal").toLowerCase();
