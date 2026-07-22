@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,12 +71,22 @@ class VoiceSaleState {
 /// Never talks to Supabase directly (that's [VoiceSaleRepository]'s job) and
 /// never builds widgets.
 class VoiceController extends Notifier<VoiceSaleState> {
+  /// Bumped by [startListening] and [reset] to invalidate any in-flight
+  /// listen/parse from a previous session. Every `await` boundary in
+  /// [startListening]/[stopAndParse] (and the recognizer's `onResult`
+  /// closure) re-checks this before touching [state], so a result that
+  /// resolves after the user moved on can never clobber fresh state.
+  int _session = 0;
+
   @override
   VoiceSaleState build() => const VoiceSaleState();
 
   Future<void> startListening() async {
+    final session = ++_session;
     final recognizer = ref.read(speechRecognizerProvider);
     final ok = await recognizer.initialize();
+    if (_session != session) return; // superseded while awaiting init
+
     if (!ok) {
       state = state.copyWith(
         phase: VoicePhase.error,
@@ -89,14 +101,22 @@ class VoiceController extends Notifier<VoiceSaleState> {
     await recognizer.start(
       localeId: localeId,
       onResult: (text, isFinal) {
+        // A late partial/final from a session the user already left behind
+        // (reset, or a fresh startListening) must not mutate current state.
+        if (_session != session) return;
         state = state.copyWith(liveTranscript: text);
       },
     );
   }
 
   Future<void> stopAndParse() async {
+    // Guards double-tap and stop-before-start.
+    if (state.phase != VoicePhase.listening) return;
+    final session = _session;
+
     final recognizer = ref.read(speechRecognizerProvider);
     await recognizer.stop();
+    if (_session != session) return;
 
     final transcript = state.liveTranscript.trim();
     if (transcript.isEmpty) {
@@ -113,6 +133,7 @@ class VoiceController extends Notifier<VoiceSaleState> {
           transcript: transcript,
           candidates: buildCandidates(products, includeUnit: true),
         );
+    if (_session != session) return;
 
     result.when(
       success: (parsed) {
@@ -140,7 +161,13 @@ class VoiceController extends Notifier<VoiceSaleState> {
   void removeLine(int index) =>
       state = state.copyWith(lines: removeLineAt(state.lines, index));
 
-  void reset() => state = const VoiceSaleState();
+  void reset() {
+    _session++;
+    // Fire-and-forget: a user backing out mid-listen must actually stop the
+    // mic, but reset() itself stays synchronous.
+    unawaited(ref.read(speechRecognizerProvider).cancel());
+    state = const VoiceSaleState();
+  }
 
   void _replace(int index, VoiceLine line) {
     final next = [...state.lines];
