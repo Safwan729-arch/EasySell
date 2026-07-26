@@ -27,10 +27,13 @@ class ScanController {
 
   Future<ScanOutcome?> captureAndRecognize() async {
     // MEMBER C: camera capture. image_picker is the stub seam.
+    // Smaller/lighter capture = faster upload with no real hit to label
+    // reading — the product name/size stays legible at 768px, and the smaller
+    // payload noticeably cuts scan latency on slow shop connections.
     final XFile? shot = await _picker.pickImage(
       source: ImageSource.camera,
-      maxWidth: 1024,
-      imageQuality: 70,
+      maxWidth: 768,
+      imageQuality: 60,
     );
     if (shot == null) return null;
     final Uint8List bytes = await shot.readAsBytes();

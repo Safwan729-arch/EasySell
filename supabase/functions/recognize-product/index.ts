@@ -77,6 +77,10 @@ async function recognize(imageB64: string, candidates: Candidate[]) {
           responseMimeType: "application/json",
           responseSchema,
           temperature: 0,
+          // Disable the model's internal "thinking" — identifying a product from
+          // a photo against a candidate list is a simple, structured job, and
+          // thinking adds several seconds of latency for no quality gain here.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     },
