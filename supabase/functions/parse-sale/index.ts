@@ -111,6 +111,10 @@ async function parseSale(input: ParseInput, candidates: Candidate[]) {
           responseMimeType: "application/json",
           responseSchema,
           temperature: 0,
+          // Disable the model's internal "thinking" — transcription + extraction
+          // is a simple, structured job, and thinking adds several seconds of
+          // latency for no quality gain here.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     },
