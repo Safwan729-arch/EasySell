@@ -73,3 +73,18 @@ double stepForUnit(ProductUnit unit) => switch (unit) {
   ProductUnit.litre => 0.5,
   ProductUnit.ml => 50,
 };
+
+/// Clamps a typed or stepped cart quantity to a valid range: never below 0,
+/// never above [remaining] stock, and floored to a whole number when the
+/// product is sold by the piece ([allowsDecimal] false). Used by the
+/// add-to-cart sheet's quantity field and stepper.
+double clampCartQuantity({
+  required double value,
+  required double remaining,
+  required bool allowsDecimal,
+}) {
+  var v = allowsDecimal ? value : value.floorToDouble();
+  if (v < 0) v = 0;
+  if (v > remaining) v = remaining;
+  return v;
+}

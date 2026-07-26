@@ -124,4 +124,43 @@ void main() {
       expect(stepForUnit(ProductUnit.ml), 50);
     });
   });
+
+  group('clampCartQuantity', () {
+    test('passes an in-range value through', () {
+      expect(
+        clampCartQuantity(value: 3, remaining: 10, allowsDecimal: false),
+        3,
+      );
+    });
+    test('clamps a value above remaining down to remaining', () {
+      expect(
+        clampCartQuantity(value: 20, remaining: 12, allowsDecimal: false),
+        12,
+      );
+    });
+    test('clamps negatives to zero', () {
+      expect(
+        clampCartQuantity(value: -1, remaining: 10, allowsDecimal: true),
+        0,
+      );
+    });
+    test('floors decimals for piece products', () {
+      expect(
+        clampCartQuantity(value: 2.7, remaining: 10, allowsDecimal: false),
+        2,
+      );
+    });
+    test('keeps decimals for weight/volume products', () {
+      expect(
+        clampCartQuantity(value: 2.5, remaining: 10, allowsDecimal: true),
+        2.5,
+      );
+    });
+    test('remaining of zero yields zero', () {
+      expect(
+        clampCartQuantity(value: 5, remaining: 0, allowsDecimal: false),
+        0,
+      );
+    });
+  });
 }
