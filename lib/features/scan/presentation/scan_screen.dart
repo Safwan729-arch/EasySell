@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/haptics.dart';
 import '../../../core/error/failure.dart';
-import '../../cart/domain/cart_math.dart';
-import '../../cart/presentation/cart_controller.dart';
+import '../../cart/presentation/add_to_cart_sheet.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../domain/scan_decision.dart';
@@ -71,7 +69,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     switch (outcome.action) {
       case ScanAction.autoSell:
         if (outcome.products.isEmpty) return _noMatch();
-        return _addToCart(outcome.products.first);
+        return _confirmAndAdd(outcome.products.first);
       case ScanAction.chooseFromMatches:
         final picked = await showProductPickerSheet(
           context,
@@ -82,34 +80,27 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           if (mounted) context.pop();
           return false;
         }
-        return _addToCart(picked);
+        return _confirmAndAdd(picked);
       case ScanAction.noMatch:
         return _noMatch();
     }
   }
 
-  /// Adds a unit-aware increment of [product] to the cart. Always returns
-  /// true (keep scanning) -- the AppBar back arrow, not a successful add, is
-  /// how a shopkeeper exits to review the cart.
-  Future<bool> _addToCart(Product product) async {
-    final cart = ref.read(cartControllerProvider.notifier);
-    if (cart.remainingStockFor(product) <= 0) {
-      if (mounted) {
-        final message = product.quantity <= 0
-            ? '${product.name} is out of stock.'
-            : '${product.name} is already fully staged in your cart.';
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
-      }
-      return true;
-    }
-    cart.addOrIncrement(product, stepForUnit(product.unit));
-    AppHaptics.success();
-    if (mounted) {
+  /// Opens the add-to-cart confirmation sheet for [product] so the shopkeeper
+  /// sets the quantity before it enters the cart, then returns true to keep
+  /// scanning (the AppBar back arrow, not a successful add, is how a shopkeeper
+  /// exits to review the cart). The sheet owns stock handling, the add, and the
+  /// success haptic; a Cancel/dismiss simply adds nothing and returns to the
+  /// camera.
+  Future<bool> _confirmAndAdd(Product product) async {
+    final added = await showAddToCartSheet(context, product: product);
+    if (!mounted) return false;
+    if (added == true) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Added ${product.name} to cart')));
+        ..showSnackBar(
+          SnackBar(content: Text('Added ${product.name} to cart')),
+        );
     }
     return true;
   }
@@ -126,7 +117,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       if (mounted) context.pop();
       return false;
     }
-    return _addToCart(picked);
+    return _confirmAndAdd(picked);
   }
 
   @override
