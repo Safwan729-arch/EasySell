@@ -2,7 +2,8 @@
 
 **Date:** 2026-07-27
 **Feature owner:** Member A (Full Stack)
-**Scope:** Flutter scan flow (`lib/features/scan/`, `lib/features/cart/` reuse). No backend/Edge Function changes.
+**Scope:** Flutter scan flow + the shared add-to-cart sheet (`lib/features/scan/`,
+`lib/features/cart/`). No backend/Edge Function changes.
 **Branch:** `feat/scan-quantity-sheet` (off `main`; independent of the Gemini scan migration).
 
 ---
@@ -11,115 +12,130 @@
 
 After a scan recognizes a product, show a **quantity-confirmation sheet** where the
 shopkeeper sets the amount **before** it is added to the cart. Today the scan flow
-**auto-adds one unit-step** to the cart and immediately reopens the camera; quantity
-can only be corrected later on the Cart screen. This feature inserts a deliberate
-"set the amount, then Add" gate — matching the project rule "never auto-commit AI
-output; confirm first" — while preserving fast back-to-back scanning ("Add & scan
-next" reopens the camera).
+**auto-adds one unit-step** and immediately reopens the camera; quantity can only be
+corrected later on the Cart screen. This feature inserts a deliberate "set the
+amount, then Add" gate — matching the project rule "never auto-commit AI output;
+confirm first" — while preserving fast back-to-back scanning (adding reopens the
+camera).
 
-This is **Option C** from brainstorming: confirm on every scan, but the sheet is the
-default landing after recognition, with a prominent quantity stepper and an "Add &
-scan next" primary action.
+**Approach (revised after codebase exploration):** the app already has
+`showAddToCartSheet` (`lib/features/cart/presentation/add_to_cart_sheet.dart`),
+used by the Product Detail screen. It already renders product identity, an
+"available to add" stock hint, a unit-aware −/＋ quantity stepper clamped to stock,
+a live subtotal in the shop's currency, and Cancel / Add buttons — exactly the sheet
+this feature needs. So we **reuse it** in the scan flow rather than build a twin, and
+**enhance it once** with a directly-typeable quantity field (per the user decision
+"reuse it + add typing"), which benefits every caller.
 
 ## 2. Current behavior (what changes)
 
 In `lib/features/scan/presentation/scan_screen.dart`, `_route()` handles three
-recognition outcomes and each ends by calling `_addToCart(product)`, which
-**immediately** does `cart.addOrIncrement(product, stepForUnit(product.unit))`,
-shows an "Added …" snackbar, and returns `true` (keep scanning).
+recognition outcomes (`autoSell`, `chooseFromMatches` → after the "Did you mean?"
+picker, `noMatch` → after the manual picker) and each ends by calling
+`_addToCart(product)`, which **immediately** does
+`cart.addOrIncrement(product, stepForUnit(product.unit))`, shows an "Added …"
+snackbar, and returns `true` (keep scanning).
 
-The change: `_addToCart` is replaced by `_confirmAndAdd(product)`, which opens the
-new quantity sheet first and only adds the **chosen** quantity. All three paths
-(`autoSell`, `chooseFromMatches` → after the "Did you mean?" picker, `noMatch` →
-after the manual picker) funnel through this single gate.
+`showAddToCartSheet` already: computes `remainingStockFor`, shows an out-of-stock
+state, steps by `stepForUnit`, clamps `+`/quantity to remaining stock, shows the live
+subtotal, calls `cart.addOrIncrement(product, qty)` itself on Add + fires
+`AppHaptics.success()`, and pops `true` (added) / `false` (cancel) / `null`
+(dismiss). It currently shows the quantity as **read-only text** — no typing.
 
-## 3. The quantity sheet
+## 3. Enhancement to the shared sheet: typeable quantity
 
-New modal bottom sheet: `showScanQuantitySheet(context, {product, remainingStock})`
-→ `Future<double?>` returning the chosen quantity, or `null` if dismissed.
+In `_AddToCartSheet` (`add_to_cart_sheet.dart`), replace the read-only quantity
+`Text` (`'${Qty.format(_qty)} ${product.unitLabel}'`) with an editable
+**`TextField`** sitting between the −/＋ buttons, with the unit label beside it:
 
-**Contents:**
-- **Product identity:** `product.name` (bold title); subtitle = `brand · variant`
-  joined (omit empties), same style as `product_picker_sheet.dart`.
-- **Quantity control:** a row of `[−]  <number field>  [+]` with the unit label
-  (`product.unit.label`) beside it.
-  - `−`/`+` step by `stepForUnit(product.unit)` (1 pcs, 0.5 kg, 50 g, 0.5 litre,
-    50 ml).
-  - The number field is directly editable (numeric keyboard;
-    `keyboardType: decimal` only when `product.unitType.allowsDecimal`, else
-    whole-number). Pieces reject decimals; weight/volume accept them.
-- **Stock hint:** `"{remainingStock} {unit} in stock"` (using the app's number
-  formatting, trailing zeros trimmed). Quantity is **capped at `remainingStock`** —
-  `+` and typed values never exceed it.
-- **Live subtotal:** `product.sellingPrice * quantity`, formatted with the app's
-  existing money formatter, updating as the quantity changes.
-- **Actions:**
-  - **"Add & scan next"** (primary, filled) → pops the sheet returning the chosen
-    quantity. Disabled when quantity ≤ 0.
-  - **"Cancel"** (text) / scrim dismiss → pops returning `null`.
+- Backed by a `TextEditingController` kept in sync with `_qty`: tapping −/＋ updates
+  both `_qty` and the field text; typing parses the field and updates `_qty`.
+- `keyboardType`: decimal when `product.unitType.allowsDecimal` (weight/volume),
+  whole-number otherwise (pieces). Pieces reject a typed decimal (floored to whole).
+- On every change, the typed value is run through a pure helper
+  `clampCartQuantity(value, remaining, allowsDecimal)` (see §5) → clamped to
+  `[0, remaining]`, floored to whole for pieces. The subtotal updates live from the
+  clamped `_qty`.
+- Empty / unparseable / `0` field → `_qty = 0` → **Add disabled** (existing
+  `(_qty <= 0)` guard already covers this).
+- The existing −/＋ disable rules are kept (− disabled at ≤ one step; ＋ disabled when
+  the next step would exceed remaining). Typing is the escape hatch for large amounts.
 
-**Initial quantity:** `min(stepForUnit(product.unit), remainingStock)` so a product
-with less than one full step left still opens at a valid amount.
+Everything else in the sheet (identity, stock hint, subtotal row, Cancel/Add
+buttons, out-of-stock handling) is unchanged. Its `Future<bool?>` contract is
+unchanged, so the Product Detail caller keeps working with no edit.
 
-## 4. Flow / behavior in `scan_screen.dart`
+## 4. Scan flow wiring (`scan_screen.dart`)
 
-`_confirmAndAdd(Product product) → Future<bool>` (returns whether to keep scanning):
+Replace `_addToCart(Product)` with `_confirmAndAdd(Product) → Future<bool>`:
 
-1. Compute `remaining = cart.remainingStockFor(product)`.
-2. If `remaining <= 0`: keep the **existing** out-of-stock / already-staged snackbar
-   (out of stock vs fully-staged message), do **not** open the sheet, return `true`.
-3. Else `final qty = await showScanQuantitySheet(context, product: product,
-   remainingStock: remaining);`
-   - If `qty == null` (dismissed): add nothing, return `true` (reopen camera — a
-     cancel skips this item but keeps the scan session going; the AppBar back arrow
-     still exits to the cart, unchanged).
-   - Else: `cart.addOrIncrement(product, qty)`, fire `AppHaptics.success()`, show
-     `"Added {qty} {unit} {name} to cart"` snackbar, return `true`.
+```dart
+Future<bool> _confirmAndAdd(Product product) async {
+  final added = await showAddToCartSheet(context, product: product);
+  if (!mounted) return false;
+  if (added == true) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('Added ${product.name} to cart')));
+  }
+  return true; // keep scanning whether added, cancelled, or dismissed
+}
+```
 
-`addOrIncrementLine` already clamps the merged quantity to stock, so a race where
-stock changed between compute and add can never oversell.
+Update the three `_route` call sites (`autoSell` → `_confirmAndAdd(products.first)`;
+the two picker paths → `_confirmAndAdd(picked)`). The old inline out-of-stock /
+"already fully staged" snackbar and the direct `addOrIncrement` are removed — the
+sheet now owns stock handling and the add. `AppHaptics.success()` is fired by the
+sheet, so it is not duplicated here.
 
-**Decision — cancel keeps scanning:** consistent with Option C's speed goal; the
-back arrow is the single, explicit "I'm done" exit. (The product-picker dismissal on
-the `chooseFromMatches`/`noMatch` paths keeps its current pop-to-exit behavior; only
-the *quantity* sheet's dismissal reopens the camera.)
+**Behavior decisions preserved from Option C:** adding reopens the camera (the
+`_run` loop), so Add behaves as "add & scan next"; Cancel/dismiss adds nothing and
+also returns to the camera; the AppBar back arrow remains the single explicit exit to
+the cart. The product-**picker** dismissal on the ambiguous/no-match paths keeps its
+current pop-to-exit behavior; only the quantity sheet's dismissal returns to scanning.
 
 ## 5. Files
 
-- **Create:** `lib/features/scan/presentation/scan_quantity_sheet.dart` — the sheet
-  widget + `showScanQuantitySheet(...)` helper. Self-contained; depends on
-  `Product`, `stepForUnit`, and the money/number formatters.
-- **Create:** `lib/features/scan/domain/scan_quantity.dart` (small pure helper) —
-  `clampScanQuantity({required double value, required double step,
-  required double remaining, required bool allowsDecimal})` returning a validated
-  quantity (≥ 0, ≤ remaining, snapped/whole for pieces). Extracted so the stepping
-  and clamping math is unit-testable without pumping a widget.
+- **Modify:** `lib/features/cart/presentation/add_to_cart_sheet.dart` — add the
+  typeable `TextField` + `TextEditingController` wiring described in §3.
+- **Modify:** `lib/features/cart/domain/cart_math.dart` — add pure helper
+  `double clampCartQuantity({required double value, required double remaining,
+  required bool allowsDecimal})` (clamp to `[0, remaining]`; floor to whole when
+  `!allowsDecimal`). Extracted so the typing/clamp math is unit-testable without a
+  widget, and reusable by the sheet.
 - **Modify:** `lib/features/scan/presentation/scan_screen.dart` — replace
-  `_addToCart` with `_confirmAndAdd`; update the three `_route` call sites.
+  `_addToCart` with `_confirmAndAdd`; update the three `_route` call sites; drop the
+  now-unused out-of-stock snackbar branch and the direct cart import usage if it
+  becomes unused.
 
-No changes to `cart_math.dart`, `cart_controller.dart`, or any Edge Function.
+No changes to `cart_controller.dart`, the Edge Functions, or the Gemini migration.
 
 ## 6. Testing
 
-- **Unit** (`test/features/scan/scan_quantity_test.dart`): `clampScanQuantity`
-  covers — default at one step; `+` capping at remaining; `−` not going below 0;
-  pieces rejecting decimals (2.4 pcs → 2); weight allowing 2.5 kg; remaining < step
-  clamps the initial/step-up to remaining.
-- **Widget** (`test/features/scan/scan_quantity_sheet_test.dart`): pumping the sheet —
-  `+`/`−` update the displayed quantity and subtotal; typing a number updates the
-  subtotal; "Add & scan next" is disabled at 0 and returns the chosen quantity on
-  tap; Cancel returns null; a `remainingStock` of 3 blocks stepping to 4.
-- **Scan-flow** (extend existing scan-screen test if present, else a focused new
-  test): a recognized single match opens the quantity sheet (not an immediate add),
-  and only the chosen quantity lands in the cart.
+- **Unit** (`test/features/cart/cart_math_test.dart`, extend if present else create):
+  `clampCartQuantity` — clamps above remaining down to remaining; negatives → 0;
+  pieces floor `2.7 → 2`; weight keeps `2.5`; value within range passes through;
+  `remaining` of `0` → `0`.
+- **Widget** (`test/features/cart/add_to_cart_sheet_test.dart`): pump the sheet for a
+  piece product with known stock — typing `20` when only `12` in stock clamps to
+  `12` and updates the subtotal; typing a decimal for a piece floors it; typing `0`
+  or clearing disables Add; −/＋ still work and stay in sync with the field; Add pops
+  `true` and stages the typed quantity; Cancel pops `false`.
+- **Scan-flow** (`test/features/scan/scan_confirm_test.dart`, new): a recognized
+  single match opens the add-to-cart sheet rather than adding immediately, and only
+  the confirmed quantity lands in the cart. (Uses the existing scan test doubles /
+  controller-override pattern if one exists; otherwise a focused widget test around
+  `_confirmAndAdd`.)
 
 ## 7. Out of scope
 
 - No change to recognition, the Edge Function, or the Gemini migration.
 - No change to the Cart screen's own line stepper or checkout.
 - No multi-quantity-per-scan or barcode features.
+- Product Detail keeps its current behavior; it simply inherits the typeable field
+  for free.
 
 ## 8. Rollback
 
 Feature is additive and branch-isolated. Reverting the branch's commits restores the
-auto-add-one behavior; no data or schema implications.
+auto-add-one scan behavior and the read-only stepper; no data or schema implications.
