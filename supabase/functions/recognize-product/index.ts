@@ -105,6 +105,8 @@ async function recognize(imageB64: string, candidates: Candidate[]) {
   return JSON.parse(text) as Record<string, unknown>;
 }
 
+// Never trust the model's output shape. Drop invented ids, clamp confidences,
+// derive status from surviving matches, and coerce read_* fields to string|null.
 function normalize(raw: Record<string, unknown>, candidates: Candidate[]) {
   const ids = new Set(candidates.map((c) => c.id));
   const matches = Array.isArray(raw.matches) ? raw.matches : [];
@@ -114,12 +116,15 @@ function normalize(raw: Record<string, unknown>, candidates: Candidate[]) {
       product_id: m.product_id,
       confidence: Math.max(0, Math.min(1, Number(m.confidence) || 0)),
     }));
-  const status = clean.length === 0 ? "none" : (raw.status as string) ?? "match";
+  // Derive status from the matches that SURVIVED filtering, never from the
+  // model's raw status — a hallucinated product_id dropped above could otherwise
+  // leave a misleading "multiple"/"match" that steers the app's confirmation UI wrong.
+  const status = clean.length === 0 ? "none" : clean.length === 1 ? "match" : "multiple";
   return {
     status,
-    read_brand: raw.read_brand ?? null,
-    read_name: raw.read_name ?? null,
-    read_size: raw.read_size ?? null,
+    read_brand: typeof raw.read_brand === "string" ? raw.read_brand : null,
+    read_name: typeof raw.read_name === "string" ? raw.read_name : null,
+    read_size: typeof raw.read_size === "string" ? raw.read_size : null,
     matches: clean,
   };
 }
@@ -141,7 +146,7 @@ Deno.serve(async (req) => {
   } catch (_e) {
     return json({ error: "invalid JSON body" }, 400);
   }
-  if (!imageB64 || !Array.isArray(candidates)) {
+  if (typeof imageB64 !== "string" || imageB64.trim().length === 0 || !Array.isArray(candidates)) {
     return json({ error: "image_base64 and candidates are required" }, 400);
   }
   // Fast-fail with a clear message rather than letting an unset key surface as a
