@@ -111,10 +111,11 @@ async function parseSale(input: ParseInput, candidates: Candidate[]) {
           responseMimeType: "application/json",
           responseSchema,
           temperature: 0,
-          // Disable the model's internal "thinking" — transcription + extraction
-          // is a simple, structured job, and thinking adds several seconds of
-          // latency for no quality gain here.
-          thinkingConfig: { thinkingBudget: 0 },
+          // Minimize the model's internal "thinking" — transcription + extraction
+          // is a simple, structured job. Gemini 3 flash can't turn thinking fully
+          // off, so use the lowest level to cut latency. (thinkingBudget is the
+          // retired 2.5 knob; 3.x uses thinkingLevel.)
+          thinkingConfig: { thinkingLevel: "minimal" },
         },
       }),
     },
