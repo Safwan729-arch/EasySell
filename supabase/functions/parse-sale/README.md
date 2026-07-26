@@ -1,50 +1,44 @@
 # parse-sale — deploy & run
 
-Voice sale Edge Function. Given either a **transcript** of a shopkeeper's
-spoken sentence or raw **audio**, plus the shop's product candidates, it turns
-the sentence into sale line items matched against those candidates, and
-returns normalized JSON.
+Voice sale Edge Function. Given either raw **audio** of a shopkeeper's spoken
+sentence (what the app sends) or a **transcript** (a curl-testable debug path),
+plus the shop's product candidates, it turns the sentence into sale line items
+matched against those candidates, and returns normalized JSON.
 
-## Hybrid flow: Gemini hears it, Frog understands it
+## One Gemini call: hears it AND understands it
 
-Two providers, two jobs:
-- **Audio in → Gemini transcribes.** When the request carries `audio_base64`,
-  this function calls the Gemini API directly
-  (`generativelanguage.googleapis.com`) to transcribe the clip to text. The
-  shop's product names are passed as vocabulary hints so brand names are heard
-  correctly, but the full candidate JSON (with ids) is never sent to Gemini —
-  it only needs words, not ids.
-- **Text (typed or transcribed) → Frog parses.** The resulting transcript is
-  fed into the **existing, unchanged** Frog/GPT step — an OpenAI-compatible
-  gateway — which matches it against the candidate list and returns
-  structured line items. This is the same path a plain `transcript` request
-  always used; audio is just a new way to arrive at a transcript.
+A **single** Google Gemini `generateContent` call
+(`generativelanguage.googleapis.com`) does both jobs at once:
+- **Transcribes** the audio verbatim into `heard_text` (the review sheet shows
+  this so a mishear is obvious).
+- **Extracts** sale line items, matched against the candidate list, using
+  structured output (`responseMimeType: application/json` + `responseSchema`) so
+  the reply is guaranteed to be the right shape — no brace-scraping.
 
-### Why Gemini, not Frog, for audio
+The text `transcript` path uses the same single call, just without the audio
+part.
 
-Verified 2026-07-22 (probe-audio spike): **Frog does not accept audio.**
-`/chat/completions` rejects an `input_audio` content block
-(`400: "Content blocks are expected to be either text or image_url type"`) and
-there is no `/audio/transcriptions` endpoint (`404`). Gemini has a free tier
-and accepts audio directly via `generateContent`, so it does the
-transcription; Frog keeps doing exactly what it always has with plain text.
+> **History:** this function used to make two hops — Gemini transcribed the
+> audio, then the Frog gateway (OpenAI-compatible GPT) parsed the text into
+> items. It now does both in one Gemini call; **Frog is no longer used by
+> voice.** (Frog was never able to accept audio anyway — verified 2026-07-22 it
+> rejects an `input_audio` block and has no transcription endpoint.)
 
 ## One-time setup
 1. Install the Supabase CLI and log in: `supabase login`
 2. Link the project: `supabase link --project-ref <your-ref>`
 3. Set secrets:
    ```
-   supabase secrets set FROG_API_KEY=xxxxx          # required (already set for recognize-product)
-   supabase secrets set GEMINI_API_KEY=xxxxx         # required for audio input (free Gemini key)
+   supabase secrets set GEMINI_API_KEY=xxxxx    # required (official Google AI Studio key, shared with scan)
    ```
-   Optional overrides if a default is rejected:
+   Optional override if you want a different model than the default
+   `gemini-3.6-flash`:
    ```
-   supabase secrets set FROG_BASE_URL=https://frogapi.app/v1
-   supabase secrets set VOICE_MODEL=gpt-5.6-luna              # exact lowercase slug from the Frog dashboard
-   supabase secrets set GEMINI_TRANSCRIBE_MODEL=gemini-2.5-flash  # free tier, audio-capable
+   supabase secrets set GEMINI_VOICE_MODEL=gemini-flash-latest   # exact Gemini model slug
    ```
-   `FROG_API_KEY`, `VOICE_MODEL`/`OPENAI_MODEL`, and `GEMINI_API_KEY` are the
-   only ones that matter for a first deploy — the rest default sensibly.
+   `GEMINI_API_KEY` is the only secret that matters. (The old `FROG_*`,
+   `VOICE_MODEL`/`OPENAI_MODEL`, and `GEMINI_TRANSCRIBE_MODEL` secrets are no
+   longer read by this function.)
 4. Deploy: `supabase functions deploy parse-sale`
 
 ## Contract
@@ -83,18 +77,19 @@ Response (same shape regardless of which input was used):
   ]
 }
 ```
+`quantity` is omitted when no count was spoken — the app defaults it to 1 and
+flags it as assumed.
 
 A silent/unintelligible audio clip is a real "nothing was said" result: Gemini
-returning an empty/whitespace transcript short-circuits to
-`{ "heard_text": "", "items": [] }` with **200**, without calling Frog at all.
+returns empty `items` (and an empty `heard_text`) →
+`{ "heard_text": "", "items": [] }` with **200**.
 
-Genuine failures (bad key, gateway/Gemini outage, unparseable reply) return
-**502** so the app shows a retry state; missing/duplicate input fields
-(neither or both of `transcript`/`audio_base64`, missing `candidates`, or
-audio sent with no `GEMINI_API_KEY` configured) return **400**. An
-unexpected Gemini response shape (missing/empty `candidates`, or a
-non-array `parts` list — e.g. a safety block or an API change) is also a
-**502** (retry) — it is never treated as a silent empty transcript.
+Genuine failures (bad key, Gemini outage, unparseable reply) return **502** so
+the app shows a retry state; missing/duplicate input fields (neither or both of
+`transcript`/`audio_base64`, missing `candidates`, or `GEMINI_API_KEY` not
+configured) return **400**. An unexpected Gemini response shape (missing/empty
+`candidates`, or a non-array `parts` list — e.g. a safety block or an API change)
+is also a **502** (retry) — it is never treated as a silent empty result.
 
 ## Smoke test — text (no audio needed — it takes text)
 ```
