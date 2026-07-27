@@ -44,8 +44,10 @@ class _FakeAudioRecorder implements AudioRecorderPort {
 /// [VoiceSaleRepository]'s private Supabase client field never needs
 /// constructing -- same trick `test/voice_controller_test.dart` uses.
 class _FakeVoiceRepo implements VoiceSaleRepository {
-  _FakeVoiceRepo(this._result);
+  _FakeVoiceRepo(this._result, {Result<VoiceParseResult>? transcriptResult})
+    : _transcriptResult = transcriptResult ?? _result;
   final Result<VoiceParseResult> _result;
+  final Result<VoiceParseResult> _transcriptResult;
 
   @override
   Future<Result<VoiceParseResult>> parse({
@@ -53,6 +55,12 @@ class _FakeVoiceRepo implements VoiceSaleRepository {
     required String audioMime,
     required List<Map<String, dynamic>> candidates,
   }) async => _result;
+
+  @override
+  Future<Result<VoiceParseResult>> parseTranscript({
+    required String transcript,
+    required List<Map<String, dynamic>> candidates,
+  }) async => _transcriptResult;
 }
 
 Product _p(String id, {required String name}) =>

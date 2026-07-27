@@ -59,6 +59,30 @@ class VoiceSaleRepository {
       return Result.failure(mapVoiceFailure(e));
     }
   }
+
+  /// Re-parses an edited transcript through the same `parse-sale` function,
+  /// using its text path instead of audio. Lets the shopkeeper fix a mishear
+  /// and get freshly matched line items without re-recording.
+  Future<Result<VoiceParseResult>> parseTranscript({
+    required String transcript,
+    required List<Map<String, dynamic>> candidates,
+  }) async {
+    try {
+      final res = await _client.functions
+          .invoke(
+            'parse-sale',
+            body: {'transcript': transcript, 'candidates': candidates},
+          )
+          .timeout(const Duration(seconds: 30));
+      final data = res.data;
+      final map = data is String ? jsonDecode(data) : data;
+      return Result.success(
+        VoiceParseResult.fromJson(Map<String, dynamic>.from(map as Map)),
+      );
+    } catch (e) {
+      return Result.failure(mapVoiceFailure(e));
+    }
+  }
 }
 
 final voiceSaleRepositoryProvider = Provider<VoiceSaleRepository>((ref) {

@@ -73,10 +73,13 @@ class _FakeAudioRecorder implements AudioRecorderPort {
 /// records the last audio it was called with, for tests that need to assert
 /// what was actually sent to `parse-sale`.
 class _FakeVoiceRepo implements VoiceSaleRepository {
-  _FakeVoiceRepo(this._result);
+  _FakeVoiceRepo(this._result, {Result<VoiceParseResult>? transcriptResult})
+    : _transcriptResult = transcriptResult ?? _result;
   final Result<VoiceParseResult> _result;
+  final Result<VoiceParseResult> _transcriptResult;
   Uint8List? lastAudioBytes;
   String? lastAudioMime;
+  String? lastTranscript;
 
   @override
   Future<Result<VoiceParseResult>> parse({
@@ -87,6 +90,15 @@ class _FakeVoiceRepo implements VoiceSaleRepository {
     lastAudioBytes = audioBytes;
     lastAudioMime = audioMime;
     return _result;
+  }
+
+  @override
+  Future<Result<VoiceParseResult>> parseTranscript({
+    required String transcript,
+    required List<Map<String, dynamic>> candidates,
+  }) async {
+    lastTranscript = transcript;
+    return _transcriptResult;
   }
 }
 
@@ -103,6 +115,15 @@ class _PendingVoiceRepo implements VoiceSaleRepository {
   Future<Result<VoiceParseResult>> parse({
     required Uint8List audioBytes,
     required String audioMime,
+    required List<Map<String, dynamic>> candidates,
+  }) {
+    called = true;
+    return completer.future;
+  }
+
+  @override
+  Future<Result<VoiceParseResult>> parseTranscript({
+    required String transcript,
     required List<Map<String, dynamic>> candidates,
   }) {
     called = true;

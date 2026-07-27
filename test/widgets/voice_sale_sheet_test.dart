@@ -64,6 +64,12 @@ class _FakeVoiceRepo implements VoiceSaleRepository {
     required String audioMime,
     required List<Map<String, dynamic>> candidates,
   }) async => _result;
+
+  @override
+  Future<Result<VoiceParseResult>> parseTranscript({
+    required String transcript,
+    required List<Map<String, dynamic>> candidates,
+  }) async => _result;
 }
 
 Product _p(String id, {required String name}) =>
