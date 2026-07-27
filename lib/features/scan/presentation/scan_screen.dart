@@ -92,14 +92,16 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     }
   }
 
-  /// Shows the add-to-cart confirmation sheet for [product] so the shopkeeper
-  /// sees what was recognized and sets a quantity before it lands in the
-  /// cart. Always returns true (keep scanning) -- the AppBar back arrow, not
-  /// a successful add or a cancel, is how a shopkeeper exits to review the
-  /// cart.
+  /// Opens the add-to-cart confirmation sheet for [product] so the shopkeeper
+  /// sets the quantity before it enters the cart, then returns true to keep
+  /// scanning (the AppBar back arrow, not a successful add, is how a shopkeeper
+  /// exits to review the cart). The sheet owns stock handling, the add, and the
+  /// success haptic; a Cancel/dismiss simply adds nothing and returns to the
+  /// camera.
   Future<bool> _confirmAndAdd(Product product) async {
     final added = await showAddToCartSheet(context, product: product);
-    if (added == true && mounted) {
+    if (!mounted) return false;
+    if (added == true) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(

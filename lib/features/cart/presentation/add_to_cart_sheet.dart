@@ -36,8 +36,10 @@ class _AddToCartSheet extends ConsumerStatefulWidget {
 
 class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
   late double _qty;
+  late final TextEditingController _qtyController;
 
   double get _step => stepForUnit(widget.product.unit);
+  bool get _allowsDecimal => widget.product.unitType.allowsDecimal;
 
   @override
   void initState() {
@@ -46,10 +48,49 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
         .read(cartControllerProvider.notifier)
         .remainingStockFor(widget.product);
     _qty = remaining <= 0 ? 0 : _step.clamp(0, remaining).toDouble();
+    _qtyController = TextEditingController(text: Qty.format(_qty));
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    super.dispose();
+  }
+
+  /// Sets the quantity from a stepper button and syncs the text field to match.
+  void _setQty(double v) {
+    setState(() => _qty = v);
+    final text = Qty.format(v);
+    _qtyController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  /// Handles direct typing: parse, clamp to stock (and to whole for pieces).
+  /// Only snaps the field text back when the typed value was out of range, so a
+  /// mid-entry decimal like "2." is not clobbered.
+  void _onFieldChanged(String raw, double remaining) {
+    final parsed = double.tryParse(raw.trim());
+    final clamped = clampCartQuantity(
+      value: parsed ?? 0,
+      remaining: remaining,
+      allowsDecimal: _allowsDecimal,
+    );
+    setState(() => _qty = clamped);
+    if (parsed != null && parsed != clamped) {
+      final text = Qty.format(clamped);
+      _qtyController.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
   }
 
   void _add() {
-    ref.read(cartControllerProvider.notifier).addOrIncrement(widget.product, _qty);
+    ref
+        .read(cartControllerProvider.notifier)
+        .addOrIncrement(widget.product, _qty);
     AppHaptics.success();
     Navigator.of(context).pop(true);
   }
@@ -60,7 +101,9 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
     final l10n = context.l10n;
     final product = widget.product;
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
-    final maxQty = ref.read(cartControllerProvider.notifier).remainingStockFor(product);
+    final maxQty = ref
+        .read(cartControllerProvider.notifier)
+        .remainingStockFor(product);
     final outOfStock = maxQty <= 0;
     final total = product.sellingPrice * _qty;
 
@@ -111,16 +154,30 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
                         ? null
                         : () {
                             AppHaptics.tap();
-                            setState(() => _qty -= _step);
+                            _setQty(_qty - _step);
                           },
                     icon: const Icon(Icons.remove),
                   ),
                   SizedBox(
-                    width: 88,
-                    child: Text(
-                      '${Qty.format(_qty)} ${product.unitLabel}',
+                    width: 96,
+                    child: TextField(
+                      controller: _qtyController,
+                      enabled: !outOfStock,
+                      onChanged: (v) => _onFieldChanged(v, maxQty),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: _allowsDecimal,
+                      ),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleLarge,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        suffixText: product.unitLabel,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
                   ),
                   IconButton.filledTonal(
@@ -128,7 +185,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
                         ? null
                         : () {
                             AppHaptics.tap();
-                            setState(() => _qty += _step);
+                            _setQty(_qty + _step);
                           },
                     icon: const Icon(Icons.add),
                   ),
