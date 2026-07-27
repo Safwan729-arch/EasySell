@@ -30,6 +30,20 @@ interface Candidate {
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const MODEL = Deno.env.get("GEMINI_VOICE_MODEL") ?? "gemini-3.5-flash-lite";
 
+// Hard ceiling on generated output. A model confused by shop noise tries to
+// transcribe the whole room; without a cap it can generate until the model
+// default, which is what produced the 30s client timeouts. A realistic 5-item
+// sale is ~300 output tokens, so 1024 leaves headroom. NOTE: on Gemini 3.x
+// thinking tokens count against this budget -- thinkingLevel "minimal" (set
+// below) keeps that draw small. Hitting the cap truncates the JSON, which
+// fails JSON.parse and surfaces as a fast 502 rather than a 30s hang.
+const MAX_OUTPUT_TOKENS = Number(Deno.env.get("GEMINI_VOICE_MAX_TOKENS") ?? "1024");
+
+// Server-side deadline for the Gemini call. Must stay BELOW the app's 30s
+// client timeout so the user gets a real error state instead of the client
+// giving up on a request the server is still waiting on.
+const GEMINI_TIMEOUT_MS = Number(Deno.env.get("GEMINI_VOICE_TIMEOUT_MS") ?? "20000");
+
 const instruction = (candidates: Candidate[]) =>
   `You are a point-of-sale assistant. You receive a shopkeeper's spoken sentence,
 either as audio or as already-transcribed text. The speech may be English,
@@ -50,6 +64,14 @@ exist), return BOTH with SIMILAR confidence — do NOT guess a winner; the app a
 the user. Never invent a product_id that is not in the list. If no count was
 spoken for an item, OMIT "quantity" entirely (do not guess a number). If nothing
 sale-like was said, return an empty items array.
+
+NOISE RULE — the recording may come from a busy shop or street:
+- Transcribe ONLY the primary speaker (the person closest to the microphone).
+- IGNORE background chatter, other people's voices, traffic, music, and ambient
+  noise. Do NOT transcribe them and do NOT turn them into items.
+- "heard_text" must contain ONLY the sale sentence — never a description of the
+  noise, never bystander speech. If the primary speaker said nothing sale-like,
+  return an empty items array and a SHORT heard_text.
 
 Rank each item's matches by confidence (highest first).
 Product list: ${JSON.stringify(candidates)}`;
@@ -106,6 +128,9 @@ async function parseSale(input: ParseInput, candidates: Candidate[]) {
     {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+      // Aborts throw, hit the handler's catch, and become a 502 -- the same
+      // path as any other Gemini failure. No new error branch needed.
+      signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
       body: JSON.stringify({
         contents: [
           { role: "user", parts: [{ text: instruction(candidates) }, userPart] },
@@ -114,6 +139,7 @@ async function parseSale(input: ParseInput, candidates: Candidate[]) {
           responseMimeType: "application/json",
           responseSchema,
           temperature: 0,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
           // Minimize the model's internal "thinking" — transcription + extraction
           // is a simple, structured job. Gemini 3 flash can't turn thinking fully
           // off, so use the lowest level to cut latency. (thinkingBudget is the
@@ -210,6 +236,7 @@ Deno.serve(async (req) => {
     return json({ error: "GEMINI_API_KEY is not configured" }, 400);
   }
 
+  const startedAt = Date.now();
   try {
     const input: ParseInput = hasAudio
       ? {
@@ -220,13 +247,23 @@ Deno.serve(async (req) => {
     // Audio has no client-supplied transcript to fall back on; heard_text then
     // comes from Gemini (or "" for a silent clip).
     const fallback = hasAudio ? "" : (transcript as string);
+    const geminiStartedAt = Date.now();
     const raw = await parseSale(input, candidates as Candidate[]);
+    const geminiMs = Date.now() - geminiStartedAt;
+    // console.error so it lands in Supabase function logs regardless of log
+    // level. This is how we confirm which segment dominates on a real noisy
+    // failure instead of inferring it.
+    console.error(
+      `parse-sale timing: mode=${hasAudio ? "audio" : "text"} ` +
+        `b64len=${hasAudio ? (audioBase64 as string).length : 0} ` +
+        `gemini=${geminiMs}ms total=${Date.now() - startedAt}ms`,
+    );
     return json(normalize(raw, candidates as Candidate[], fallback), 200);
   } catch (e) {
-    // Genuine failures (bad key, Gemini outage, non-JSON reply, safety block)
-    // return 5xx so the app shows its error/retry state. A real empty result is
-    // still a 200 with items: [] from normalize().
-    console.error("parse-sale failed:", e);
+    // Genuine failures (bad key, Gemini outage, non-JSON reply, safety block,
+    // or our own 20s abort) return 5xx so the app shows its error/retry state.
+    // A real empty result is still a 200 with items: [] from normalize().
+    console.error(`parse-sale failed after ${Date.now() - startedAt}ms:`, e);
     return json({ error: "parse failed" }, 502);
   }
 });
