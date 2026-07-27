@@ -102,16 +102,16 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   /// success haptic; a Cancel/dismiss simply adds nothing and returns to the
   /// camera.
   Future<bool> _confirmAndAdd(Product product, {String? readLabel}) async {
+    final notifier = ref.read(cartControllerProvider.notifier);
     final snapshot = ref.read(cartControllerProvider); // pre-add cart
     final added = await showAddToCartSheet(context, product: product, readLabel: readLabel);
     if (!mounted) return false;
     if (added == true) {
       showUndoableAddSnackBar(
         ScaffoldMessenger.of(context),
-        ref,
         message: context.l10n.scan_addedToCart(product.name),
         undoLabel: context.l10n.common_undo,
-        snapshot: snapshot,
+        onUndo: () => notifier.restore(snapshot),
       );
     }
     return true;

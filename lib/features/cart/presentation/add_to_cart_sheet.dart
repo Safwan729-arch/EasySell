@@ -135,17 +135,16 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-          if (widget.readLabel != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                l10n.scan_read(widget.readLabel!),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontStyle: FontStyle.italic,
-                ),
+          if (widget.readLabel != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.scan_read(widget.readLabel!),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
               ),
             ),
+          ],
           const SizedBox(height: 4),
           Text(
             outOfStock

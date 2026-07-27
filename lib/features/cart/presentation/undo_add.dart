@@ -1,29 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/cart_line.dart';
-import 'cart_controller.dart';
-
-/// Shows a confirmation snackbar with an Undo action that restores the cart to
-/// [snapshot]. Shared by the scan and voice add flows so "undo last add"
-/// behaves identically in both. Capture [snapshot] BEFORE mutating the cart.
+/// Shows a confirmation snackbar with an Undo action that calls [onUndo].
+/// Shared by the scan and voice add flows so "undo last add" behaves
+/// identically in both. Callers must capture whatever [onUndo] needs (e.g. a
+/// controller notifier and a pre-add snapshot) BEFORE any navigation that
+/// could unmount the calling widget -- the SnackBarAction fires later, once
+/// the widget that triggered it may already be gone, so [onUndo] must not
+/// depend on a `BuildContext`/`WidgetRef` tied to that widget.
 void showUndoableAddSnackBar(
-  ScaffoldMessengerState messenger,
-  WidgetRef ref, {
+  ScaffoldMessengerState messenger, {
   required String message,
   required String undoLabel,
-  required List<CartLine> snapshot,
+  required VoidCallback onUndo,
 }) {
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
         content: Text(message),
-        action: SnackBarAction(
-          label: undoLabel,
-          onPressed: () =>
-              ref.read(cartControllerProvider.notifier).restore(snapshot),
-        ),
+        action: SnackBarAction(label: undoLabel, onPressed: onUndo),
       ),
     );
 }

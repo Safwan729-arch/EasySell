@@ -59,10 +59,9 @@ class VoiceReviewSheet extends ConsumerWidget {
     context.push('/cart');
     showUndoableAddSnackBar(
       messenger,
-      ref,
       message: addedMsg,
       undoLabel: undoLabel,
-      snapshot: snapshot,
+      onUndo: () => cart.restore(snapshot),
     );
   }
 
@@ -71,30 +70,39 @@ class VoiceReviewSheet extends ConsumerWidget {
   /// are ignored by the controller.
   Future<void> _editTranscript(BuildContext context, WidgetRef ref, String current) async {
     final controller = TextEditingController(text: current);
-    final edited = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(dialogContext.l10n.voice_heard),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-          onSubmitted: (v) => Navigator.of(dialogContext).pop(v),
+    try {
+      final edited = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(dialogContext.l10n.voice_heard),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+            onSubmitted: (v) => Navigator.of(dialogContext).pop(v),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(dialogContext.l10n.common_cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+              child: Text(dialogContext.l10n.voice_recheck),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(dialogContext.l10n.common_cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-            child: Text(dialogContext.l10n.voice_recheck),
-          ),
-        ],
-      ),
-    );
-    if (edited != null) {
-      await ref.read(voiceControllerProvider.notifier).reparseFromText(edited);
+      );
+      if (edited != null) {
+        await ref.read(voiceControllerProvider.notifier).reparseFromText(edited);
+      }
+    } finally {
+      // Deferred a frame: the AlertDialog's exit-transition route is still
+      // mounted (mid pop-animation) the instant `showDialog` resolves, so
+      // disposing synchronously here can race the TextField's own teardown.
+      // A post-frame callback runs after that route has actually been
+      // removed from the tree.
+      WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
     }
   }
 
