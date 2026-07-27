@@ -1099,4 +1099,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get voice_retry => 'আবার চেষ্টা করুন';
+
+  @override
+  String get voice_typeInstead => 'লিখে দিন';
 }

@@ -14,6 +14,7 @@ import '../../scan/presentation/product_picker_sheet.dart';
 import '../domain/voice_line.dart';
 import '../domain/voice_parse_result.dart';
 import 'voice_controller.dart';
+import 'voice_transcript_dialog.dart';
 
 /// The last stop before a spoken sale touches the cart: one row per line the
 /// AI parsed, letting the shopkeeper fix a mishear, settle an ambiguous
@@ -54,47 +55,6 @@ class VoiceReviewSheet extends ConsumerWidget {
     context.push('/cart');
   }
 
-  /// Opens a small editor prefilled with [current] transcript. On submit,
-  /// re-runs the AI on the corrected text via the controller. Empty submits
-  /// are ignored by the controller.
-  Future<void> _editTranscript(BuildContext context, WidgetRef ref, String current) async {
-    final controller = TextEditingController(text: current);
-    try {
-      final edited = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(dialogContext.l10n.voice_heard),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            onSubmitted: (v) => Navigator.of(dialogContext).pop(v),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(dialogContext.l10n.common_cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-              child: Text(dialogContext.l10n.voice_recheck),
-            ),
-          ],
-        ),
-      );
-      if (edited != null) {
-        await ref.read(voiceControllerProvider.notifier).reparseFromText(edited);
-      }
-    } finally {
-      // Deferred a frame: the AlertDialog's exit-transition route is still
-      // mounted (mid pop-animation) the instant `showDialog` resolves, so
-      // disposing synchronously here can race the TextField's own teardown.
-      // A post-frame callback runs after that route has actually been
-      // removed from the tree.
-      WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -127,7 +87,8 @@ class VoiceReviewSheet extends ConsumerWidget {
           Text(l10n.voice_title, style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
           InkWell(
-            onTap: () => _editTranscript(context, ref, state.heardText ?? ''),
+            onTap: () =>
+                showVoiceTranscriptDialog(context, ref, state.heardText ?? ''),
             child: Row(
               children: [
                 Flexible(
@@ -139,7 +100,11 @@ class VoiceReviewSheet extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(Icons.edit, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.edit,
+                  size: 14,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ],
             ),
           ),

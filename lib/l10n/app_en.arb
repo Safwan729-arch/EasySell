@@ -340,5 +340,6 @@
   "voice_errNoSpeech": "Didn't catch that. Try again.",
   "voice_errNoMatch": "Couldn't match anything you said.",
   "voice_errMicDenied": "Microphone access is off. Turn it on in Settings.",
-  "voice_retry": "Try again"
+  "voice_retry": "Try again",
+  "voice_typeInstead": "Type it instead"
 }

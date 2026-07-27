@@ -1921,6 +1921,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get voice_retry;
+
+  /// No description provided for @voice_typeInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Type it instead'**
+  String get voice_typeInstead;
 }
 
 class _AppLocalizationsDelegate

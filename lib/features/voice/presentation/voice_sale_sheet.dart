@@ -7,6 +7,7 @@ import '../../../core/widgets/skeleton.dart';
 import '../../../l10n/app_localizations.dart';
 import 'voice_controller.dart';
 import 'voice_review_sheet.dart';
+import 'voice_transcript_dialog.dart';
 
 /// Presents [VoiceSaleSheet] as a modal bottom sheet -- mirrors the other
 /// `show*Sheet` entry points (`showAddToCartSheet`, `showProductPickerSheet`).
@@ -48,6 +49,11 @@ class VoiceSaleSheet extends ConsumerWidget {
       VoicePhase.error => _ErrorPane(
         errorKey: state.errorMessage,
         onRetry: notifier.reset,
+        // Retrying into the same noise repeats the same failure, so offer the
+        // text path as a real way out. `context`/`ref` are available here, so
+        // `_ErrorPane` stays a plain StatelessWidget.
+        onTypeInstead: () =>
+            showVoiceTranscriptDialog(context, ref, state.heardText ?? ''),
       ),
     };
   }
@@ -240,10 +246,15 @@ class _ThinkingPane extends StatelessWidget {
 }
 
 class _ErrorPane extends StatelessWidget {
-  const _ErrorPane({required this.errorKey, required this.onRetry});
+  const _ErrorPane({
+    required this.errorKey,
+    required this.onRetry,
+    required this.onTypeInstead,
+  });
 
   final String? errorKey;
   final VoidCallback onRetry;
+  final VoidCallback onTypeInstead;
 
   /// Maps the controller's magic error keys to localized copy. Anything else
   /// is a repository `Failure.message`, already user-friendly, and is shown
@@ -278,6 +289,11 @@ class _ErrorPane extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           FilledButton.tonal(onPressed: onRetry, child: Text(l10n.voice_retry)),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: onTypeInstead,
+            child: Text(l10n.voice_typeInstead),
+          ),
         ],
       ),
     );

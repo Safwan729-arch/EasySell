@@ -339,5 +339,6 @@
   "voice_errNoSpeech": "শুনতে পাইনি। আবার চেষ্টা করুন।",
   "voice_errNoMatch": "আপনার বলা কিছুই মেলাতে পারিনি।",
   "voice_errMicDenied": "মাইক্রোফোনের অনুমতি বন্ধ আছে। সেটিংসে গিয়ে চালু করুন।",
-  "voice_retry": "আবার চেষ্টা করুন"
+  "voice_retry": "আবার চেষ্টা করুন",
+  "voice_typeInstead": "লিখে দিন"
 }

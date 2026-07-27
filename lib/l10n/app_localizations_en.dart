@@ -1105,4 +1105,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voice_retry => 'Try again';
+
+  @override
+  String get voice_typeInstead => 'Type it instead';
 }
