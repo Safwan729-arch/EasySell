@@ -3,6 +3,7 @@ import 'package:ai_shopkeeper/features/auth/data/auth_repository.dart';
 import 'package:ai_shopkeeper/features/auth/domain/shop.dart';
 import 'package:ai_shopkeeper/features/cart/presentation/add_to_cart_sheet.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
+import 'package:ai_shopkeeper/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,6 +35,8 @@ Widget _harness(Product product) => ProviderScope(
   ],
   child: MaterialApp(
     theme: AppTheme.light,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
       body: Builder(
         builder: (context) => ElevatedButton(
