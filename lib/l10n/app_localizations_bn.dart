@@ -1064,6 +1064,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get voice_heard => 'আমি শুনেছি';
 
   @override
+  String get voice_recheck => 'আবার দেখুন';
+
+  @override
   String get voice_whichOne => 'কোনটি?';
 
   @override

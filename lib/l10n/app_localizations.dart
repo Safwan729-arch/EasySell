@@ -1862,6 +1862,12 @@ abstract class AppLocalizations {
   /// **'I heard'**
   String get voice_heard;
 
+  /// No description provided for @voice_recheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-check'**
+  String get voice_recheck;
+
   /// No description provided for @voice_whichOne.
   ///
   /// In en, this message translates to:

@@ -8,6 +8,7 @@ import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../../shared/extensions/format.dart';
 import '../../cart/domain/cart_math.dart';
 import '../../cart/presentation/cart_controller.dart';
+import '../../cart/presentation/undo_add.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../scan/presentation/product_picker_sheet.dart';
@@ -42,6 +43,10 @@ class VoiceReviewSheet extends ConsumerWidget {
     }
 
     final cart = ref.read(cartControllerProvider.notifier);
+    final snapshot = ref.read(cartControllerProvider); // pre-add cart
+    final messenger = ScaffoldMessenger.of(context);
+    final undoLabel = context.l10n.common_undo;
+    final addedMsg = context.l10n.voice_addToCart;
     for (var i = 0; i < state.lines.length; i++) {
       cart.addOrIncrement(resolved[i], state.lines[i].quantity);
     }
@@ -52,6 +57,45 @@ class VoiceReviewSheet extends ConsumerWidget {
     // No AppRoutes constant for cart exists yet -- app_router.dart itself
     // registers this route by the raw literal.
     context.push('/cart');
+    showUndoableAddSnackBar(
+      messenger,
+      ref,
+      message: addedMsg,
+      undoLabel: undoLabel,
+      snapshot: snapshot,
+    );
+  }
+
+  /// Opens a small editor prefilled with [current] transcript. On submit,
+  /// re-runs the AI on the corrected text via the controller. Empty submits
+  /// are ignored by the controller.
+  Future<void> _editTranscript(BuildContext context, WidgetRef ref, String current) async {
+    final controller = TextEditingController(text: current);
+    final edited = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.voice_heard),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          onSubmitted: (v) => Navigator.of(dialogContext).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(dialogContext.l10n.common_cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            child: Text(dialogContext.l10n.voice_recheck),
+          ),
+        ],
+      ),
+    );
+    if (edited != null) {
+      await ref.read(voiceControllerProvider.notifier).reparseFromText(edited);
+    }
   }
 
   @override
@@ -85,10 +129,21 @@ class VoiceReviewSheet extends ConsumerWidget {
         children: [
           Text(l10n.voice_title, style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
-          Text(
-            '${l10n.voice_heard} "${state.heardText ?? ''}"',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          InkWell(
+            onTap: () => _editTranscript(context, ref, state.heardText ?? ''),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    '${l10n.voice_heard} "${state.heardText ?? ''}"',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.edit, size: 14, color: theme.colorScheme.onSurfaceVariant),
+              ],
             ),
           ),
           const SizedBox(height: 16),

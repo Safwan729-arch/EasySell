@@ -1070,6 +1070,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voice_heard => 'I heard';
 
   @override
+  String get voice_recheck => 'Re-check';
+
+  @override
   String get voice_whichOne => 'Which one?';
 
   @override
