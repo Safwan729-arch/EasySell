@@ -27,6 +27,10 @@ const _product = Product(
   quantity: 12,
 );
 
+// Anchored to "today" (not a fixed calendar date) so the sale always falls
+// inside the History screen's default "Today" scope regardless of when the
+// suite runs. A hardcoded past date silently drops out of scope once the clock
+// moves past it, which made this test pass only on the day it was written.
 final _sale = Transaction(
   id: 't1',
   shopId: 's',
@@ -36,7 +40,7 @@ final _sale = Transaction(
   buyingPrice: 700,
   sellingPrice: 850,
   source: 'manual',
-  createdAt: DateTime(2026, 7, 21, 20, 44),
+  createdAt: DateTime.now(),
 );
 
 GoRouter _router() => GoRouter(
