@@ -40,6 +40,28 @@ Widget _harness(Product product) => ProviderScope(
     home: Scaffold(
       body: Builder(
         builder: (context) => ElevatedButton(
+          onPressed: () => showAddToCartSheet(context, product: product, readLabel: 'Pepsi · 1L'),
+          child: const Text('open'),
+        ),
+      ),
+    ),
+  ),
+);
+
+Widget _harnessNoLabel(Product product) => ProviderScope(
+  overrides: [
+    myShopProvider.overrideWith(
+      (ref) =>
+          const Shop(id: 's', ownerId: 'o', name: 'Test Shop', currency: 'USD'),
+    ),
+  ],
+  child: MaterialApp(
+    theme: AppTheme.light,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      body: Builder(
+        builder: (context) => ElevatedButton(
           onPressed: () => showAddToCartSheet(context, product: product),
           child: const Text('open'),
         ),
@@ -118,5 +140,19 @@ void main() {
 
     expect(find.widgetWithText(TextField, '2'), findsOneWidget);
     expect(find.text('\$10.00'), findsOneWidget);
+  });
+
+  testWidgets('shows the "Read:" caption when a readLabel is given', (tester) async {
+    await tester.pumpWidget(_harness(_p(quantity: 12, price: 5)));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Read: Pepsi · 1L'), findsOneWidget);
+  });
+
+  testWidgets('omits the caption when no readLabel is given', (tester) async {
+    await tester.pumpWidget(_harnessNoLabel(_p(quantity: 12, price: 5)));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Read:'), findsNothing);
   });
 }

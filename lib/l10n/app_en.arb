@@ -197,6 +197,8 @@
   "scan_failed": "Scan failed. Try again.",
   "scan_addedToCart": "Added {name} to cart",
   "@scan_addedToCart": { "placeholders": { "name": { "type": "String" } } },
+  "scan_read": "Read: {details}",
+  "@scan_read": { "placeholders": { "details": { "type": "String" } } },
   "scan_didYouMean": "Did you mean?",
   "scan_noMatchPick": "No match — pick the product",
   "scan_searchProducts": "Search products",

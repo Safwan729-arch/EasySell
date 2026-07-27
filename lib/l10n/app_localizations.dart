@@ -1130,6 +1130,12 @@ abstract class AppLocalizations {
   /// **'Added {name} to cart'**
   String scan_addedToCart(String name);
 
+  /// No description provided for @scan_read.
+  ///
+  /// In en, this message translates to:
+  /// **'Read: {details}'**
+  String scan_read(String details);
+
   /// No description provided for @scan_didYouMean.
   ///
   /// In en, this message translates to:

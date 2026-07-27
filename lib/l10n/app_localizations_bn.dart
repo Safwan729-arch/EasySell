@@ -650,6 +650,11 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String scan_read(String details) {
+    return 'পড়া হয়েছে: $details';
+  }
+
+  @override
   String get scan_didYouMean => 'আপনি কি এটি বোঝাতে চেয়েছেন?';
 
   @override

@@ -15,20 +15,22 @@ import 'cart_controller.dart';
 Future<bool?> showAddToCartSheet(
   BuildContext context, {
   required Product product,
+  String? readLabel,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
-    builder: (_) => _AddToCartSheet(product: product),
+    builder: (_) => _AddToCartSheet(product: product, readLabel: readLabel),
   );
 }
 
 class _AddToCartSheet extends ConsumerStatefulWidget {
-  const _AddToCartSheet({required this.product});
+  const _AddToCartSheet({required this.product, this.readLabel});
 
   final Product product;
+  final String? readLabel;
 
   @override
   ConsumerState<_AddToCartSheet> createState() => _AddToCartSheetState();
@@ -131,6 +133,17 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
               subtitle,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          if (widget.readLabel != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                l10n.scan_read(widget.readLabel!),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           const SizedBox(height: 4),

@@ -197,6 +197,7 @@
   "scan_failed": "স্ক্যান ব্যর্থ। আবার চেষ্টা করুন।",
   "scan_addedToCart": "{name} কার্টে যোগ হয়েছে",
   "@scan_addedToCart": { "placeholders": { "name": { "type": "String" } } },
+  "scan_read": "পড়া হয়েছে: {details}",
   "scan_didYouMean": "আপনি কি এটি বোঝাতে চেয়েছেন?",
   "scan_noMatchPick": "মেলেনি — পণ্য বেছে নিন",
   "scan_searchProducts": "পণ্য খুঁজুন",

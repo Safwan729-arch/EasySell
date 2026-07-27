@@ -655,6 +655,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String scan_read(String details) {
+    return 'Read: $details';
+  }
+
+  @override
   String get scan_didYouMean => 'Did you mean?';
 
   @override
