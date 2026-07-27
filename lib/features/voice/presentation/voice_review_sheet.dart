@@ -8,7 +8,6 @@ import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../../shared/extensions/format.dart';
 import '../../cart/domain/cart_math.dart';
 import '../../cart/presentation/cart_controller.dart';
-import '../../cart/presentation/undo_add.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../scan/presentation/product_picker_sheet.dart';
@@ -43,10 +42,6 @@ class VoiceReviewSheet extends ConsumerWidget {
     }
 
     final cart = ref.read(cartControllerProvider.notifier);
-    final snapshot = ref.read(cartControllerProvider); // pre-add cart
-    final messenger = ScaffoldMessenger.of(context);
-    final undoLabel = context.l10n.common_undo;
-    final addedMsg = context.l10n.voice_addToCart;
     for (var i = 0; i < state.lines.length; i++) {
       cart.addOrIncrement(resolved[i], state.lines[i].quantity);
     }
@@ -57,12 +52,6 @@ class VoiceReviewSheet extends ConsumerWidget {
     // No AppRoutes constant for cart exists yet -- app_router.dart itself
     // registers this route by the raw literal.
     context.push('/cart');
-    showUndoableAddSnackBar(
-      messenger,
-      message: addedMsg,
-      undoLabel: undoLabel,
-      onUndo: () => cart.restore(snapshot),
-    );
   }
 
   /// Opens a small editor prefilled with [current] transcript. On submit,

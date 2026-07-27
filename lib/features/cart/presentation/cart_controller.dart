@@ -34,10 +34,6 @@ class CartController extends Notifier<List<CartLine>> {
 
   void clear() => state = const [];
 
-  /// Reverts the cart to a previously captured [snapshot]. Used by the
-  /// "undo last add" affordance after a scan or voice add.
-  void restore(List<CartLine> snapshot) => state = snapshot;
-
   /// How much more of [product] can still be added right now: current stock
   /// minus whatever quantity of it is already staged.
   double remainingStockFor(Product product) =>
