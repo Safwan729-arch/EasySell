@@ -37,12 +37,24 @@ const MODEL = Deno.env.get("GEMINI_VOICE_MODEL") ?? "gemini-3.5-flash-lite";
 // thinking tokens count against this budget -- thinkingLevel "minimal" (set
 // below) keeps that draw small. Hitting the cap truncates the JSON, which
 // fails JSON.parse and surfaces as a fast 502 rather than a 30s hang.
-const MAX_OUTPUT_TOKENS = Number(Deno.env.get("GEMINI_VOICE_MAX_TOKENS") ?? "1024");
+const MAX_OUTPUT_TOKENS = (() => {
+  const parsed = Number(Deno.env.get("GEMINI_VOICE_MAX_TOKENS") ?? "1024");
+  // Guard against invalid env values (NaN, negative, zero). A malformed secret
+  // must not silently become a 0-token budget (null in JSON) or break voice
+  // while looking like a Gemini problem. Always fall back to the default.
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1024;
+})();
 
 // Server-side deadline for the Gemini call. Must stay BELOW the app's 30s
 // client timeout so the user gets a real error state instead of the client
 // giving up on a request the server is still waiting on.
-const GEMINI_TIMEOUT_MS = Number(Deno.env.get("GEMINI_VOICE_TIMEOUT_MS") ?? "20000");
+const GEMINI_TIMEOUT_MS = (() => {
+  const parsed = Number(Deno.env.get("GEMINI_VOICE_TIMEOUT_MS") ?? "20000");
+  // Guard against invalid env values (NaN, negative, zero). A malformed secret
+  // must not silently become a 0ms timeout that kills every call instantly and
+  // looks like a Gemini outage. Always fall back to the default.
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
+})();
 
 const instruction = (candidates: Candidate[]) =>
   `You are a point-of-sale assistant. You receive a shopkeeper's spoken sentence,
