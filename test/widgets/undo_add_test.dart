@@ -50,6 +50,10 @@ void main() {
 
     await tester.tap(find.text('add'));
     await tester.pump();
+    // Settle the SnackBar entrance transition (~250ms) before tapping Undo --
+    // not pumpAndSettle(), which would fight the SnackBar's ~4s auto-dismiss
+    // timer (pumpAndSettle keeps pumping until no frames are scheduled, and
+    // that timer keeps one scheduled the whole time).
     await tester.pump(const Duration(milliseconds: 750));
     expect(capturedRef.read(cartControllerProvider).length, 1);
 
