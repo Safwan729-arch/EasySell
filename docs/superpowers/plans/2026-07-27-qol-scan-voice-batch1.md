@@ -1067,7 +1067,21 @@ void main() {
 Run: `flutter test test/widgets/voice_edit_transcript_test.dart`
 Expected: FAIL — the heard line isn't tappable / no "Re-check" editor.
 
-- [ ] **Step 3: Make the heard line tappable + add the editor**
+- [ ] **Step 3: Add the `voice_recheck` string, then make the heard line tappable + add the editor**
+
+In `lib/l10n/app_en.arb`, after the `"voice_heard"` entry add:
+
+```json
+  "voice_recheck": "Re-check",
+```
+
+In `lib/l10n/app_bn.arb`, add the matching key:
+
+```json
+  "voice_recheck": "আবার দেখুন",
+```
+
+Regenerate: `flutter gen-l10n`
 
 In `lib/features/voice/presentation/voice_review_sheet.dart`, add imports:
 
@@ -1122,7 +1136,7 @@ Add this method to `VoiceReviewSheet` (it's a `ConsumerWidget`, so take `ref`):
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-            child: const Text('Re-check'),
+            child: Text(dialogContext.l10n.voice_recheck),
           ),
         ],
       ),
@@ -1133,7 +1147,9 @@ Add this method to `VoiceReviewSheet` (it's a `ConsumerWidget`, so take `ref`):
   }
 ```
 
-> Note: "Re-check" is a UI action label. If you want it localized, add a `voice_recheck` key to both ARBs and use `context.l10n.voice_recheck`; the test's `find.text('Re-check')` must then match the English value. For this batch a literal is acceptable since it is an in-dialog control, but prefer the l10n key if touching the ARBs anyway.
+> Note: the `find.text('Re-check')` in the Step 1 test matches the English
+> value of `voice_recheck` ("Re-check"), which the test harness renders since
+> it forces `locale: const Locale('en')`.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1186,7 +1202,7 @@ Run: `flutter analyze lib test` — clean. `flutter test` — green (the existin
 - [ ] **Step 6: Commit**
 
 ```bash
-git add lib/features/voice/presentation/voice_review_sheet.dart test/widgets/voice_edit_transcript_test.dart
+git add lib/l10n/app_en.arb lib/l10n/app_bn.arb lib/l10n/app_localizations.dart lib/l10n/app_localizations_en.dart lib/l10n/app_localizations_bn.dart lib/features/voice/presentation/voice_review_sheet.dart test/widgets/voice_edit_transcript_test.dart
 git commit -m "feat(voice): edit misheard transcript to re-run AI; undo last voice add
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
