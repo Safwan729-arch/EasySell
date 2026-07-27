@@ -18,7 +18,7 @@
 - **On iOS these three flags are no-ops** for file recording (wired only into `RecorderStreamDelegate.swift`, the streaming path). iOS gains come from Layers 1, 2, and 4 only.
 - **`echoCancel` must be `false`** — it targets speaker-playback bleed (not this failure) and the package documents that it lowers recording volume.
 - **The `parse-sale` request/response contract is frozen.** No field added, removed, or renamed.
-- **Client timeout stays 30s** (`voice_sale_repository.dart:52`) as a network backstop; the server aborts first at 20s.
+- **Client timeout stays 30s** (`voice_sale_repository.dart:52`) as a network backstop; the server aborts first at 20s. **Revised post-launch:** the final whole-branch review found 20s didn't compose with upload + cold start inside the 30s client budget on the fallback capture rung; the server abort default is now 15000ms (env override clamped to a 25000ms ceiling). Client timeout is unchanged.
 - Run `flutter analyze` before every commit. **Never run `dart format .` repo-wide** — format only the paths you touched.
 
 ---
@@ -56,6 +56,12 @@ const MAX_OUTPUT_TOKENS = Number(Deno.env.get("GEMINI_VOICE_MAX_TOKENS") ?? "102
 // giving up on a request the server is still waiting on.
 const GEMINI_TIMEOUT_MS = Number(Deno.env.get("GEMINI_VOICE_TIMEOUT_MS") ?? "20000");
 ```
+
+> **Revised post-launch (final whole-branch review):** 20000 didn't compose —
+> it left only ~10s of the client's 30s budget for upload + Edge Function cold
+> start, which a weak connection on the fallback capture rung could exceed.
+> The shipped default is **15000**, with any `GEMINI_VOICE_TIMEOUT_MS`
+> override clamped to a **25000** ceiling. See `index.ts` for the final code.
 
 - [ ] **Step 2: Add the noise rule to the prompt**
 

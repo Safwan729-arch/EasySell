@@ -64,9 +64,19 @@ class VoiceController extends Notifier<VoiceSaleState> {
   /// fresh state.
   int _session = 0;
 
-  /// Auto-stop for the current recording. Always cancelled before any
-  /// transition out of `listening`, so a timer from an abandoned session can
-  /// never fire into a later one.
+  /// Auto-stop for the current recording. NOT always cancelled before a
+  /// transition out of `listening`: [startListening] sets `phase` to
+  /// `listening` before `await recorder.start()`, and `_capTimer` is only
+  /// armed after `start()` resolves. If the user taps Stop during that
+  /// window, [stopAndParse] sees `phase == listening` and proceeds -- but
+  /// there is no timer yet to cancel, and it does not bump [_session] (it's
+  /// still the same session, just stopped early). When `start()` later
+  /// resolves, [startListening] arms a fresh timer for a session that has
+  /// already moved on. The `state.phase == VoicePhase.listening` guard in
+  /// the timer callback is what actually stops that stale timer from firing
+  /// a spurious second [stopAndParse] -- by the time it fires, the earlier
+  /// stop will have already moved `phase` past `listening`. It is load-bearing,
+  /// not redundant with the `_session` check above it.
   Timer? _capTimer;
 
   @override

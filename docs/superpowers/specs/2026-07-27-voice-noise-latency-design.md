@@ -83,6 +83,13 @@ Gemini `fetch`. An abort throws, the existing catch maps it to 502, and the app
 shows its error state at ~20s instead of dangling to the client's 30s. The
 client timeout stays at 30s as a backstop for network stalls.
 
+> **Revised post-launch (final whole-branch review):** 20s didn't compose —
+> it left only ~10s of the client's 30s budget for upload + Edge Function
+> cold start, which a weak connection on the fallback capture rung could
+> exceed, reproducing the original hang. `GEMINI_TIMEOUT_MS` default is now
+> **15000**, with any env override clamped to a **25000** ceiling. The client
+> timeout is still unchanged at 30s.
+
 **3.3 Prompt hardening.** The instruction at `index.ts:33-55` never mentions
 noise. Add a rule: transcribe only the primary/nearest speaker; ignore
 background chatter, ambient noise, and other voices; `heard_text` covers only

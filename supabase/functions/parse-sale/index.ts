@@ -45,15 +45,23 @@ const MAX_OUTPUT_TOKENS = (() => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1024;
 })();
 
-// Server-side deadline for the Gemini call. Must stay BELOW the app's 30s
-// client timeout so the user gets a real error state instead of the client
-// giving up on a request the server is still waiting on.
+// Server-side deadline for the Gemini call. Must leave enough of the app's 30s
+// client timeout for upload (base64 audio) and Edge Function cold start on top
+// of the Gemini call itself -- not merely "be below 30s". A 20s abort left
+// only ~10s for everything else; on a weak connection the ~320KB base64
+// payload from the fallback capture rung alone can exceed that, so the client
+// gave up at 30s before the fast 502 this feature exists to produce ever
+// arrived. 15s composes; the 25000 clamp on any override exists so a
+// misconfigured secret can't silently reintroduce that failure mode.
 const GEMINI_TIMEOUT_MS = (() => {
-  const parsed = Number(Deno.env.get("GEMINI_VOICE_TIMEOUT_MS") ?? "20000");
-  // Guard against invalid env values (NaN, negative, zero). A malformed secret
-  // must not silently become a 0ms timeout that kills every call instantly and
-  // looks like a Gemini outage. Always fall back to the default.
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
+  const parsed = Number(Deno.env.get("GEMINI_VOICE_TIMEOUT_MS") ?? "15000");
+  // Guard against invalid env values (NaN, negative, zero, or too large). A
+  // malformed secret must not silently become a 0ms timeout that kills every
+  // call instantly (looks like a Gemini outage) or a value large enough to
+  // blow the composed 30s client-timeout budget again. Always fall back to
+  // the default, and always clamp an override to the 25000 ceiling.
+  if (!Number.isFinite(parsed) || parsed <= 0) return 15000;
+  return Math.min(parsed, 25000);
 })();
 
 const instruction = (candidates: Candidate[]) =>
@@ -181,7 +189,18 @@ async function parseSale(input: ParseInput, candidates: Candidate[]) {
     .filter((p: Record<string, unknown>) => !p?.thought)
     .map((p: Record<string, unknown>) => (typeof p?.text === "string" ? p.text : ""))
     .join("");
-  return JSON.parse(text) as Record<string, unknown>;
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch (e) {
+    // A truncated reply (maxOutputTokens hit mid-JSON) throws the exact same
+    // bare SyntaxError as a genuine Gemini outage. finishReason distinguishes
+    // them in the logs: "MAX_TOKENS" means truncation, not a failure to reach
+    // Gemini at all.
+    const finishReason = body?.candidates?.[0]?.finishReason ?? "unknown";
+    throw new Error(
+      `gemini: JSON.parse failed (finishReason=${finishReason}): ${(e as Error).message}`,
+    );
+  }
 }
 
 // Never trust the model's output shape. Drop invented ids, clamp confidences,
@@ -216,6 +235,10 @@ function json(body: unknown, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  // Hoisted above body parsing (not just above the Gemini call) so a slow/large
+  // request body -- the exact thing the payload-size hypothesis is about --
+  // is inside the measured window instead of invisible before the clock starts.
+  const startedAt = Date.now();
   let transcript: unknown;
   let audioBase64: unknown;
   let audioMime: unknown;
@@ -248,7 +271,10 @@ Deno.serve(async (req) => {
     return json({ error: "GEMINI_API_KEY is not configured" }, 400);
   }
 
-  const startedAt = Date.now();
+  // Set once the Gemini call actually starts (not just declared). Left
+  // `undefined` if we fail before reaching it, so the catch block can log an
+  // unambiguous "not-started" instead of a misleading 0ms/omitted segment.
+  let geminiStartedAt: number | undefined;
   try {
     const input: ParseInput = hasAudio
       ? {
@@ -259,7 +285,7 @@ Deno.serve(async (req) => {
     // Audio has no client-supplied transcript to fall back on; heard_text then
     // comes from Gemini (or "" for a silent clip).
     const fallback = hasAudio ? "" : (transcript as string);
-    const geminiStartedAt = Date.now();
+    geminiStartedAt = Date.now();
     const raw = await parseSale(input, candidates as Candidate[]);
     const geminiMs = Date.now() - geminiStartedAt;
     // console.error so it lands in Supabase function logs regardless of log
@@ -273,9 +299,21 @@ Deno.serve(async (req) => {
     return json(normalize(raw, candidates as Candidate[], fallback), 200);
   } catch (e) {
     // Genuine failures (bad key, Gemini outage, non-JSON reply, safety block,
-    // or our own 20s abort) return 5xx so the app shows its error/retry state.
-    // A real empty result is still a 200 with items: [] from normalize().
-    console.error(`parse-sale failed after ${Date.now() - startedAt}ms:`, e);
+    // or our own timeout abort) return 5xx so the app shows its error/retry
+    // state. A real empty result is still a 200 with items: [] from normalize().
+    // This is the noisy-shop-failure case the instrumentation exists to
+    // diagnose, so it must emit the SAME mode/b64len/gemini fields as the
+    // success path above -- a failure log with no payload size and no Gemini
+    // segment defeats the point of adding this instrumentation.
+    const geminiMs = geminiStartedAt === undefined
+      ? "not-started"
+      : `${Date.now() - geminiStartedAt}ms(unfinished)`;
+    console.error(
+      `parse-sale FAILED: mode=${hasAudio ? "audio" : "text"} ` +
+        `b64len=${hasAudio ? (audioBase64 as string).length : 0} ` +
+        `gemini=${geminiMs} total=${Date.now() - startedAt}ms`,
+      e,
+    );
     return json({ error: "parse failed" }, 502);
   }
 });
