@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/theme.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../shared/providers/onboarding_provider.dart';
@@ -20,6 +21,7 @@ class WelcomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -41,7 +43,7 @@ class WelcomeScreen extends ConsumerWidget {
               Entrance(
                 index: 1,
                 child: Text(
-                  'Run your shop\nsmarter',
+                  l10n.welcome_headline,
                   style: theme.textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     height: 1.05,
@@ -52,8 +54,7 @@ class WelcomeScreen extends ConsumerWidget {
               Entrance(
                 index: 2,
                 child: Text(
-                  'Track inventory, record sales by voice or photo, and see your '
-                  'profit at a glance.',
+                  l10n.welcome_subtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -76,7 +77,7 @@ class WelcomeScreen extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              'Get started',
+                              l10n.welcome_getStarted,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: theme.colorScheme.onPrimary,

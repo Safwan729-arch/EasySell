@@ -5,7 +5,10 @@ import 'package:ai_shopkeeper/features/cart/domain/cart_line.dart';
 import 'package:ai_shopkeeper/features/cart/presentation/cart_controller.dart';
 import 'package:ai_shopkeeper/features/cart/presentation/cart_screen.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
+import 'package:ai_shopkeeper/l10n/app_localizations.dart';
+import 'package:ai_shopkeeper/shared/providers/locale_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -37,7 +40,18 @@ Widget _harness(List<CartLine> lines) => ProviderScope(
           const Shop(id: 's', ownerId: 'o', name: 'Test Shop', currency: 'USD'),
     ),
   ],
-  child: MaterialApp(theme: AppTheme.light, home: const CartScreen()),
+  child: MaterialApp(
+    theme: AppTheme.light,
+    locale: const Locale('en'),
+    supportedLocales: supportedAppLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    home: const CartScreen(),
+  ),
 );
 
 void main() {

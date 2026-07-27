@@ -270,7 +270,7 @@ class AppTheme {
   static TextTheme _typography(Brightness brightness) {
     final base = GoogleFonts.interTextTheme(
       ThemeData(brightness: brightness).textTheme,
-    );
+    ).apply(fontFamilyFallback: const ['NotoSansBengali']);
     const tnum = [FontFeature.tabularFigures()];
 
     // Null-safe global scale: shrink the size when one is set, leave inherited

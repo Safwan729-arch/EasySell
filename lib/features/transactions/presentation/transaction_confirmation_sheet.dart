@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/haptics.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../cart/domain/cart_math.dart';
@@ -84,6 +85,7 @@ class _RestockConfirmationSheetState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
     final isLoading = ref.watch(transactionControllerProvider).isLoading;
 
@@ -93,7 +95,7 @@ class _RestockConfirmationSheetState
         setState(() {
           _error = switch (next.error) {
             Failure(:final message) => message,
-            _ => 'Something went wrong. Please try again.',
+            _ => l10n.common_somethingWrong,
           };
         });
       }
@@ -118,7 +120,7 @@ class _RestockConfirmationSheetState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Confirm restock', style: theme.textTheme.titleLarge),
+          Text(l10n.restock_confirmTitle, style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
           Text(_product.name, style: theme.textTheme.titleMedium),
           if (subtitle.isNotEmpty)
@@ -130,7 +132,7 @@ class _RestockConfirmationSheetState
             ),
           const SizedBox(height: 4),
           Text(
-            'In stock: ${_product.quantityLabel}',
+            l10n.restock_inStock(_product.quantityLabel),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -139,7 +141,7 @@ class _RestockConfirmationSheetState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Quantity', style: theme.textTheme.titleSmall),
+              Text(l10n.common_quantity, style: theme.textTheme.titleSmall),
               Row(
                 children: [
                   IconButton.filledTonal(
@@ -175,13 +177,13 @@ class _RestockConfirmationSheetState
           const Divider(height: 24),
           _row(
             theme,
-            'Unit cost',
+            l10n.restock_unitCost,
             Money.format(_product.buyingPrice, currencyCode: currency),
           ),
           const SizedBox(height: 8),
           _row(
             theme,
-            'Total cost',
+            l10n.restock_totalCost,
             Money.format(total, currencyCode: currency),
             emphasize: true,
           ),
@@ -201,7 +203,7 @@ class _RestockConfirmationSheetState
                   onPressed: isLoading
                       ? null
                       : () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.common_cancel),
                 ),
               ),
               const SizedBox(width: 12),
@@ -214,7 +216,7 @@ class _RestockConfirmationSheetState
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Confirm restock'),
+                      : Text(l10n.restock_confirmTitle),
                 ),
               ),
             ],

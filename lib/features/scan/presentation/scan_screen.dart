@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/haptics.dart';
 import '../../../core/error/failure.dart';
-import '../../cart/domain/cart_math.dart';
-import '../../cart/presentation/cart_controller.dart';
+import '../../../core/l10n/l10n_ext.dart';
+import '../../cart/presentation/add_to_cart_sheet.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../domain/scan_decision.dart';
@@ -13,8 +12,11 @@ import 'product_picker_sheet.dart';
 import 'scan_controller.dart';
 
 /// Drives the scan flow: opens the camera immediately, recognizes, then routes
-/// to add-to-cart / chooser / manual pick. A successful add reopens the camera
-/// so a shopkeeper can scan a customer's items back-to-back; the AppBar back
+/// to a confirmation sheet / chooser / manual pick. Every resolved product --
+/// even a high-confidence auto match -- pauses on [showAddToCartSheet] so the
+/// shopkeeper can see what was recognized and set a quantity before it lands
+/// in the cart; AI output is never auto-committed. Confirming (or cancelling)
+/// reopens the camera so items can be scanned back-to-back; the AppBar back
 /// arrow exits to Inventory, where the global cart bar reflects everything
 /// scanned so far. Cart items still only commit via the Cart screen's
 /// checkout -- scanning never auto-commits a sale.
@@ -36,6 +38,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   Future<void> _run() async {
+    final l10n = context.l10n;
     while (true) {
       setState(() {
         _busy = true;
@@ -56,7 +59,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       } catch (e) {
         if (!mounted) return;
         setState(
-          () => _error = e is Failure ? e.message : 'Scan failed. Try again.',
+          () => _error =
+              e is Failure ? l10n.common_couldNotRecognize : l10n.scan_failed,
         );
         return;
       } finally {
@@ -71,45 +75,36 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     switch (outcome.action) {
       case ScanAction.autoSell:
         if (outcome.products.isEmpty) return _noMatch();
-        return _addToCart(outcome.products.first);
+        return _confirmAndAdd(outcome.products.first);
       case ScanAction.chooseFromMatches:
         final picked = await showProductPickerSheet(
           context,
           products: outcome.products,
-          title: 'Did you mean?',
+          title: context.l10n.scan_didYouMean,
         );
         if (picked == null) {
           if (mounted) context.pop();
           return false;
         }
-        return _addToCart(picked);
+        return _confirmAndAdd(picked);
       case ScanAction.noMatch:
         return _noMatch();
     }
   }
 
-  /// Adds a unit-aware increment of [product] to the cart. Always returns
-  /// true (keep scanning) -- the AppBar back arrow, not a successful add, is
-  /// how a shopkeeper exits to review the cart.
-  Future<bool> _addToCart(Product product) async {
-    final cart = ref.read(cartControllerProvider.notifier);
-    if (cart.remainingStockFor(product) <= 0) {
-      if (mounted) {
-        final message = product.quantity <= 0
-            ? '${product.name} is out of stock.'
-            : '${product.name} is already fully staged in your cart.';
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
-      }
-      return true;
-    }
-    cart.addOrIncrement(product, stepForUnit(product.unit));
-    AppHaptics.success();
-    if (mounted) {
+  /// Shows the add-to-cart confirmation sheet for [product] so the shopkeeper
+  /// sees what was recognized and sets a quantity before it lands in the
+  /// cart. Always returns true (keep scanning) -- the AppBar back arrow, not
+  /// a successful add or a cancel, is how a shopkeeper exits to review the
+  /// cart.
+  Future<bool> _confirmAndAdd(Product product) async {
+    final added = await showAddToCartSheet(context, product: product);
+    if (added == true && mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Added ${product.name} to cart')));
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.scan_addedToCart(product.name))),
+        );
     }
     return true;
   }
@@ -120,19 +115,19 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     final picked = await showProductPickerSheet(
       context,
       products: all,
-      title: 'No match — pick the product',
+      title: context.l10n.scan_noMatchPick,
     );
     if (picked == null) {
       if (mounted) context.pop();
       return false;
     }
-    return _addToCart(picked);
+    return _confirmAndAdd(picked);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan product')),
+      appBar: AppBar(title: Text(context.l10n.inventory_scanProduct)),
       body: Center(
         child: _error != null
             ? Column(
@@ -145,7 +140,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                     child: Text(_error!, textAlign: TextAlign.center),
                   ),
                   const SizedBox(height: 12),
-                  FilledButton(onPressed: _run, child: const Text('Retry')),
+                  FilledButton(onPressed: _run, child: Text(context.l10n.common_retry)),
                 ],
               )
             : _busy

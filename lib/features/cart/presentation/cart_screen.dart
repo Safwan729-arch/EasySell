@@ -5,12 +5,16 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/segment_pills.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../customers/presentation/customer_picker_sheet.dart';
 import '../domain/cart_line.dart';
 import '../domain/cart_math.dart';
 import 'cart_checkout_controller.dart';
 import 'cart_controller.dart';
+import 'payment_method_controller.dart';
 
 /// Full-screen cart review + checkout. This IS the review-before-commit step
 /// for a multi-item sale -- there is no second confirmation modal, the same
@@ -23,22 +27,30 @@ class CartScreen extends ConsumerWidget {
     final itemCount = lines.length;
     final total = cartTotal(lines);
     final currency = ref.read(myShopProvider).value?.currency ?? 'USD';
+    final selection = ref.read(paymentMethodControllerProvider);
 
     final ok = await ref
         .read(cartCheckoutControllerProvider.notifier)
-        .checkout();
+        .checkout(customerId: selection.customer?.id);
     if (!context.mounted || !ok) return;
 
     AppHaptics.success();
+    final l10n = context.l10n;
+    ref.read(paymentMethodControllerProvider.notifier).reset();
     context.pop();
+    final formattedTotal = Money.format(total, currencyCode: currency);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
           content: Text(
-            '$itemCount ${itemCount == 1 ? 'item' : 'items'} sold · '
-            '${Money.format(total, currencyCode: currency)}',
+            selection.customer != null
+                ? l10n.cart_addedToKhata(
+                    selection.customer!.name,
+                    formattedTotal,
+                  )
+                : l10n.cart_itemsSold(itemCount, formattedTotal),
           ),
         ),
       );
@@ -50,10 +62,8 @@ class CartScreen extends ConsumerWidget {
       builder: (ctx) {
         final colors = Theme.of(ctx).extension<AppColors>()!;
         return AlertDialog(
-          title: const Text('Clear cart?'),
-          content: const Text(
-            'This removes every item from the cart. Nothing is sold.',
-          ),
+          title: Text(ctx.l10n.cart_clearTitle),
+          content: Text(ctx.l10n.cart_clearBody),
           // Natural-width actions: the theme forces FilledButton to a
           // full-width minimumSize, which makes a dialog's confirm button
           // dwarf the text "Keep". Reset it so both size to their content.
@@ -61,7 +71,7 @@ class CartScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Keep'),
+              child: Text(ctx.l10n.cart_keep),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -71,7 +81,7 @@ class CartScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
               ),
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Clear'),
+              child: Text(ctx.l10n.common_clear),
             ),
           ],
         );
@@ -80,6 +90,7 @@ class CartScreen extends ConsumerWidget {
     if (cleared == true) {
       AppHaptics.warning();
       ref.read(cartControllerProvider.notifier).clear();
+      ref.read(paymentMethodControllerProvider.notifier).reset();
     }
   }
 
@@ -95,7 +106,7 @@ class CartScreen extends ConsumerWidget {
         AppHaptics.warning();
         final message = switch (next.error) {
           Failure(:final message) => message,
-          _ => 'Checkout failed. Please try again.',
+          _ => context.l10n.cart_checkoutFailed,
         };
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -110,14 +121,14 @@ class CartScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cart'),
+        title: Text(context.l10n.cart_title),
         actions: [
           if (lines.isNotEmpty)
             TextButton(
               onPressed: checkoutState.isLoading
                   ? null
                   : () => _confirmClear(context, ref),
-              child: const Text('Clear'),
+              child: Text(context.l10n.common_clear),
             ),
         ],
       ),
@@ -132,7 +143,7 @@ class CartScreen extends ConsumerWidget {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 2),
                     child: Text(
-                      '${lines.length} ${lines.length == 1 ? 'item' : 'items'} in cart',
+                      context.l10n.cart_itemsInCart(lines.length),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -245,7 +256,10 @@ class _CartLineCard extends ConsumerWidget {
                         ),
                       const SizedBox(height: 3),
                       Text(
-                        '${Money.format(product.sellingPrice, currencyCode: currency)} / ${product.unitLabel}',
+                        context.l10n.cart_pricePerUnit(
+                          Money.format(product.sellingPrice, currencyCode: currency),
+                          product.unitLabel,
+                        ),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -299,7 +313,7 @@ class _CartLineCard extends ConsumerWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Remove'),
+                  label: Text(context.l10n.common_remove),
                 ),
               ],
             ),
@@ -430,7 +444,10 @@ class _StepButton extends StatelessWidget {
 /// Bounded-height checkout bar. Uses `MainAxisSize.min` so it hugs its content
 /// instead of expanding to fill the loose height Scaffold grants a
 /// bottomNavigationBar (the bug that previously collapsed the item list).
-class _CheckoutBar extends StatelessWidget {
+/// A `ConsumerWidget` (rather than plain values) so it can own the Cash/Credit
+/// toggle and the chosen-customer row, which live in
+/// [paymentMethodControllerProvider].
+class _CheckoutBar extends ConsumerWidget {
   const _CheckoutBar({
     required this.total,
     required this.itemCount,
@@ -446,9 +463,15 @@ class _CheckoutBar extends StatelessWidget {
   final VoidCallback onCheckout;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = context.l10n;
+    final selection = ref.watch(paymentMethodControllerProvider);
+    final notifier = ref.read(paymentMethodControllerProvider.notifier);
+    final isCredit = selection.method == PaymentMethod.credit;
+    final customer = selection.customer;
+
     return Container(
       decoration: BoxDecoration(
         color: scheme.surface,
@@ -461,12 +484,55 @@ class _CheckoutBar extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SegmentPills<PaymentMethod>(
+                  values: PaymentMethod.values,
+                  selected: selection.method,
+                  labelOf: (m) => m == PaymentMethod.cash
+                      ? l10n.cart_paymentCash
+                      : l10n.cart_paymentCredit,
+                  onChanged: isLoading
+                      ? (_) {}
+                      : (m) => m == PaymentMethod.cash
+                          ? notifier.setCash()
+                          : notifier.setCredit(),
+                ),
+              ),
+              if (isCredit) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: customer == null
+                      ? OutlinedButton.icon(
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                                  final chosen = await showCustomerPickerSheet(
+                                    context,
+                                  );
+                                  if (chosen != null) {
+                                    notifier.chooseCustomer(chosen);
+                                  }
+                                },
+                          icon: const Icon(Icons.person_add_alt, size: 18),
+                          label: Text(l10n.cart_selectCustomer),
+                        )
+                      : Text(
+                          customer.name,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                ),
+              ],
+              const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     child: Text(
-                      'Total · $itemCount ${itemCount == 1 ? 'item' : 'items'}',
+                      l10n.cart_totalItems(itemCount),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -487,7 +553,9 @@ class _CheckoutBar extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: isLoading ? null : onCheckout,
+                  onPressed: (isLoading || !selection.isReady)
+                      ? null
+                      : onCheckout,
                   icon: isLoading
                       ? const SizedBox(
                           height: 18,
@@ -498,7 +566,13 @@ class _CheckoutBar extends StatelessWidget {
                           ),
                         )
                       : const Icon(Icons.point_of_sale, size: 20),
-                  label: Text(isLoading ? 'Selling…' : 'Checkout'),
+                  label: Text(
+                    isLoading
+                        ? l10n.cart_selling
+                        : (isCredit && customer != null)
+                        ? l10n.cart_addToKhata(customer.name)
+                        : l10n.cart_checkout,
+                  ),
                 ),
               ),
             ],
@@ -530,14 +604,14 @@ class _EmptyCart extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Your cart is empty',
+              context.l10n.cart_empty,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Add products from Items or Scan to build a sale, then check out here.',
+              context.l10n.cart_emptyHint,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,

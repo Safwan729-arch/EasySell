@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../../shared/providers/locale_provider.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../../../shared/providers/theme_mode_provider.dart';
 
@@ -19,76 +21,80 @@ class SettingsScreen extends ConsumerWidget {
     final isGuest = user?.isAnonymous ?? false;
     final isLoading = ref.watch(authControllerProvider).isLoading;
 
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settings_title)),
       body: ListView(
         children: [
-          const _SectionHeader('Profile'),
+          _SectionHeader(l10n.settings_sectionProfile),
           ListTile(
             leading: const Icon(Icons.person_outline),
             title: Text(
-              isGuest ? 'Guest session' : (user?.email ?? 'Signed in'),
+              isGuest ? l10n.settings_guestSession : (user?.email ?? l10n.settings_signedIn),
             ),
             subtitle: Text(
-              isGuest ? 'Anonymous — data is tied to this device' : 'Signed in',
+              isGuest ? l10n.settings_anonymousData : l10n.settings_signedIn,
             ),
           ),
           const Divider(),
-          const _SectionHeader('Shop'),
+          _SectionHeader(l10n.settings_sectionShop),
           ListTile(
             leading: const Icon(Icons.storefront_outlined),
             title: Text(shop?.name ?? '—'),
-            subtitle: const Text('Shop name'),
+            subtitle: Text(l10n.settings_shopName),
           ),
           if (shop?.address != null && shop!.address!.isNotEmpty)
             ListTile(
               leading: const Icon(Icons.location_on_outlined),
               title: Text(shop.address!),
-              subtitle: const Text('Address'),
+              subtitle: Text(l10n.settings_address),
             ),
           if (shop?.phone != null && shop!.phone!.isNotEmpty)
             ListTile(
               leading: const Icon(Icons.phone_outlined),
               title: Text(shop.phone!),
-              subtitle: const Text('Phone'),
+              subtitle: Text(l10n.settings_phone),
             ),
           ListTile(
             leading: const Icon(Icons.payments_outlined),
             title: Text(shop?.currency ?? 'USD'),
-            subtitle: const Text('Currency'),
+            subtitle: Text(l10n.settings_currency),
           ),
           const Divider(),
-          const _SectionHeader('Assistant'),
+          _SectionHeader(l10n.settings_sectionLanguage),
+          const _LanguageSelector(),
+          const Divider(),
+          _SectionHeader(l10n.settings_sectionAssistant),
           ListTile(
             leading: const Icon(Icons.lightbulb_outline),
-            title: const Text('AI Insights'),
-            subtitle: const Text('Suggestions from the assistant'),
+            title: Text(l10n.settings_aiInsights),
+            subtitle: Text(l10n.settings_aiInsightsSub),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.insights),
           ),
           ListTile(
             leading: const Icon(Icons.insights_outlined),
-            title: const Text('Trends'),
-            subtitle: const Text('Sales trend dashboards'),
+            title: Text(l10n.settings_trends),
+            subtitle: Text(l10n.settings_trendsSub),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.trends),
           ),
           const Divider(),
-          const _SectionHeader('Appearance'),
+          _SectionHeader(l10n.settings_sectionAppearance),
           const _ThemeModeSelector(),
           const Divider(),
-          const _SectionHeader('Inventory'),
+          _SectionHeader(l10n.settings_sectionInventory),
           ListTile(
             leading: const Icon(Icons.category_outlined),
-            title: const Text('Manage categories'),
-            subtitle: const Text('Rename, add, or remove categories'),
+            title: Text(l10n.settings_manageCategories),
+            subtitle: Text(l10n.settings_manageCategoriesSub),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.categories),
           ),
           ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
-            title: const Text('Archived products'),
-            subtitle: const Text('View and restore removed products'),
+            title: Text(l10n.settings_archivedProducts),
+            subtitle: Text(l10n.settings_archivedProductsSub),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.archivedProducts),
           ),
@@ -100,7 +106,7 @@ class SettingsScreen extends ConsumerWidget {
                   ? null
                   : () => ref.read(authControllerProvider.notifier).signOut(),
               icon: const Icon(Icons.logout),
-              label: const Text('Sign out'),
+              label: Text(l10n.common_signOut),
             ),
           ),
         ],
@@ -123,22 +129,57 @@ class _ThemeModeSelector extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: SegmentedButton<ThemeMode>(
-        segments: const [
+        segments: [
           ButtonSegment(
             value: ThemeMode.light,
-            label: Text('Light'),
-            icon: Icon(Icons.light_mode_outlined),
+            label: Text(context.l10n.settings_themeLight),
+            icon: const Icon(Icons.light_mode_outlined),
           ),
           ButtonSegment(
             value: ThemeMode.dark,
-            label: Text('Dark'),
-            icon: Icon(Icons.dark_mode_outlined),
+            label: Text(context.l10n.settings_themeDark),
+            icon: const Icon(Icons.dark_mode_outlined),
           ),
         ],
         selected: {selected},
         showSelectedIcon: false,
         onSelectionChanged: (selection) =>
             ref.read(themeModeProvider.notifier).setMode(selection.first),
+      ),
+    );
+  }
+}
+
+/// English / বাংলা picker. The choice is persisted via [localeProvider] and
+/// applied app-wide by MaterialApp.router. The language names are endonyms
+/// (shown the same in both modes), so they stay literal rather than ARB keys.
+class _LanguageSelector extends ConsumerWidget {
+  const _LanguageSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final selected =
+        locale.languageCode == 'bn' ? const Locale('bn') : const Locale('en');
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: SegmentedButton<Locale>(
+        segments: const [
+          ButtonSegment(
+            value: Locale('en'),
+            label: Text('English'),
+            icon: Icon(Icons.language),
+          ),
+          ButtonSegment(
+            value: Locale('bn'),
+            label: Text('বাংলা'),
+            icon: Icon(Icons.translate),
+          ),
+        ],
+        selected: {selected},
+        showSelectedIcon: false,
+        onSelectionChanged: (selection) =>
+            ref.read(localeProvider.notifier).setLocale(selection.first),
       ),
     );
   }

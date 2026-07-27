@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/entrance.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/last_email_store.dart';
 import 'auth_controller.dart';
 
@@ -69,29 +71,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Email is required';
-    if (!value.contains('@')) return 'Enter a valid email';
+  String? _validateEmail(AppLocalizations l10n, String? value) {
+    if (value == null || value.trim().isEmpty) return l10n.auth_emailRequired;
+    if (!value.contains('@')) return l10n.auth_emailInvalid;
     return null;
   }
 
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 6) return 'At least 6 characters';
+  String? _validatePassword(AppLocalizations l10n, String? value) {
+    if (value == null || value.isEmpty) return l10n.auth_passwordRequired;
+    if (value.length < 6) return l10n.auth_passwordMin;
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(authControllerProvider);
     final isLoading = state.isLoading;
 
     // Surface failures as friendly snackbars (never raw errors).
     ref.listen<AsyncValue<void>>(authControllerProvider, (_, next) {
       if (next is AsyncError) {
+        // The persistent banner shows the offline state ambiently; on an actual
+        // sign-in attempt we also surface an actionable message so the tap isn't
+        // a silent dead-end.
         final message = switch (next.error) {
+          NetworkFailure() => l10n.auth_noInternet,
           Failure(:final message) => message,
-          _ => 'Something went wrong. Please try again.',
+          _ => l10n.common_somethingWrong,
         };
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -132,7 +139,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                           Text(
-                            _isSignUp ? 'Create your account' : 'Welcome back',
+                            _isSignUp
+                                ? l10n.auth_createAccount
+                                : l10n.auth_welcomeBack,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
@@ -144,13 +153,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       TextFormField(
                         controller: _nameController,
                         textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Full name',
-                          prefixIcon: Icon(Icons.person_outline),
+                        decoration: InputDecoration(
+                          labelText: l10n.auth_fullName,
+                          prefixIcon: const Icon(Icons.person_outline),
                         ),
                         validator: (v) =>
                             _isSignUp && (v == null || v.trim().isEmpty)
-                            ? 'Name is required'
+                            ? l10n.auth_nameRequired
                             : null,
                       ),
                       const SizedBox(height: 16),
@@ -159,11 +168,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: l10n.auth_email,
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
-                      validator: _validateEmail,
+                      validator: (v) => _validateEmail(l10n, v),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -173,7 +182,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: l10n.auth_password,
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -182,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      validator: _validatePassword,
+                      validator: (v) => _validatePassword(l10n, v),
                     ),
                     const SizedBox(height: 24),
                     Entrance(
@@ -197,7 +206,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Text(_isSignUp ? 'Sign up' : 'Sign in'),
+                            : Text(_isSignUp ? l10n.auth_signUp : l10n.auth_signIn),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -208,7 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 .read(authControllerProvider.notifier)
                                 .signInWithGoogle(),
                       icon: const Icon(Icons.login),
-                      label: const Text('Continue with Google'),
+                      label: Text(l10n.auth_continueGoogle),
                     ),
                     const SizedBox(height: 16),
                     TextButton(
@@ -216,9 +225,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? null
                           : () => setState(() => _isSignUp = !_isSignUp),
                       child: Text(
-                        _isSignUp
-                            ? 'Already have an account? Sign in'
-                            : "Don't have an account? Sign up",
+                        _isSignUp ? l10n.auth_haveAccount : l10n.auth_noAccount,
                       ),
                     ),
                     // Dev-only shortcut: never shipped in release builds.

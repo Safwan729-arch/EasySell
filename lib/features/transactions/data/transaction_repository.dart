@@ -34,11 +34,17 @@ class TransactionRepository {
     required String shopId,
     required List<Map<String, dynamic>> items,
     String source = 'manual',
+    String? customerId,
   }) async {
     try {
       final result = await _client.rpc(
         'record_sale_cart',
-        params: {'p_shop_id': shopId, 'p_items': items, 'p_source': source},
+        params: {
+          'p_shop_id': shopId,
+          'p_items': items,
+          'p_source': source,
+          'p_customer_id': ?customerId,
+        },
       );
       final rows = result as List;
       return Result.success([

@@ -9,7 +9,11 @@ class Qty {
 
   static String format(num v) {
     final d = v.toDouble();
-    return d == d.roundToDouble() ? d.toStringAsFixed(0) : d.toString();
+    // NumberFormat localizes digits + grouping via Intl.defaultLocale, so
+    // counts render in Bengali digits (০-৯) when the app is in Bengali.
+    return d == d.roundToDouble()
+        ? NumberFormat.decimalPattern().format(d)
+        : NumberFormat('#,##0.###').format(d);
   }
 }
 

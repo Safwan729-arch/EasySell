@@ -1,0 +1,648 @@
+<title>AI Shopkeeper — বাংলা UI প্রিভিউ</title>
+<style>
+  :root {
+    /* App dark-theme tokens (from lib/core/config/theme.dart _darkPalette) */
+    --bg: #0B1120;
+    --card: #141C2E;
+    --card-raised: #1B2438;
+    --border: #273349;
+    --ink: #E6EBF3;
+    --ink-muted: #93A0B4;
+    --brand: #5B9CFF;
+    --brand-ink: #0A1422;
+    --positive: #34D399;
+    --negative: #F87171;
+    --warning: #FB923C;
+    --navbar: #111A2A;
+    --hero-on: #FFFFFF;
+
+    /* Studio chrome (deliberately darker than the app canvas so phones lift) */
+    --studio: #070B14;
+    --studio-2: #0C1322;
+    --studio-ink: #D7DEEA;
+    --studio-muted: #7C8AA3;
+    --studio-border: #1B2437;
+
+    --bn: 'Nirmala UI', 'Noto Sans Bengali', 'Kohinoor Bangla', 'SolaimanLipi', 'Vrinda', sans-serif;
+    --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, var(--bn);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 620px at 50% -8%, rgba(91,156,255,0.16), transparent 60%),
+      var(--studio);
+    color: var(--studio-ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* ---- Page header ---- */
+  .masthead { max-width: 760px; margin: 0 auto 40px; text-align: center; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--brand); font-weight: 700; margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(28px, 4.6vw, 44px); line-height: 1.1; margin: 0 0 16px;
+    font-weight: 800; letter-spacing: -0.02em; text-wrap: balance; color: #fff;
+  }
+  .lede { font-size: 17px; color: var(--studio-muted); margin: 0 auto; max-width: 60ch; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    margin: 24px auto 0;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--studio-2); border: 1px solid var(--studio-border);
+    border-radius: 999px; padding: 7px 14px; font-size: 13px; color: var(--studio-ink);
+  }
+  .chip b { color: var(--brand); font-weight: 700; }
+
+  .banner {
+    display: flex; gap: 14px; align-items: flex-start;
+    max-width: 760px; margin: 28px auto 0;
+    background: linear-gradient(180deg, rgba(91,156,255,0.12), rgba(91,156,255,0.05));
+    border: 1px solid rgba(91,156,255,0.32);
+    border-radius: 16px; padding: 16px 18px;
+  }
+  .banner .dot {
+    flex: none; width: 34px; height: 34px; border-radius: 10px;
+    background: var(--brand); color: var(--brand-ink);
+    display: grid; place-items: center; font-size: 18px; font-weight: 800;
+  }
+  .banner h3 { margin: 0 0 3px; font-size: 15px; color: #fff; }
+  .banner p { margin: 0; font-size: 14px; color: var(--studio-muted); }
+
+  /* ---- Phone gallery ---- */
+  .gallery {
+    display: grid; gap: 40px 34px; margin-top: 52px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    justify-items: center;
+  }
+  .device { width: 100%; max-width: 372px; }
+  .device > figcaption {
+    text-align: center; margin: 0 0 14px; font-size: 14px; color: var(--studio-muted);
+  }
+  .device > figcaption b { color: var(--studio-ink); font-weight: 700; }
+  .device > figcaption .en { color: #56617a; }
+
+  .phone {
+    border-radius: 40px; padding: 10px;
+    background: linear-gradient(160deg, #232f45, #0d1526);
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  }
+  .screen {
+    background: var(--bg); border-radius: 31px; overflow: hidden;
+    height: 748px; display: flex; flex-direction: column;
+    color: var(--ink); position: relative;
+  }
+
+  /* status bar */
+  .status {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px 4px; font-size: 12px; color: var(--ink);
+    font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+  .status .glyphs { letter-spacing: 2px; opacity: 0.85; }
+
+  .body { flex: 1; overflow-y: auto; }
+  .body::-webkit-scrollbar { width: 0; }
+  .pad { padding: 8px 16px 16px; }
+
+  /* generic app bits */
+  .appbar {
+    display: flex; align-items: center; justify-content: center; position: relative;
+    padding: 10px 16px 12px; font-weight: 700; font-size: 17px;
+  }
+  .appbar .lead, .appbar .trail {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 14px; font-weight: 600;
+  }
+  .appbar .lead { left: 16px; color: var(--ink-muted); }
+  .appbar .trail { right: 16px; color: var(--brand); }
+
+  .row { display: flex; align-items: center; gap: 12px; }
+  .grow { flex: 1; min-width: 0; }
+  .muted { color: var(--ink-muted); }
+  .ellip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--card); border: 1px solid var(--border);
+    display: grid; place-items: center; color: var(--ink); flex: none;
+  }
+  .icon-btn.filled { background: var(--brand); color: var(--brand-ink); border: none; }
+  .icon-btn svg { width: 19px; height: 19px; }
+
+  .title-lg { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .sub { font-size: 13px; color: var(--ink-muted); }
+
+  /* segmented pills */
+  .pills { display: inline-flex; background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px; gap: 2px; }
+  .pills.fill { display: flex; }
+  .pill { flex: 1; text-align: center; padding: 7px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; color: var(--ink-muted); white-space: nowrap; }
+  .pill.on { background: var(--brand); color: var(--brand-ink); }
+
+  .cal-btn { width: 40px; height: 40px; border-radius: 12px; flex: none;
+    background: var(--card); border: 1px solid var(--border); display: grid; place-items: center; color: var(--ink); }
+
+  /* cards */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 16px;
+  }
+  .card + .card, .stack > * + * { margin-top: 16px; }
+
+  /* revenue hero */
+  .hero { background: var(--brand); border: none; color: var(--hero-on); position: relative; }
+  .hero .label { font-size: 13px; color: rgba(255,255,255,0.78); }
+  .hero .big { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 0;
+    font-variant-numeric: tabular-nums; }
+  .hero .delta {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+    background: rgba(255,255,255,0.18); border-radius: 999px; padding: 4px 10px;
+    font-size: 12px; font-weight: 700;
+  }
+  .hero .stats { display: flex; gap: 8px; margin-top: 18px; }
+  .hero .stat { flex: 1; }
+  .hero .stat .k { font-size: 12px; color: rgba(255,255,255,0.72); }
+  .hero .stat .v { font-size: 17px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .hero .expand {
+    position: absolute; top: 14px; right: 14px; width: 28px; height: 28px;
+    border-radius: 50%; background: rgba(255,255,255,0.16); display: grid; place-items: center;
+  }
+  .hero .expand svg { width: 13px; height: 13px; }
+
+  /* bars */
+  .bars { display: flex; align-items: flex-end; gap: 10px; height: 132px; margin-top: 14px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
+  .bar { width: 100%; max-width: 26px; border-radius: 7px;
+    background: linear-gradient(180deg, rgba(91,156,255,0.55), rgba(91,156,255,0.18)); }
+  .bar.hot { background: linear-gradient(180deg, var(--brand), rgba(91,156,255,0.4)); }
+  .bar-lab { font-size: 11px; color: var(--ink-muted); }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px;
+    border-radius: 999px; font-size: 11px; font-weight: 700;
+  }
+  .tag.pos { background: rgba(52,211,153,0.14); color: var(--positive); }
+  .tag.brand { background: rgba(91,156,255,0.16); color: var(--brand); }
+
+  .section-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--ink-muted); text-transform: uppercase; margin: 20px 0 8px; }
+
+  .tile { width: 44px; height: 44px; border-radius: 12px; flex: none;
+    background: var(--card-raised); display: grid; place-items: center;
+    font-weight: 800; color: var(--brand); font-size: 17px; }
+  .tile.sm { width: 40px; height: 40px; font-size: 15px; }
+
+  .btn-out {
+    border: 1px solid var(--border); color: var(--brand); background: transparent;
+    border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 700; white-space: nowrap;
+  }
+  .btn-fill {
+    background: var(--brand); color: var(--brand-ink); border: none;
+    border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 800; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* list tiles */
+  .lt { display: flex; align-items: center; gap: 12px; padding: 6px 4px; }
+  .lt .name { font-weight: 600; font-size: 15px; }
+  .lt .price { font-weight: 800; font-size: 15px; text-align: right; font-variant-numeric: tabular-nums; }
+  .lt .stock { font-size: 12px; font-weight: 600; text-align: right; margin-top: 3px; }
+  .stock.ok { color: var(--positive); } .stock.low { color: var(--warning); }
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* settings rows */
+  .srow { display: flex; align-items: center; gap: 14px; padding: 12px 4px; }
+  .srow svg { width: 20px; height: 20px; color: var(--ink-muted); flex: none; }
+  .srow .t { font-size: 15px; } .srow .s { font-size: 12px; color: var(--ink-muted); margin-top: 1px; }
+  .chev { color: var(--ink-muted); }
+  .lang-card { border-color: rgba(91,156,255,0.5); background: rgba(91,156,255,0.06); position: relative; }
+  .new-tag { position: absolute; top: -9px; right: 14px; background: var(--brand); color: var(--brand-ink);
+    font-size: 10px; font-weight: 800; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; }
+
+  /* cart */
+  .qty { display: inline-flex; align-items: center; background: var(--card-raised);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .qty span { min-width: 64px; text-align: center; font-weight: 700; font-size: 14px; }
+  .qty button { background: none; border: none; color: var(--brand); padding: 8px 11px; font-size: 16px; }
+  .remove { color: var(--negative); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+  .checkout-bar { border-top: 1px solid var(--border); background: var(--card); padding: 14px 16px 18px; }
+
+  .fab {
+    position: absolute; right: 16px; bottom: 78px;
+    background: var(--brand); color: var(--brand-ink); border-radius: 14px;
+    padding: 9px 15px; font-weight: 800; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 0 10px 24px -8px rgba(91,156,255,0.6);
+  }
+
+  /* bottom nav */
+  .navbar { display: flex; background: var(--navbar); border-top: 1px solid var(--border); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 9px 0 12px; color: var(--ink-muted); font-size: 11px; }
+  .nav-item.on { color: var(--brand); font-weight: 700; }
+  .nav-item svg { width: 22px; height: 22px; }
+
+  /* ---- Translation notes ---- */
+  .notes { margin-top: 64px; }
+  .notes h2 { font-size: 22px; color: #fff; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .notes .lede { text-align: left; margin: 0 0 24px; }
+  .grid-notes { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .note {
+    background: var(--studio-2); border: 1px solid var(--studio-border);
+    border-radius: 14px; padding: 16px;
+  }
+  .note .en { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--studio-muted); }
+  .note .bn { font-size: 20px; color: #fff; font-weight: 700; margin: 6px 0 8px; }
+  .note .alt { font-size: 13px; color: var(--studio-muted); }
+  .note .alt b { color: var(--brand); font-weight: 600; }
+
+  footer { margin-top: 56px; text-align: center; color: var(--studio-muted); font-size: 13px; }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 32px 14px 60px; }
+    .screen { height: 700px; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">AI Shopkeeper · Localization Preview</p>
+    <h1>অ্যাপের বাংলা রূপ — রিভিউ প্রিভিউ</h1>
+    <p class="lede">This is a <b style="color:var(--studio-ink)">mockup</b>, not the real app yet — the actual screens with English swapped for Bengali, so you can judge the wording and layout before we build the language feature. Nothing here is wired up.</p>
+    <div class="legend">
+      <span class="chip">সংখ্যা: <b>বাংলা ০-৯</b></span>
+      <span class="chip">ভাষার ধরন: <b>দোকানের চলিত বাংলা</b></span>
+      <span class="chip">মুদ্রা: <b>৳ টাকা</b></span>
+      <span class="chip">স্ক্রিন: <b>৪টি</b></span>
+    </div>
+    <div class="banner">
+      <div class="dot">✦</div>
+      <div>
+        <h3>নতুন ফিচার — ভাষা পরিবর্তন (Settings screen)</h3>
+        <p>The 4th phone (সেটিংস) shows the new <b style="color:var(--studio-ink)">English ⇄ বাংলা</b> switcher — tap and the whole app changes language. That toggle is the feature we're building; the rest just shows how Bengali looks everywhere.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="gallery">
+
+    <!-- ============ 1. DASHBOARD / হোম ============ -->
+    <figure class="device">
+      <figcaption><b>হোম</b> <span class="en">· Dashboard</span></figcaption>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>৯:৪১</span><span class="glyphs">● ▮ ▮</span></div>
+        <div class="body"><div class="pad">
+          <div class="row">
+            <div class="grow">
+              <div style="font-weight:800;font-size:16px" class="ellip">রহিম জেনারেল স্টোর</div>
+              <div class="sub">শুক্র, ১১ জুলাই</div>
+            </div>
+            <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+            <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          </div>
+
+          <div class="row" style="margin-top:16px;gap:8px">
+            <div class="pills fill grow">
+              <div class="pill on">আজ</div><div class="pill">সপ্তাহ</div><div class="pill">মাস</div>
+            </div>
+            <div class="cal-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          </div>
+
+          <div class="card hero" style="margin-top:16px">
+            <div class="expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
+            <div class="label">আয় · আজ</div>
+            <div class="big">৳১২,৪৫০</div>
+            <div class="delta">▲ ১২% গতকালের চেয়ে</div>
+            <div class="stats">
+              <div class="stat"><div class="k">লাভ</div><div class="v">৳৩,২০০</div></div>
+              <div class="stat"><div class="k">মার্জিন</div><div class="v">২৫.৭%</div></div>
+              <div class="stat"><div class="k">বিক্রি</div><div class="v">৮৬</div></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:16px">
+            <div class="row" style="align-items:flex-start">
+              <div class="grow">
+                <div class="sub">বিক্রি · গত ৭ দিন</div>
+                <div style="font-size:20px;font-weight:800;margin-top:2px">৳৪২,১০০</div>
+              </div>
+              <span class="tag pos">শনি সেরা</span>
+            </div>
+            <div class="bars">
+              <div class="bar-col"><div class="bar" style="height:42%"></div><div class="bar-lab">র</div></div>
+              <div class="bar-col"><div class="bar" style="height:60%"></div><div class="bar-lab">সো</div></div>
+              <div class="bar-col"><div class="bar" style="height:48%"></div><div class="bar-lab">ম</div></div>
+              <div class="bar-col"><div class="bar" style="height:72%"></div><div class="bar-lab">বু</div></div>
+              <div class="bar-col"><div class="bar" style="height:55%"></div><div class="bar-lab">বৃ</div></div>
+              <div class="bar-col"><div class="bar" style="height:80%"></div><div class="bar-lab">শু</div></div>
+              <div class="bar-col"><div class="bar hot" style="height:100%"></div><div class="bar-lab">শ</div></div>
+            </div>
+          </div>
+
+          <div class="section-label">সেরা বিক্রেতা</div>
+          <div class="card" style="padding:14px">
+            <div class="row">
+              <div class="tile">পে</div>
+              <div class="grow">
+                <div style="font-weight:700;font-size:15px">পেপসি ৫০০ মিলি</div>
+                <div class="sub">১২০ বিক্রি · ৳৬,০০০ আয়</div>
+              </div>
+              <span class="tag brand">সেরা</span>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:16px;padding:12px 14px">
+            <div class="row">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
+              <div class="grow" style="font-weight:700;font-size:15px;margin-left:2px">কম স্টক</div>
+              <div style="color:var(--brand);font-size:13px;font-weight:600">সব দেখুন</div>
+            </div>
+            <div class="lt">
+              <div class="tile sm">চা</div>
+              <div class="grow"><div class="name">চাল (মিনিকেট)</div><div style="font-size:12px;color:var(--negative)">৬ কেজি বাকি · রিঅর্ডার</div></div>
+              <button class="btn-out">রিস্টক</button>
+            </div>
+            <div class="lt">
+              <div class="tile sm">স</div>
+              <div class="grow"><div class="name">সয়াবিন তেল</div><div style="font-size:12px;color:var(--negative)">৪ লিটার বাকি · রিঅর্ডার</div></div>
+              <button class="btn-out">রিস্টক</button>
+            </div>
+          </div>
+        </div></div>
+        <div class="fab"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>বিক্রি</div>
+        <div class="navbar">
+          <div class="nav-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>হোম</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4zM4 7l8 4 8-4M12 21V11"/></svg>পণ্য</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 16v-5M12 16V8M17 16v-9"/></svg>রিপোর্ট</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>হিস্ট্রি</div>
+        </div>
+      </div></div>
+    </figure>
+
+    <!-- ============ 2. INVENTORY / পণ্য ============ -->
+    <figure class="device">
+      <figcaption><b>পণ্য</b> <span class="en">· Inventory</span></figcaption>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>৯:৪১</span><span class="glyphs">● ▮ ▮</span></div>
+        <div class="body"><div class="pad">
+          <div class="row" style="align-items:flex-start">
+            <div class="grow">
+              <div class="title-lg">পণ্যতালিকা</div>
+              <div class="sub">৪২টি পণ্য · ৳১.২ লাখ মূল্য</div>
+            </div>
+            <div class="icon-btn filled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg></div>
+            <div class="icon-btn filled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></div>
+          </div>
+
+          <div style="margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:10px;color:var(--ink-muted)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <span style="font-size:14px">পণ্য খুঁজুন</span>
+          </div>
+
+          <div class="pills" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+            <div class="pill on">সব</div><div class="pill">কম স্টক</div><div class="pill">পানীয়</div><div class="pill">মুদি</div>
+          </div>
+
+          <div style="margin-top:14px" class="stack">
+            <div class="card" style="padding:12px">
+              <div class="lt" style="padding:0">
+                <div class="tile">পে</div>
+                <div class="grow"><div class="name">পেপসি</div><div class="sub">৫০০ মিলি</div></div>
+                <div><div class="price">৳৫০</div><div class="stock ok">২৪ স্টকে</div></div>
+              </div>
+            </div>
+            <div class="card" style="padding:12px">
+              <div class="lt" style="padding:0">
+                <div class="tile">চা</div>
+                <div class="grow"><div class="name">চাল</div><div class="sub">মিনিকেট</div></div>
+                <div><div class="price">৳৭৫</div><div class="stock low">৬ কেজি স্টকে</div></div>
+              </div>
+            </div>
+            <div class="card" style="padding:12px">
+              <div class="lt" style="padding:0">
+                <div class="tile">স</div>
+                <div class="grow"><div class="name">সয়াবিন তেল</div><div class="sub">৫ লিটার</div></div>
+                <div><div class="price">৳৮৫০</div><div class="stock low">৪ স্টকে</div></div>
+              </div>
+            </div>
+            <div class="card" style="padding:12px">
+              <div class="lt" style="padding:0">
+                <div class="tile">লা</div>
+                <div class="grow"><div class="name">লাক্স সাবান</div><div class="sub">১০০ গ্রাম</div></div>
+                <div><div class="price">৳৩৫</div><div class="stock ok">৪০ স্টকে</div></div>
+              </div>
+            </div>
+            <div class="card" style="padding:12px">
+              <div class="lt" style="padding:0">
+                <div class="tile">বি</div>
+                <div class="grow"><div class="name">বিস্কুট</div><div class="sub">প্রাণ</div></div>
+                <div><div class="price">৳২০</div><div class="stock ok">৬০ স্টকে</div></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="navbar">
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>হোম</div>
+          <div class="nav-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4zM4 7l8 4 8-4M12 21V11"/></svg>পণ্য</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 16v-5M12 16V8M17 16v-9"/></svg>রিপোর্ট</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>হিস্ট্রি</div>
+        </div>
+      </div></div>
+    </figure>
+
+    <!-- ============ 3. CART / কার্ট ============ -->
+    <figure class="device">
+      <figcaption><b>কার্ট</b> <span class="en">· Cart</span></figcaption>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>৯:৪১</span><span class="glyphs">● ▮ ▮</span></div>
+        <div class="appbar"><span class="lead">←</span>কার্ট<span class="trail">খালি করুন</span></div>
+        <div class="body"><div class="pad" style="padding-top:0">
+          <div class="sub" style="font-weight:600;margin:4px 0 12px">৩টি পণ্য কার্টে</div>
+          <div class="stack">
+
+            <div class="card" style="padding:12px">
+              <div class="row" style="align-items:flex-start">
+                <div class="tile">পে</div>
+                <div class="grow">
+                  <div style="font-weight:700;font-size:15px">পেপসি ৫০০ মিলি</div>
+                  <div class="sub" style="margin-top:2px">৳৫০ / পিস</div>
+                </div>
+                <div style="font-weight:800;font-size:15px">৳১০০</div>
+              </div>
+              <div class="row" style="margin-top:12px">
+                <div class="qty"><button>−</button><span>২ পিস</span><button>+</button></div>
+                <div class="grow"></div>
+                <span class="remove"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>মুছুন</span>
+              </div>
+            </div>
+
+            <div class="card" style="padding:12px">
+              <div class="row" style="align-items:flex-start">
+                <div class="tile">চা</div>
+                <div class="grow">
+                  <div style="font-weight:700;font-size:15px">চাল মিনিকেট</div>
+                  <div class="sub" style="margin-top:2px">৳৭৫ / কেজি</div>
+                </div>
+                <div style="font-weight:800;font-size:15px">৳৩৭৫</div>
+              </div>
+              <div class="row" style="margin-top:12px">
+                <div class="qty"><button>−</button><span>৫ কেজি</span><button>+</button></div>
+                <div class="grow"></div>
+                <span class="remove"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>মুছুন</span>
+              </div>
+            </div>
+
+            <div class="card" style="padding:12px">
+              <div class="row" style="align-items:flex-start">
+                <div class="tile">লা</div>
+                <div class="grow">
+                  <div style="font-weight:700;font-size:15px">লাক্স সাবান</div>
+                  <div class="sub" style="margin-top:2px">৳৩৫ / পিস</div>
+                </div>
+                <div style="font-weight:800;font-size:15px">৳১০৫</div>
+              </div>
+              <div class="row" style="margin-top:12px">
+                <div class="qty"><button>−</button><span>৩ পিস</span><button>+</button></div>
+                <div class="grow"></div>
+                <span class="remove"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>মুছুন</span>
+              </div>
+            </div>
+
+          </div>
+        </div></div>
+        <div class="checkout-bar">
+          <div class="row" style="align-items:flex-end">
+            <div class="grow sub">মোট · ৩টি পণ্য</div>
+            <div style="font-size:22px;font-weight:800">৳৫৮০</div>
+          </div>
+          <button class="btn-fill" style="margin-top:14px">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h20l-2 12H4zM7 7V5a5 5 0 0 1 10 0v2"/></svg>
+            চেকআউট
+          </button>
+        </div>
+      </div></div>
+    </figure>
+
+    <!-- ============ 4. SETTINGS / সেটিংস ============ -->
+    <figure class="device">
+      <figcaption><b>সেটিংস</b> <span class="en">· Settings — নতুন ভাষা টগল</span></figcaption>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>৯:৪১</span><span class="glyphs">● ▮ ▮</span></div>
+        <div class="appbar"><span class="lead">←</span>সেটিংস</div>
+        <div class="body"><div class="pad" style="padding-top:0">
+
+          <div class="section-label" style="margin-top:8px">প্রোফাইল</div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
+            <div class="grow"><div class="t">রহিম উদ্দিন</div><div class="s">সাইন ইন করা আছে</div></div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="section-label">দোকান</div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l1-5h16l1 5M4 9v11h16V9M4 9h16"/></svg>
+            <div class="grow"><div class="t">রহিম জেনারেল স্টোর</div><div class="s">দোকানের নাম</div></div>
+          </div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div class="grow"><div class="t">মিরপুর, ঢাকা</div><div class="s">ঠিকানা</div></div>
+          </div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+            <div class="grow"><div class="t">০১৭১২-৩৪৫৬৭৮</div><div class="s">ফোন</div></div>
+          </div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            <div class="grow"><div class="t">৳ BDT (টাকা)</div><div class="s">মুদ্রা</div></div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="section-label" style="color:var(--brand)">ভাষা</div>
+          <div class="card lang-card" style="padding:14px;margin-top:2px">
+            <span class="new-tag">নতুন</span>
+            <div class="row" style="margin-bottom:12px">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M5 8h14M9 4v4m1 8 4-9 4 9m-6.5-2.5h5M2 12a10 10 0 0 0 8 4"/></svg>
+              <div class="grow" style="font-weight:700;font-size:15px">অ্যাপের ভাষা</div>
+            </div>
+            <div class="pills fill">
+              <div class="pill">English</div>
+              <div class="pill on">বাংলা</div>
+            </div>
+          </div>
+
+          <div class="divider" style="margin-top:16px"></div>
+          <div class="section-label">চেহারা</div>
+          <div class="pills fill" style="margin:2px 0 4px">
+            <div class="pill"><span style="margin-right:5px">☀</span>লাইট</div>
+            <div class="pill on"><span style="margin-right:5px">☾</span>ডার্ক</div>
+          </div>
+
+          <div class="divider" style="margin-top:16px"></div>
+          <div class="section-label">অ্যাসিস্ট্যান্ট</div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12c.5.5 1 1.3 1 2h6c0-.7.5-1.5 1-2a7 7 0 0 0-4-12z"/></svg>
+            <div class="grow"><div class="t">এআই ইনসাইট</div><div class="s">অ্যাসিস্ট্যান্টের পরামর্শ</div></div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M17 7h4v4"/></svg>
+            <div class="grow"><div class="t">ট্রেন্ড</div><div class="s">বিক্রির ট্রেন্ড</div></div>
+            <span class="chev">›</span>
+          </div>
+
+          <div class="divider"></div>
+          <div class="section-label">পণ্য</div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <div class="grow"><div class="t">ক্যাটাগরি পরিচালনা</div><div class="s">যোগ, নাম বদল বা মুছুন</div></div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+            <div class="grow"><div class="t">আর্কাইভ পণ্য</div><div class="s">সরানো পণ্য দেখুন ও ফেরান</div></div>
+            <span class="chev">›</span>
+          </div>
+
+          <button class="btn-out" style="width:100%;margin:20px 0 8px;padding:13px;display:flex;align-items:center;justify-content:center;gap:8px">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            লগ আউট
+          </button>
+        </div></div>
+      </div></div>
+    </figure>
+
+  </div>
+
+  <!-- ============ Translation notes ============ -->
+  <section class="notes">
+    <h2>শব্দচয়ন — কয়েকটি সিদ্ধান্ত রিভিউ করুন</h2>
+    <p class="lede">Key term choices I made in "natural shop Bengali." Each shows what I picked and the alternatives — tell me any you'd rather swap, and I'll lock the wording before we build.</p>
+    <div class="grid-notes">
+      <div class="note"><div class="en">Inventory</div><div class="bn">পণ্যতালিকা</div><div class="alt">alt: <b>ইনভেন্টরি</b> · <b>মজুদ</b></div></div>
+      <div class="note"><div class="en">Cart</div><div class="bn">কার্ট</div><div class="alt">alt: <b>ঝুড়ি</b> · <b>শপিং ব্যাগ</b></div></div>
+      <div class="note"><div class="en">Checkout</div><div class="bn">চেকআউট</div><div class="alt">alt: <b>বিক্রি সম্পন্ন</b> · <b>বিল করুন</b></div></div>
+      <div class="note"><div class="en">Revenue</div><div class="bn">আয়</div><div class="alt">alt: <b>রাজস্ব</b> · <b>বিক্রি</b></div></div>
+      <div class="note"><div class="en">Low stock</div><div class="bn">কম স্টক</div><div class="alt">alt: <b>মজুদ কম</b> · <b>স্টক কম</b></div></div>
+      <div class="note"><div class="en">Remove</div><div class="bn">মুছুন</div><div class="alt">alt: <b>সরান</b> · <b>বাদ দিন</b></div></div>
+      <div class="note"><div class="en">Restock</div><div class="bn">রিস্টক</div><div class="alt">alt: <b>স্টক যোগ</b> · <b>মাল তুলুন</b></div></div>
+      <div class="note"><div class="en">Sign out</div><div class="bn">লগ আউট</div><div class="alt">alt: <b>সাইন আউট</b> · <b>বের হন</b></div></div>
+    </div>
+  </section>
+
+  <footer>
+    রিভিউয়ের জন্য মকআপ · এখনো কোড করা হয়নি — আপনার মতামত দিলে আসল ফিচার বানানো শুরু হবে।
+  </footer>
+</div>

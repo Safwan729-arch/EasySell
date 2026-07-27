@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/failure.dart';
 import '../../../shared/providers/refresh_provider.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../customers/presentation/customers_controller.dart';
+import '../../customers/presentation/receivables_controller.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/data/transaction_repository.dart';
 import '../domain/cart_math.dart';
@@ -19,7 +21,7 @@ class CartCheckoutController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
-  Future<bool> checkout({String source = 'manual'}) async {
+  Future<bool> checkout({String source = 'manual', String? customerId}) async {
     final shopId = ref.read(myShopProvider).value?.id;
     final lines = ref.read(cartControllerProvider);
     if (shopId == null) {
@@ -38,12 +40,17 @@ class CartCheckoutController extends AsyncNotifier<void> {
           shopId: shopId,
           items: cartItemsPayload(lines),
           source: source,
+          customerId: customerId,
         );
     return result.when(
       success: (_) {
         ref.read(cartControllerProvider.notifier).clear();
         ref.invalidate(productsStreamProvider);
         ref.read(dataRefreshProvider.notifier).bump();
+        if (customerId != null) {
+          ref.invalidate(customersControllerProvider);
+          ref.invalidate(receivablesControllerProvider);
+        }
         state = const AsyncData(null);
         return true;
       },

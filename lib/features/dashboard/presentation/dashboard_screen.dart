@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
+import '../../../core/l10n/enum_labels.dart';
+import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/gradient_bars.dart';
@@ -20,6 +23,7 @@ import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/presentation/sales_providers.dart';
 import '../../transactions/presentation/transaction_confirmation_sheet.dart';
+import 'receivables_card.dart';
 import 'revenue_hero.dart';
 import 'summary_breakdown_sheet.dart';
 
@@ -43,18 +47,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     AnalyticsPeriod.month,
   ];
 
-  static String _periodWord(AnalyticsPeriod p) => switch (p) {
-    AnalyticsPeriod.today => 'Today',
-    AnalyticsPeriod.week => 'Week',
-    AnalyticsPeriod.month => 'Month',
-    AnalyticsPeriod.all => 'All',
-  };
-
   /// Placeholder notifications surface. // MEMBER C owns the real one (push
   /// alerts, low-stock and sale events); this keeps the bell honest until then.
   static void _showNotificationsSheet(BuildContext context) {
     AppHaptics.tap();
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -70,10 +68,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               color: theme.colorScheme.outline,
             ),
             const SizedBox(height: 12),
-            Text("You're all caught up", style: theme.textTheme.titleMedium),
+            Text(l10n.dashboard_notificationsCaughtUp, style: theme.textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
-              "We'll alert you about low stock and sales here.",
+              l10n.dashboard_notificationsHint,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -88,6 +86,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final shop = ref.watch(myShopProvider).value;
     final currency = shop?.currency ?? 'USD';
     final dateLabel = DateFormat('EEE, d MMM').format(DateTime.now());
@@ -134,7 +133,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            shop?.name ?? 'Your shop',
+                            shop?.name ?? l10n.dashboard_yourShop,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.titleMedium?.copyWith(
@@ -159,6 +158,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       onTap: () => _showNotificationsSheet(context),
                     ),
                     const SizedBox(width: 8),
+                    // Permanent door to the customer credit (khata) ledger. The
+                    // receivables card below is hidden when nobody owes money, so
+                    // this header icon is the always-present entry point.
+                    _HeaderIcon(
+                      icon: Icons.people_alt_outlined,
+                      onTap: () => context.push(AppRoutes.customers),
+                    ),
+                    const SizedBox(width: 8),
                     _HeaderIcon(
                       icon: Icons.settings_outlined,
                       onTap: () => context.push('/settings'),
@@ -175,7 +182,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       child: SegmentPills<AnalyticsPeriod>(
                         values: _periods,
                         selected: _period,
-                        labelOf: _periodWord,
+                        labelOf: (p) => periodLabel(l10n, p),
                         onChanged: (p) {
                           setState(() => _period = p);
                           // Period and day-mode are mutually exclusive.
@@ -209,7 +216,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(height: 16),
               summaryAsync.when(
                 loading: () => const _SummarySkeleton(),
-                error: (_, _) => const _ErrorText('Could not load summary.'),
+                error: (_, _) => _ErrorText(l10n.dashboard_couldNotLoadSummary),
                 data: (s) {
                   final margin = s.revenue > 0
                       ? s.profit / s.revenue * 100
@@ -221,7 +228,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       : null;
                   final label = isDay
                       ? DateFormat('EEE, d MMM').format(selectedDay)
-                      : _periodWord(_period);
+                      : periodLabel(l10n, _period);
                   return Entrance(
                     index: 2,
                     child: RevenueHero(
@@ -244,6 +251,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 },
               ),
               const SizedBox(height: 16),
+              const Entrance(index: 3, child: ReceivablesCard()),
               Entrance(
                 index: 4,
                 child: _WeeklySalesCard(
@@ -306,7 +314,7 @@ class _SellFab extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Sell',
+                context.l10n.common_sell,
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.w700,
@@ -356,6 +364,7 @@ class _WeeklySalesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -364,9 +373,9 @@ class _WeeklySalesCard extends StatelessWidget {
             height: 180,
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (_, _) => const SizedBox(
+          error: (_, _) => SizedBox(
             height: 180,
-            child: Center(child: Text('Could not load sales.')),
+            child: Center(child: Text(context.l10n.dashboard_couldNotLoadSales)),
           ),
           data: (points) {
             final values = [for (final p in points) p.revenue];
@@ -388,7 +397,7 @@ class _WeeklySalesCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sales · last 7 days',
+                            context.l10n.dashboard_salesLast7,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -417,7 +426,7 @@ class _WeeklySalesCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          '$peakLabel best',
+                          context.l10n.dashboard_bestDay(peakLabel),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.extension<AppColors>()!.positive,
                             fontWeight: FontWeight.w700,
@@ -430,8 +439,7 @@ class _WeeklySalesCard extends StatelessWidget {
                 GradientBars(
                   values: values,
                   labels: [
-                    for (final p in points)
-                      DateFormat('E').format(p.bucket).substring(0, 1),
+                    for (final p in points) weekdayBarLabel(locale, p.bucket),
                   ],
                   highlight: peak >= 0 ? peak : null,
                   height: 150,
@@ -462,7 +470,7 @@ class _TopPerformer extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'TOP PERFORMER',
+          context.l10n.dashboard_topPerformer,
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
@@ -475,7 +483,7 @@ class _TopPerformer extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'No sales yet — your best seller will appear here.',
+                context.l10n.dashboard_noSalesYet,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -505,7 +513,10 @@ class _TopPerformer extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${Qty.format(top.units)} sold · ${Money.format(top.revenue, currencyCode: currency)} revenue',
+                          context.l10n.dashboard_soldRevenue(
+                            Qty.format(top.units),
+                            Money.format(top.revenue, currencyCode: currency),
+                          ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -523,7 +534,7 @@ class _TopPerformer extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'MVP',
+                      context.l10n.dashboard_mvpBadge,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w700,
@@ -565,7 +576,7 @@ class _LowStockCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Low stock',
+                  context.l10n.dashboard_lowStock,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -573,7 +584,7 @@ class _LowStockCard extends StatelessWidget {
                 const Spacer(),
                 TextButton(
                   onPressed: () => context.go('/inventory'),
-                  child: const Text('View all'),
+                  child: Text(context.l10n.dashboard_viewAll),
                 ),
               ],
             ),
@@ -581,7 +592,7 @@ class _LowStockCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(0, 4, 0, 12),
                 child: Text(
-                  "You're fully stocked — nothing needs reordering.",
+                  context.l10n.dashboard_fullyStocked,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -631,7 +642,7 @@ class _LowStockRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$qty left · reorder',
+                  context.l10n.dashboard_leftReorder(qty),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.negative,
                   ),
@@ -645,7 +656,7 @@ class _LowStockRow extends StatelessWidget {
               minimumSize: const Size(0, 38),
               padding: const EdgeInsets.symmetric(horizontal: 14),
             ),
-            child: const Text('Restock'),
+            child: Text(context.l10n.common_restock),
           ),
         ],
       ),

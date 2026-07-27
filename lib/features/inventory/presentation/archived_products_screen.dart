@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
@@ -28,8 +29,8 @@ class ArchivedProductsScreen extends ConsumerWidget {
         SnackBar(
           content: Text(
             ok
-                ? '"${product.name}" restored to inventory.'
-                : "Couldn't restore \"${product.name}\". Please try again.",
+                ? context.l10n.inventory_restored(product.name)
+                : context.l10n.inventory_couldNotRestore(product.name),
           ),
         ),
       );
@@ -41,11 +42,11 @@ class ArchivedProductsScreen extends ConsumerWidget {
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Archived products')),
+      appBar: AppBar(title: Text(context.l10n.settings_archivedProducts)),
       body: archivedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => const Center(
-          child: Text('Could not load archived products. Pull to retry.'),
+        error: (_, _) => Center(
+          child: Text(context.l10n.inventory_couldNotLoadArchived),
         ),
         data: (products) {
           if (products.isEmpty) return const _EmptyState();
@@ -73,7 +74,7 @@ class ArchivedProductsScreen extends ConsumerWidget {
                 trailing: TextButton.icon(
                   onPressed: () => _restore(context, ref, p),
                   icon: const Icon(Icons.unarchive_outlined),
-                  label: const Text('Restore'),
+                  label: Text(context.l10n.common_restore),
                 ),
               );
             },
@@ -99,10 +100,10 @@ class _EmptyState extends StatelessWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 12),
-          const Text('No archived products.'),
+          Text(context.l10n.inventory_noArchived),
           const SizedBox(height: 4),
           Text(
-            'Products you remove from inventory show up here.',
+            context.l10n.inventory_archivedHint,
             style: Theme.of(context).textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),

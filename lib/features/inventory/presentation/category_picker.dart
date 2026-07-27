@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_ext.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/category_repository.dart';
 import '../domain/category.dart';
@@ -63,11 +64,11 @@ class _CategoryFieldState extends ConsumerState<CategoryField> {
             key: ValueKey(_rev),
             initialValue: widget.value,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: 'Category'),
+            decoration: InputDecoration(labelText: context.l10n.category_fieldLabel),
             items: [
-              const DropdownMenuItem<String?>(
+              DropdownMenuItem<String?>(
                 value: null,
-                child: Text('No category'),
+                child: Text(context.l10n.category_none),
               ),
               for (final c in merged)
                 DropdownMenuItem<String?>(value: c.id, child: Text(c.name)),
@@ -78,7 +79,7 @@ class _CategoryFieldState extends ConsumerState<CategoryField> {
                     Icon(Icons.add, size: 16, color: theme.colorScheme.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'Add new category',
+                      context.l10n.category_addNew,
                       style: TextStyle(color: theme.colorScheme.primary),
                     ),
                   ],
@@ -115,12 +116,13 @@ class _CategoryFieldState extends ConsumerState<CategoryField> {
   }
 
   Future<void> _startAdd() async {
+    final l10n = context.l10n;
     final name = await promptCategoryName(context: context);
     if (name == null || name.trim().isEmpty) return;
 
     final shopId = ref.read(myShopProvider).value?.id;
     if (shopId == null) {
-      _snack('No shop found for this account.');
+      _snack(l10n.category_noShop);
       return;
     }
 
@@ -141,9 +143,7 @@ class _CategoryFieldState extends ConsumerState<CategoryField> {
         if (!mounted) return;
         setState(() {
           _pending = category;
-          _note = alreadyExisted
-              ? 'Already exists — selected it for you'
-              : null;
+          _note = alreadyExisted ? l10n.category_alreadyExists : null;
           _rev++;
         });
         widget.onChanged(category.id);
@@ -166,8 +166,8 @@ class _CategoryFieldState extends ConsumerState<CategoryField> {
 Future<String?> promptCategoryName({
   required BuildContext context,
   String? initialValue,
-  String title = 'New category',
-  String actionLabel = 'Add',
+  String? title,
+  String? actionLabel,
 }) {
   final controller = TextEditingController(text: initialValue ?? '');
   return showModalBottomSheet<String>(
@@ -175,6 +175,7 @@ Future<String?> promptCategoryName({
     isScrollControlled: true,
     showDragHandle: true,
     builder: (sheetContext) {
+      final l10n = sheetContext.l10n;
       void submit() => Navigator.of(sheetContext).pop(controller.text.trim());
       return Padding(
         padding: EdgeInsets.only(
@@ -187,7 +188,10 @@ Future<String?> promptCategoryName({
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: Theme.of(sheetContext).textTheme.titleLarge),
+            Text(
+              title ?? l10n.category_newTitle,
+              style: Theme.of(sheetContext).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
@@ -195,9 +199,9 @@ Future<String?> promptCategoryName({
               textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => submit(),
-              decoration: const InputDecoration(
-                labelText: 'Category name',
-                hintText: 'e.g. Frozen items',
+              decoration: InputDecoration(
+                labelText: l10n.category_nameLabel,
+                hintText: l10n.category_nameHint,
               ),
             ),
             const SizedBox(height: 20),
@@ -206,14 +210,14 @@ Future<String?> promptCategoryName({
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(sheetContext).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.common_cancel),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
                     onPressed: submit,
-                    child: Text(actionLabel),
+                    child: Text(actionLabel ?? l10n.common_add),
                   ),
                 ),
               ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/category_repository.dart';
 import '../domain/category.dart';
@@ -32,10 +33,11 @@ class _ManageCategoriesScreenState
   }
 
   Future<void> _add() async {
+    final l10n = context.l10n;
     final name = await promptCategoryName(context: context);
     if (name == null || name.trim().isEmpty) return;
     final shopId = ref.read(myShopProvider).value?.id;
-    if (shopId == null) return _snack('No shop found for this account.');
+    if (shopId == null) return _snack(l10n.category_noShop);
 
     final result = await _repo.upsertCategory(shopId: shopId, name: name);
     result.when(
@@ -48,8 +50,8 @@ class _ManageCategoriesScreenState
     final name = await promptCategoryName(
       context: context,
       initialValue: category.name,
-      title: 'Rename category',
-      actionLabel: 'Save',
+      title: context.l10n.category_renameTitle,
+      actionLabel: context.l10n.common_save,
     );
     if (name == null || name.trim().isEmpty || name.trim() == category.name) {
       return;
@@ -68,13 +70,11 @@ class _ManageCategoriesScreenState
       builder: (ctx) {
         final colors = Theme.of(ctx).extension<AppColors>()!;
         return AlertDialog(
-          title: const Text('Delete category?'),
+          title: Text(ctx.l10n.category_deleteTitle),
           content: Text(
             usageCount == 0
-                ? '"${category.name}" will be removed.'
-                : '"${category.name}" will be removed. $usageCount '
-                      '${usageCount == 1 ? 'product' : 'products'} will become '
-                      'uncategorized (not deleted).',
+                ? ctx.l10n.category_deleteBodyEmpty(category.name)
+                : ctx.l10n.category_deleteBodyUsed(category.name, usageCount),
           ),
           // Natural-width actions: the theme forces FilledButton to a full-width
           // minimumSize, which otherwise makes "Delete" dwarf "Cancel".
@@ -82,7 +82,7 @@ class _ManageCategoriesScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(ctx.l10n.common_cancel),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -92,7 +92,7 @@ class _ManageCategoriesScreenState
                 padding: const EdgeInsets.symmetric(horizontal: 20),
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete'),
+              child: Text(ctx.l10n.common_delete),
             ),
           ],
         );
@@ -125,10 +125,10 @@ class _ManageCategoriesScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage categories'),
+        title: Text(context.l10n.settings_manageCategories),
         actions: [
           IconButton(
-            tooltip: 'Add category',
+            tooltip: context.l10n.category_addTooltip,
             icon: const Icon(Icons.add),
             onPressed: _add,
           ),
@@ -136,8 +136,8 @@ class _ManageCategoriesScreenState
       ),
       body: categoriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => const Center(
-          child: Text('Could not load categories. Pull to retry.'),
+        error: (_, _) => Center(
+          child: Text(context.l10n.category_couldNotLoad),
         ),
         data: (categories) {
           if (categories.isEmpty) {
@@ -152,7 +152,7 @@ class _ManageCategoriesScreenState
               final count = counts[c.id] ?? 0;
               return ListTile(
                 title: Text(c.name),
-                subtitle: Text('$count ${count == 1 ? 'product' : 'products'}'),
+                subtitle: Text(context.l10n.category_productCount(count)),
                 trailing: PopupMenuButton<String>(
                   onSelected: (action) {
                     if (action == 'rename') {
@@ -161,9 +161,9 @@ class _ManageCategoriesScreenState
                       _delete(c, count);
                     }
                   },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'rename', child: Text('Rename')),
-                    PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(value: 'rename', child: Text(context.l10n.common_rename)),
+                    PopupMenuItem(value: 'delete', child: Text(context.l10n.common_delete)),
                   ],
                 ),
               );
@@ -190,10 +190,10 @@ class _EmptyState extends StatelessWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 12),
-          const Text('No categories yet.'),
+          Text(context.l10n.category_noneYet),
           const SizedBox(height: 4),
           Text(
-            'Tap + to add one.',
+            context.l10n.category_tapToAdd,
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],

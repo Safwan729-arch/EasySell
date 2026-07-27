@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/l10n/l10n_ext.dart';
 import '../../inventory/domain/product.dart';
 
 /// Bottom sheet listing [products] with a name search; returns the chosen
@@ -61,9 +62,9 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           TextField(
             autofocus: false,
             onChanged: (v) => setState(() => _q = v),
-            decoration: const InputDecoration(
-              hintText: 'Search products',
-              prefixIcon: Icon(Icons.search),
+            decoration: InputDecoration(
+              hintText: context.l10n.scan_searchProducts,
+              prefixIcon: const Icon(Icons.search),
             ),
           ),
           const SizedBox(height: 8),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/haptics.dart';
 import '../../../core/config/motion.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../domain/cart_math.dart';
@@ -51,8 +52,10 @@ class CartBar extends ConsumerWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            '${lines.length} ${lines.length == 1 ? 'item' : 'items'} · '
-                            '${Money.format(cartTotal(lines), currencyCode: currency)}',
+                            context.l10n.cart_barSummary(
+                              lines.length,
+                              Money.format(cartTotal(lines), currencyCode: currency),
+                            ),
                             style: theme.textTheme.titleSmall?.copyWith(
                               color: theme.colorScheme.onPrimary,
                               fontWeight: FontWeight.w700,

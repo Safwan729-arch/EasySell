@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/trend_repository.dart';
@@ -19,28 +20,27 @@ class TrendScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final async = ref.watch(trendsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Trends')),
+      appBar: AppBar(title: Text(l10n.trends_title)),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(trendsProvider),
         child: async.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => const _Centered(
+          error: (e, _) => _Centered(
             icon: Icons.error_outline,
-            message: 'Could not load trends.',
+            message: l10n.trends_couldNotLoad,
           ),
           data: (trends) {
             if (trends.isEmpty) {
               return ListView(
-                children: const [
-                  SizedBox(height: 120),
+                children: [
+                  const SizedBox(height: 120),
                   _Centered(
                     icon: Icons.insights_outlined,
-                    message:
-                        'No trends yet.\nTrend dashboards will appear here '
-                        'once the assistant has analyzed your sales.',
+                    message: l10n.trends_empty,
                   ),
                 ],
               );
@@ -103,7 +103,7 @@ class _TrendCard extends StatelessWidget {
             const SizedBox(height: 16),
             if (trend.points.isEmpty)
               Text(
-                'No data points.',
+                context.l10n.trends_noData,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),

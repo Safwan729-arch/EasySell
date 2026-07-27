@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/haptics.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../cart/presentation/add_to_cart_sheet.dart';
@@ -31,7 +32,7 @@ class ProductDetailScreen extends ConsumerWidget {
       if (next is AsyncError) {
         final message = switch (next.error) {
           Failure(:final message) => message,
-          _ => 'Something went wrong. Please try again.',
+          _ => context.l10n.common_somethingWrong,
         };
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -44,14 +45,14 @@ class ProductDetailScreen extends ConsumerWidget {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (_, _) => Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Could not load product.')),
+        body: Center(child: Text(context.l10n.inventory_couldNotLoadProduct)),
       ),
       data: (products) {
         final matches = products.where((p) => p.id == productId);
         if (matches.isEmpty) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('This product no longer exists.')),
+            body: Center(child: Text(context.l10n.inventory_productGone)),
           );
         }
         return _DetailView(product: matches.first, currency: currency);
@@ -67,15 +68,13 @@ class _DetailView extends ConsumerWidget {
   final String currency;
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove product?'),
-        content: Text(
-          '"${product.name}" will be removed from your inventory. '
-          'Its past sales stay in your records.',
-        ),
+        title: Text(l10n.inventory_removeTitle),
+        content: Text(l10n.inventory_removeBody(product.name)),
         actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
         actions: [
           Row(
@@ -86,8 +85,8 @@ class _DetailView extends ConsumerWidget {
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
-                  child: const Text(
-                    'Cancel',
+                  child: Text(
+                    l10n.common_cancel,
                     maxLines: 1,
                     overflow: TextOverflow.visible,
                     softWrap: false,
@@ -101,8 +100,8 @@ class _DetailView extends ConsumerWidget {
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
-                  child: const Text(
-                    'Delete',
+                  child: Text(
+                    l10n.common_delete,
                     maxLines: 1,
                     overflow: TextOverflow.visible,
                     softWrap: false,
@@ -134,10 +133,10 @@ class _DetailView extends ConsumerWidget {
       messenger.clearSnackBars();
       final snackBar = messenger.showSnackBar(
         SnackBar(
-          content: Text('"${product.name}" removed'),
+          content: Text(l10n.inventory_removed(product.name)),
           duration: const Duration(seconds: 30),
           action: SnackBarAction(
-            label: 'Undo',
+            label: l10n.common_undo,
             onPressed: () {
               AppHaptics.tap();
               controller.restore(product.id);
@@ -162,7 +161,7 @@ class _DetailView extends ConsumerWidget {
     if (added == true && context.mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Added to cart')));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.common_addedToCart)));
     }
   }
 
@@ -171,12 +170,13 @@ class _DetailView extends ConsumerWidget {
     if (recorded == true && context.mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Stock added')));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.common_stockAdded)));
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final subtitle = [
       if (product.brand?.isNotEmpty ?? false) product.brand!,
       if (product.variant?.isNotEmpty ?? false) product.variant!,
@@ -199,13 +199,13 @@ class _DetailView extends ConsumerWidget {
         title: Text(product.name),
         actions: [
           IconButton(
-            tooltip: 'Edit',
+            tooltip: l10n.common_edit,
             icon: const Icon(Icons.edit_outlined),
             onPressed: () =>
                 context.push('/inventory/${product.id}/edit', extra: product),
           ),
           IconButton(
-            tooltip: 'Delete',
+            tooltip: l10n.common_delete,
             icon: const Icon(Icons.delete_outline),
             onPressed: () => _confirmDelete(context, ref),
           ),
@@ -220,7 +220,7 @@ class _DetailView extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _restock(context),
                   icon: const Icon(Icons.add_box_outlined),
-                  label: const Text('Restock'),
+                  label: Text(l10n.common_restock),
                 ),
               ),
               const SizedBox(width: 12),
@@ -230,7 +230,7 @@ class _DetailView extends ConsumerWidget {
                       ? null
                       : () => _addToCart(context),
                   icon: const Icon(Icons.add_shopping_cart),
-                  label: const Text('Add to cart'),
+                  label: Text(l10n.common_addToCart),
                 ),
               ),
             ],
@@ -253,37 +253,37 @@ class _DetailView extends ConsumerWidget {
               color: Theme.of(context).colorScheme.errorContainer,
               child: ListTile(
                 leading: const Icon(Icons.warning_amber_rounded),
-                title: const Text('Low stock'),
+                title: Text(l10n.inventory_lowStock),
                 subtitle: Text(
-                  'At or below reorder threshold (${product.reorderLabel}).',
+                  l10n.inventory_reorderThresholdNote(product.reorderLabel),
                 ),
               ),
             ),
-          _statTile(context, 'In stock', product.quantityLabel),
+          _statTile(context, l10n.inventory_statInStock, product.quantityLabel),
           _statTile(
             context,
-            'Buying price',
+            l10n.inventory_statBuyingPrice,
             Money.format(product.buyingPrice, currencyCode: currency),
           ),
           _statTile(
             context,
-            'Selling price',
+            l10n.inventory_statSellingPrice,
             Money.format(product.sellingPrice, currencyCode: currency),
           ),
           _statTile(
             context,
-            'Margin / unit',
+            l10n.inventory_statMarginPerUnit,
             Money.format(product.marginPerUnit, currencyCode: currency),
           ),
           _statTile(
             context,
-            'Inventory value (cost)',
+            l10n.inventory_statInventoryValue,
             Money.format(product.inventoryValue, currencyCode: currency),
           ),
           _statTile(
             context,
-            'Reorder threshold',
-            product.reorderThreshold <= 0 ? 'Off' : product.reorderLabel,
+            l10n.inventory_statReorderThreshold,
+            product.reorderThreshold <= 0 ? l10n.common_off : product.reorderLabel,
           ),
         ],
       ),

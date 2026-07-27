@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/haptics.dart';
 import '../../../core/config/motion.dart';
+import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/app_bottom_nav.dart';
 import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../cart/presentation/cart_bar.dart';
@@ -22,23 +23,6 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell>
     with SingleTickerProviderStateMixin {
-  // branchIndex maps to the StatefulShellRoute branch order in app_router.dart:
-  // 0 Home · 1 Items · 2 Reports · 3 History.
-  static const _items = [
-    AppNavItem(icon: Icons.home_rounded, label: 'Home', branchIndex: 0),
-    AppNavItem(
-      icon: Icons.inventory_2_outlined,
-      label: 'Items',
-      branchIndex: 1,
-    ),
-    AppNavItem(icon: Icons.bar_chart_rounded, label: 'Reports', branchIndex: 2),
-    AppNavItem(
-      icon: Icons.access_time_rounded,
-      label: 'History',
-      branchIndex: 3,
-    ),
-  ];
-
   // Drives the fade-through. Starts settled (value 1) so the first frame is
   // fully visible — the destination screens handle their own first-mount
   // entrance — and replays from 0 each time the active branch changes.
@@ -93,6 +77,27 @@ class _MainShellState extends ConsumerState<MainShell>
     // fade/scale it in on each branch change: fast (180ms) and subtle — a
     // barely-there scale, never a directional slide (the tabs aren't spatially
     // ordered). Reduced-motion shows the shell with no transform.
+    final l10n = context.l10n;
+    // branchIndex maps to the StatefulShellRoute branch order in app_router.dart:
+    // 0 Home · 1 Items · 2 Reports · 3 History.
+    final items = [
+      AppNavItem(icon: Icons.home_rounded, label: l10n.nav_home, branchIndex: 0),
+      AppNavItem(
+        icon: Icons.inventory_2_outlined,
+        label: l10n.nav_items,
+        branchIndex: 1,
+      ),
+      AppNavItem(
+        icon: Icons.bar_chart_rounded,
+        label: l10n.nav_reports,
+        branchIndex: 2,
+      ),
+      AppNavItem(
+        icon: Icons.access_time_rounded,
+        label: l10n.nav_history,
+        branchIndex: 3,
+      ),
+    ];
     final shell = widget.navigationShell;
     return Scaffold(
       body: AppMotion.reduced(context)
@@ -109,7 +114,7 @@ class _MainShellState extends ConsumerState<MainShell>
         children: [
           const CartBar(),
           AppBottomNav(
-            items: _items,
+            items: items,
             currentIndex: widget.navigationShell.currentIndex,
             onTap: _onTap,
           ),
