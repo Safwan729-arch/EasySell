@@ -12,9 +12,28 @@ import '../domain/scan_decision.dart';
 /// The resolved outcome the scan screen renders: an action plus the concrete
 /// products it maps to (already resolved from match ids to Product objects).
 class ScanOutcome {
-  const ScanOutcome({required this.action, required this.products});
+  const ScanOutcome({
+    required this.action,
+    required this.products,
+    this.readBrand,
+    this.readName,
+    this.readSize,
+  });
   final ScanAction action;
   final List<Product> products;
+  final String? readBrand;
+  final String? readName;
+  final String? readSize;
+
+  /// What the model reported reading off the packaging, as one display line
+  /// (e.g. "Pepsi · 1L"). Null when nothing legible was read.
+  String? get readLabel {
+    final parts = [readBrand, readName, readSize]
+        .where((s) => s != null && s.trim().isNotEmpty)
+        .map((s) => s!.trim())
+        .toList();
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
 }
 
 /// Captures a photo, recognizes it against the shop's catalog, and resolves the
@@ -52,7 +71,13 @@ class ScanController {
           for (final m in decision.matches)
             if (byId[m.productId] != null) byId[m.productId]!,
         ];
-        return ScanOutcome(action: decision.action, products: resolved);
+        return ScanOutcome(
+          action: decision.action,
+          products: resolved,
+          readBrand: recognition.readBrand,
+          readName: recognition.readName,
+          readSize: recognition.readSize,
+        );
       },
       failure: (f) => throw f,
     );
