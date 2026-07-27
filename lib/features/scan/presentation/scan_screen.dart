@@ -75,18 +75,19 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     switch (outcome.action) {
       case ScanAction.autoSell:
         if (outcome.products.isEmpty) return _noMatch();
-        return _confirmAndAdd(outcome.products.first);
+        return _confirmAndAdd(outcome.products.first, readLabel: outcome.readLabel);
       case ScanAction.chooseFromMatches:
         final picked = await showProductPickerSheet(
           context,
           products: outcome.products,
           title: context.l10n.scan_didYouMean,
+          readLabel: outcome.readLabel,
         );
         if (picked == null) {
           if (mounted) context.pop();
           return false;
         }
-        return _confirmAndAdd(picked);
+        return _confirmAndAdd(picked, readLabel: outcome.readLabel);
       case ScanAction.noMatch:
         return _noMatch();
     }
@@ -98,8 +99,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   /// exits to review the cart). The sheet owns stock handling, the add, and the
   /// success haptic; a Cancel/dismiss simply adds nothing and returns to the
   /// camera.
-  Future<bool> _confirmAndAdd(Product product) async {
-    final added = await showAddToCartSheet(context, product: product);
+  Future<bool> _confirmAndAdd(Product product, {String? readLabel}) async {
+    final added = await showAddToCartSheet(context, product: product, readLabel: readLabel);
     if (!mounted) return false;
     if (added == true) {
       ScaffoldMessenger.of(context)

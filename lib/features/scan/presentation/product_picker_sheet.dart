@@ -9,21 +9,23 @@ Future<Product?> showProductPickerSheet(
   BuildContext context, {
   required List<Product> products,
   required String title,
+  String? readLabel,
 }) {
   return showModalBottomSheet<Product>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
-    builder: (_) => _ProductPickerSheet(products: products, title: title),
+    builder: (_) => _ProductPickerSheet(products: products, title: title, readLabel: readLabel),
   );
 }
 
 class _ProductPickerSheet extends StatefulWidget {
-  const _ProductPickerSheet({required this.products, required this.title});
+  const _ProductPickerSheet({required this.products, required this.title, this.readLabel});
 
   final List<Product> products;
   final String title;
+  final String? readLabel;
 
   @override
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
@@ -58,6 +60,16 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
               fontWeight: FontWeight.w800,
             ),
           ),
+          if (widget.readLabel != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              context.l10n.scan_read(widget.readLabel!),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           TextField(
             autofocus: false,
