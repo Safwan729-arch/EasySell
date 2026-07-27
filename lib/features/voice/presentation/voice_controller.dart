@@ -147,6 +147,41 @@ class VoiceController extends Notifier<VoiceSaleState> {
     );
   }
 
+  /// Re-runs parsing on a shopkeeper-edited [transcript] (the text path of
+  /// `parse-sale`), rebuilding the reviewable lines so a single misheard word
+  /// can be fixed without re-recording. Empty input is a no-op.
+  Future<void> reparseFromText(String transcript) async {
+    final text = transcript.trim();
+    if (text.isEmpty) return;
+    final session = ++_session; // supersede any in-flight recording/parse
+    state = state.copyWith(phase: VoicePhase.thinking);
+
+    final products = ref.read(productsStreamProvider).value ?? const [];
+    final result = await ref
+        .read(voiceSaleRepositoryProvider)
+        .parseTranscript(
+          transcript: text,
+          candidates: buildCandidates(products, includeUnit: true),
+        );
+    if (_session != session) return;
+
+    result.when(
+      success: (parsed) {
+        final lines = buildVoiceLines(parsed);
+        state = state.copyWith(
+          phase: lines.isEmpty ? VoicePhase.error : VoicePhase.reviewing,
+          heardText: parsed.heardText ?? text,
+          lines: lines,
+          errorMessage: lines.isEmpty ? 'noMatch' : null,
+        );
+      },
+      failure: (f) => state = state.copyWith(
+        phase: VoicePhase.error,
+        errorMessage: f.message,
+      ),
+    );
+  }
+
   void choose(int index, String productId) =>
       _replace(index, state.lines[index].chooseProduct(productId));
 
