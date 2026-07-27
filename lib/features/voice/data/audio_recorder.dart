@@ -29,7 +29,87 @@ abstract class AudioRecorderPort {
   Future<void> dispose();
 }
 
-/// Adapts `package:record` (v7.1.1) to [AudioRecorderPort].
+/// Seam over `package:record`'s concrete `AudioRecorder` so the start-config
+/// fallback ladder in [RecordAudioRecorder.start] is unit-testable without a
+/// real microphone or platform channel.
+abstract class RecorderEngine {
+  Future<bool> hasPermission();
+  Future<void> start(record_pkg.RecordConfig config, {required String path});
+  Future<String?> stop();
+  Future<void> cancel();
+  Future<void> dispose();
+}
+
+/// The real engine: a thin pass-through to `package:record`.
+class PackageRecorderEngine implements RecorderEngine {
+  final _engine = record_pkg.AudioRecorder();
+
+  @override
+  Future<bool> hasPermission() => _engine.hasPermission();
+
+  @override
+  Future<void> start(record_pkg.RecordConfig config, {required String path}) =>
+      _engine.start(config, path: path);
+
+  @override
+  Future<String?> stop() => _engine.stop();
+
+  @override
+  Future<void> cancel() => _engine.cancel();
+
+  @override
+  Future<void> dispose() => _engine.dispose();
+}
+
+/// Speech-tuned capture. Mono / 16kHz / 32kbps costs ~4 KB per second of
+/// speech instead of the package defaults' ~16 KB/s, cutting upload time (and
+/// therefore total latency) roughly 4x before base64's further 33%.
+///
+/// `sampleRate`/`numChannels`/`bitRate` are NOT universally supported --
+/// `PCMReader.calculateBufferSize` throws when `AudioRecord.getMinBufferSize`
+/// rejects the combination -- which is exactly why [RecordAudioRecorder.start]
+/// falls back to [fallbackRecordConfig] rather than letting a rejection kill
+/// the feature on that device.
+///
+/// The effect flags below are safe everywhere: `AudioEffectsManager.apply()`
+/// guards each with `isAvailable()` and silently skips what the hardware lacks.
+/// On iOS they are no-ops for file recording -- iOS's win here is the smaller
+/// payload, not the flags.
+const speechRecordConfig = record_pkg.RecordConfig(
+  encoder: record_pkg.AudioEncoder.aacLc,
+  sampleRate: 16000,
+  numChannels: 1,
+  bitRate: 32000,
+  noiseSuppress: true,
+  autoGain: true,
+  // Deliberately off: echo cancellation targets speaker playback bleeding into
+  // the mic (not a shop-noise problem) and the package documents that it
+  // lowers recording volume -- pure cost here.
+  echoCancel: false,
+  androidConfig: record_pkg.AndroidRecordConfig(
+    // Routes to the ASR-tuned capture path Google's own speech recognition
+    // uses. Falls back to the default source on devices that don't implement
+    // it, so it is safe to request unconditionally.
+    audioSource: record_pkg.AndroidAudioSource.voiceRecognition,
+  ),
+);
+
+/// Second rung of the ladder: today's rates (the package defaults), keeping the
+/// effect flags since those can never throw. Worst case on an exotic device is
+/// therefore exactly the behavior that shipped before this change.
+const fallbackRecordConfig = record_pkg.RecordConfig(
+  encoder: record_pkg.AudioEncoder.aacLc,
+  noiseSuppress: true,
+  autoGain: true,
+  echoCancel: false,
+  androidConfig: record_pkg.AndroidRecordConfig(
+    audioSource: record_pkg.AndroidAudioSource.voiceRecognition,
+  ),
+);
+
+/// Adapts `package:record` (v7.1.1) to [AudioRecorderPort], recording with a
+/// speech-tuned profile and falling back to the package defaults on hardware
+/// that rejects it.
 ///
 /// The installed major requires a file path up front --
 /// `AudioRecorder.start(config, path: ...)` writes straight to disk and
@@ -42,23 +122,45 @@ abstract class AudioRecorderPort {
 /// Recording uses the AAC-LC encoder in an `.m4a` container, which is both
 /// the plugin's default and the broadest-supported combination across
 /// Android/iOS/Windows/macOS.
+///
+/// [RecorderEngine] and the temp-directory function are injectable so the
+/// fallback ladder can be unit-tested without a microphone or a platform
+/// channel; production wiring uses the real defaults.
 class RecordAudioRecorder implements AudioRecorderPort {
-  final _engine = record_pkg.AudioRecorder();
+  RecordAudioRecorder({
+    RecorderEngine? engine,
+    Future<Directory> Function()? temporaryDirectory,
+  }) : _engine = engine ?? PackageRecorderEngine(),
+       _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory;
+
+  final RecorderEngine _engine;
+  final Future<Directory> Function() _temporaryDirectory;
   String? _pendingPath;
 
   @override
   Future<bool> hasPermission() => _engine.hasPermission();
 
+  /// Two-rung ladder: ask for the speech profile, and if this device's hardware
+  /// rejects those rates, release the partial session and retry once with the
+  /// defaults. Only a failure of BOTH rungs propagates (the controller then
+  /// reports `noSpeech`), so the optimization can never be the reason voice
+  /// stops working on some phone we couldn't test.
   @override
   Future<void> start() async {
-    final dir = await getTemporaryDirectory();
+    try {
+      await _startWith(speechRecordConfig);
+    } catch (_) {
+      await _cancelQuietly();
+      await _startWith(fallbackRecordConfig);
+    }
+  }
+
+  Future<void> _startWith(record_pkg.RecordConfig config) async {
+    final dir = await _temporaryDirectory();
     final path =
         '${dir.path}/voice-sale-${DateTime.now().microsecondsSinceEpoch}.m4a';
     _pendingPath = path;
-    await _engine.start(
-      const record_pkg.RecordConfig(encoder: record_pkg.AudioEncoder.aacLc),
-      path: path,
-    );
+    await _engine.start(config, path: path);
   }
 
   @override
@@ -91,6 +193,17 @@ class RecordAudioRecorder implements AudioRecorderPort {
 
   @override
   Future<void> dispose() => _engine.dispose();
+
+  /// Teardown between ladder rungs: the first rung may have left a partial
+  /// session or temp file behind, and neither may block the retry, so every
+  /// failure here is swallowed.
+  Future<void> _cancelQuietly() async {
+    try {
+      await cancel();
+    } catch (_) {
+      // Best-effort: a failed cleanup must not mask the retry's own outcome.
+    }
+  }
 
   static Future<void> _deleteQuietly(File file) async {
     try {
