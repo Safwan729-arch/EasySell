@@ -31,10 +31,11 @@ part.
    ```
    supabase secrets set GEMINI_API_KEY=xxxxx    # required (official Google AI Studio key, shared with scan)
    ```
-   Optional override if you want a different model than the default
-   `gemini-3.6-flash`:
+   Voice defaults to `gemini-3.5-flash-lite` — the fastest, cheapest model in
+   the family, picked so short sale sentences parse quickly. Override only if
+   you need a heavier model for tricky Bengali/mixed speech:
    ```
-   supabase secrets set GEMINI_VOICE_MODEL=gemini-flash-latest   # exact Gemini model slug
+   supabase secrets set GEMINI_VOICE_MODEL=gemini-3.6-flash   # heavier, slower, more accurate
    ```
    `GEMINI_API_KEY` is the only secret that matters. (The old `FROG_*`,
    `VOICE_MODEL`/`OPENAI_MODEL`, and `GEMINI_TRANSCRIBE_MODEL` secrets are no

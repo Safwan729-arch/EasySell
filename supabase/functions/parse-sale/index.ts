@@ -21,11 +21,14 @@ interface Candidate {
   unit?: string;
 }
 
-// Google Gemini config. Only GEMINI_API_KEY must be set. Model pinned to
-// gemini-3.6-flash but overridable via a secret so a future slug rename never
-// needs a code change.
+// Google Gemini config. Only GEMINI_API_KEY must be set. Voice is pinned to
+// gemini-3.5-flash-lite -- the lowest-latency model in the family, chosen for
+// this simple "hear a short sale sentence -> pick products" job so voice feels
+// fast. Overridable via a secret (set GEMINI_VOICE_MODEL=gemini-3.6-flash if a
+// heavier model is ever needed for tricky Bengali/mixed speech) so a slug swap
+// never needs a code change. Scan stays on full Flash separately.
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
-const MODEL = Deno.env.get("GEMINI_VOICE_MODEL") ?? "gemini-3.6-flash";
+const MODEL = Deno.env.get("GEMINI_VOICE_MODEL") ?? "gemini-3.5-flash-lite";
 
 const instruction = (candidates: Candidate[]) =>
   `You are a point-of-sale assistant. You receive a shopkeeper's spoken sentence,
