@@ -1,4 +1,4 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,8 +64,16 @@ class VoiceController extends Notifier<VoiceSaleState> {
   /// fresh state.
   int _session = 0;
 
+  /// Auto-stop for the current recording. Always cancelled before any
+  /// transition out of `listening`, so a timer from an abandoned session can
+  /// never fire into a later one.
+  Timer? _capTimer;
+
   @override
-  VoiceSaleState build() => const VoiceSaleState();
+  VoiceSaleState build() {
+    ref.onDispose(() => _capTimer?.cancel());
+    return const VoiceSaleState();
+  }
 
   Future<void> startListening() async {
     final session = ++_session;
@@ -91,12 +99,25 @@ class VoiceController extends Notifier<VoiceSaleState> {
       unawaited(recorder.cancel());
       if (_session != session) return; // superseded while awaiting start()
       state = state.copyWith(phase: VoicePhase.error, errorMessage: 'noSpeech');
+      return;
     }
+    if (_session != session) return; // superseded while awaiting start()
+
+    _capTimer?.cancel();
+    _capTimer = Timer(ref.read(maxRecordingDurationProvider), () {
+      // Both guards matter: the session may have moved on, and the user may
+      // have already stopped manually.
+      if (_session == session && state.phase == VoicePhase.listening) {
+        unawaited(stopAndParse());
+      }
+    });
   }
 
   Future<void> stopAndParse() async {
     // Guards double-tap and stop-before-start.
     if (state.phase != VoicePhase.listening) return;
+    _capTimer?.cancel();
+    _capTimer = null;
     final session = _session;
 
     final recorder = ref.read(audioRecorderProvider);
@@ -151,6 +172,8 @@ class VoiceController extends Notifier<VoiceSaleState> {
   /// `parse-sale`), rebuilding the reviewable lines so a single misheard word
   /// can be fixed without re-recording. Empty input is a no-op.
   Future<void> reparseFromText(String transcript) async {
+    _capTimer?.cancel();
+    _capTimer = null;
     final text = transcript.trim();
     if (text.isEmpty) return;
     final session = ++_session; // supersede any in-flight recording/parse
@@ -192,6 +215,8 @@ class VoiceController extends Notifier<VoiceSaleState> {
       state = state.copyWith(lines: removeLineAt(state.lines, index));
 
   void reset() {
+    _capTimer?.cancel();
+    _capTimer = null;
     _session++;
     // Fire-and-forget: a user backing out mid-recording must actually stop
     // the mic, but reset() itself stays synchronous.
@@ -208,3 +233,11 @@ class VoiceController extends Notifier<VoiceSaleState> {
 
 final voiceControllerProvider =
     NotifierProvider<VoiceController, VoiceSaleState>(VoiceController.new);
+
+/// How long a single recording may run before it auto-stops and parses.
+/// Unbounded clips are a real latency risk: in a noisy shop people repeat
+/// themselves, and every extra second is more to upload and more for the model
+/// to transcribe. A provider (not a bare constant) so tests can shorten it.
+final maxRecordingDurationProvider = Provider<Duration>(
+  (ref) => const Duration(seconds: 15),
+);

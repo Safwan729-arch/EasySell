@@ -134,6 +134,13 @@ void main() {
     expect(container.read(voiceControllerProvider).phase, VoicePhase.listening);
     expect(find.text('Listening…'), findsOneWidget);
     expect(find.byIcon(Icons.stop), findsOneWidget);
+
+    // Leaves `listening` before the test body returns: the controller arms a
+    // real auto-stop Timer on entering listening, and Flutter's pending-timer
+    // invariant check runs before addTearDown callbacks, so relying on
+    // container.dispose() alone here would fail even though the timer is
+    // correctly cancelled on disposal.
+    container.read(voiceControllerProvider.notifier).reset();
   });
 
   testWidgets(

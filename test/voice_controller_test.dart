@@ -147,12 +147,15 @@ ProviderContainer _makeContainer({
   required AudioRecorderPort recorder,
   required VoiceSaleRepository repo,
   List<Product> products = const [],
+  Duration? maxRecordingDuration,
 }) {
   final container = ProviderContainer(
     overrides: [
       audioRecorderProvider.overrideWithValue(recorder),
       voiceSaleRepositoryProvider.overrideWithValue(repo),
       productsStreamProvider.overrideWith((ref) => Stream.value(products)),
+      if (maxRecordingDuration != null)
+        maxRecordingDurationProvider.overrideWithValue(maxRecordingDuration),
     ],
   );
   addTearDown(container.dispose);
@@ -459,5 +462,60 @@ void main() {
       expect(c.read(voiceControllerProvider).phase, VoicePhase.idle);
       expect(recorder.stopped, isFalse);
     });
+
+    test(
+      'recording auto-stops and parses once the duration cap elapses',
+      () async {
+        final recorder = _FakeAudioRecorder();
+        final parsed = VoiceParseResult(
+          heardText: 'sold 2 pepsi',
+          items: [
+            VoiceItem(
+              heard: 'pepsi',
+              quantity: 2,
+              quantityAssumed: false,
+              matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+            ),
+          ],
+        );
+        final c = _makeContainer(
+          recorder: recorder,
+          repo: _FakeVoiceRepo(Result.success(parsed)),
+          products: [_product('p1')],
+          maxRecordingDuration: const Duration(milliseconds: 20),
+        );
+
+        await c.read(voiceControllerProvider.notifier).startListening();
+        expect(c.read(voiceControllerProvider).phase, VoicePhase.listening);
+
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+
+        expect(recorder.stopped, isTrue);
+        expect(c.read(voiceControllerProvider).phase, VoicePhase.reviewing);
+        expect(c.read(voiceControllerProvider).lines, hasLength(1));
+      },
+    );
+
+    test(
+      'reset() before the cap elapses stops the auto-stop from firing',
+      () async {
+        final recorder = _FakeAudioRecorder();
+        final c = _makeContainer(
+          recorder: recorder,
+          repo: _FakeVoiceRepo(const Result.success(VoiceParseResult())),
+          maxRecordingDuration: const Duration(milliseconds: 20),
+        );
+        final notifier = c.read(voiceControllerProvider.notifier);
+
+        await notifier.startListening();
+        notifier.reset();
+
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+
+        // A stale timer firing into a fresh session would re-enter stopAndParse.
+        expect(recorder.stopped, isFalse);
+        expect(c.read(voiceControllerProvider).phase, VoicePhase.idle);
+      },
+    );
   });
 }
