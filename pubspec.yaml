@@ -49,6 +49,10 @@ dependencies:
   connectivity_plus: ^7.2.0
   record: ^7.1.1
   path_provider: ^2.1.6
+  # Zone-scoped `clock.now()`. Identical to DateTime.now() in production, but
+  # fake_async (and therefore flutter_test) overrides it, so time-dependent UI
+  # like the recording auto-stop countdown is testable without a real 15s wait.
+  clock: ^1.1.2
 
 dev_dependencies:
   flutter_test:

@@ -93,6 +93,17 @@ NOISE RULE — the recording may come from a busy shop or street:
   noise, never bystander speech. If the primary speaker said nothing sale-like,
   return an empty items array and a SHORT heard_text.
 
+SALES-HISTORY RULE — a candidate may carry "recent" (units this shop sold in the
+last 30 days). Absent means no recent sales. Use it ONLY to break a tie the words
+themselves left open, never to override what was actually said:
+- If two candidates are otherwise equally plausible and one's "recent" is at least
+  5x the other's, give it a decisive lead (e.g. 0.88 vs 0.45) — the shopkeeper
+  almost certainly meant the one they sell constantly.
+- If the gap is smaller, give only a slight lean (e.g. 0.62 vs 0.55) so the app
+  still asks.
+- A spoken size, brand, or variant ALWAYS wins over "recent". Never prefer a
+  high-selling 1L over a 500ml when "500ml" was said.
+
 Rank each item's matches by confidence (highest first).
 Product list: ${JSON.stringify(candidates)}`;
 

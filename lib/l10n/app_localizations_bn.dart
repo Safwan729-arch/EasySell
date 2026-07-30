@@ -1098,8 +1098,30 @@ class AppLocalizationsBn extends AppLocalizations {
       'মাইক্রোফোনের অনুমতি বন্ধ আছে। সেটিংসে গিয়ে চালু করুন।';
 
   @override
+  String get voice_errOffline =>
+      'আপনি অফলাইনে আছেন। ইন্টারনেট চালু করে আবার চেষ্টা করুন।';
+
+  @override
+  String get voice_errTooQuiet =>
+      'মাইক্রোফোন কোনো শব্দ পায়নি। ফোনটি আরও কাছে ধরে আবার চেষ্টা করুন।';
+
+  @override
   String get voice_retry => 'আবার চেষ্টা করুন';
 
   @override
+  String get voice_recordAgain => 'আবার রেকর্ড করুন';
+
+  @override
   String get voice_typeInstead => 'লিখে দিন';
+
+  @override
+  String voice_stoppingIn(int seconds) {
+    return '$seconds সেকেন্ডে বন্ধ হবে';
+  }
+
+  @override
+  String get voice_speakCloser => 'শুনতে পাচ্ছি না — ফোনটি আরও কাছে ধরুন';
+
+  @override
+  String get voice_levelLabel => 'মাইক্রোফোনের মাত্রা';
 }

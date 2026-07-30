@@ -1916,17 +1916,53 @@ abstract class AppLocalizations {
   /// **'Microphone access is off. Turn it on in Settings.'**
   String get voice_errMicDenied;
 
+  /// No description provided for @voice_errOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Reconnect and try again.'**
+  String get voice_errOffline;
+
+  /// No description provided for @voice_errTooQuiet.
+  ///
+  /// In en, this message translates to:
+  /// **'The microphone didn\'t pick up any sound. Hold the phone closer and try again.'**
+  String get voice_errTooQuiet;
+
   /// No description provided for @voice_retry.
   ///
   /// In en, this message translates to:
   /// **'Try again'**
   String get voice_retry;
 
+  /// No description provided for @voice_recordAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Record again'**
+  String get voice_recordAgain;
+
   /// No description provided for @voice_typeInstead.
   ///
   /// In en, this message translates to:
   /// **'Type it instead'**
   String get voice_typeInstead;
+
+  /// No description provided for @voice_stoppingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping in {seconds}s'**
+  String voice_stoppingIn(int seconds);
+
+  /// No description provided for @voice_speakCloser.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t hear you — hold the phone closer'**
+  String get voice_speakCloser;
+
+  /// No description provided for @voice_levelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone level'**
+  String get voice_levelLabel;
 }
 
 class _AppLocalizationsDelegate

@@ -1104,8 +1104,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Microphone access is off. Turn it on in Settings.';
 
   @override
+  String get voice_errOffline => 'You\'re offline. Reconnect and try again.';
+
+  @override
+  String get voice_errTooQuiet =>
+      'The microphone didn\'t pick up any sound. Hold the phone closer and try again.';
+
+  @override
   String get voice_retry => 'Try again';
 
   @override
+  String get voice_recordAgain => 'Record again';
+
+  @override
   String get voice_typeInstead => 'Type it instead';
+
+  @override
+  String voice_stoppingIn(int seconds) {
+    return 'Stopping in ${seconds}s';
+  }
+
+  @override
+  String get voice_speakCloser => 'Can\'t hear you — hold the phone closer';
+
+  @override
+  String get voice_levelLabel => 'Microphone level';
 }

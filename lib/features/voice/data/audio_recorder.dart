@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -26,6 +27,17 @@ abstract class AudioRecorderPort {
   /// Stop and discard the in-progress recording (its temp file is removed).
   Future<void> cancel();
 
+  /// Broadcast dBFS loudness samples for the recording in progress: roughly
+  /// [micLevelInterval] apart, 0 dB being full scale (see
+  /// `voice_level.dart` for the unit).
+  ///
+  /// Emits only between [start] and [stop]/[cancel]. **A platform that cannot
+  /// report amplitude simply emits nothing** -- listeners must therefore treat
+  /// "no samples" as unknown, never as silence. Broadcast because the level
+  /// meter and the silence auto-stop both listen, and neither should cost an
+  /// extra round of platform polling.
+  Stream<double> get levels;
+
   Future<void> dispose();
 }
 
@@ -37,6 +49,10 @@ abstract class RecorderEngine {
   Future<void> start(record_pkg.RecordConfig config, {required String path});
   Future<String?> stop();
   Future<void> cancel();
+
+  /// One-shot loudness reading for the active recording.
+  Future<record_pkg.Amplitude> getAmplitude();
+
   Future<void> dispose();
 }
 
@@ -58,8 +74,17 @@ class PackageRecorderEngine implements RecorderEngine {
   Future<void> cancel() => _engine.cancel();
 
   @override
+  Future<record_pkg.Amplitude> getAmplitude() => _engine.getAmplitude();
+
+  @override
   Future<void> dispose() => _engine.dispose();
 }
+
+/// How often loudness is sampled while recording. 200ms is fast enough for a
+/// meter that reads as live and gives the silence detector five samples a
+/// second, so its trailing-silence window has useful resolution without a
+/// platform call on every frame.
+const micLevelInterval = Duration(milliseconds: 200);
 
 /// Speech-tuned capture. Mono / 16kHz / 32kbps costs ~4 KB per second of
 /// speech instead of the package defaults' ~16 KB/s, cutting upload time (and
@@ -137,6 +162,20 @@ class RecordAudioRecorder implements AudioRecorderPort {
   final Future<Directory> Function() _temporaryDirectory;
   String? _pendingPath;
 
+  /// Long-lived so listeners can subscribe before (or across) a recording;
+  /// samples only flow while [_levelTimer] is alive. Closed in [dispose].
+  final _levels = StreamController<double>.broadcast();
+  Timer? _levelTimer;
+
+  /// Consecutive `getAmplitude()` failures. A platform that cannot report
+  /// loudness must not be polled forever, but a single failure right after
+  /// `start()` (the capture thread may not be live yet) is not proof of that,
+  /// so polling only gives up after several in a row.
+  int _levelFailures = 0;
+
+  @override
+  Stream<double> get levels => _levels.stream;
+
   @override
   Future<bool> hasPermission() => _engine.hasPermission();
 
@@ -161,10 +200,43 @@ class RecordAudioRecorder implements AudioRecorderPort {
         '${dir.path}/voice-sale-${DateTime.now().microsecondsSinceEpoch}.m4a';
     _pendingPath = path;
     await _engine.start(config, path: path);
+    // Only after start() actually resolved -- a rung that threw has no session
+    // to sample, and the ladder's retry starts its own polling.
+    _startSampling();
+  }
+
+  void _startSampling() {
+    _levelTimer?.cancel();
+    _levelFailures = 0;
+    _levelTimer = Timer.periodic(micLevelInterval, (_) => _sampleLevel());
+  }
+
+  void _stopSampling() {
+    _levelTimer?.cancel();
+    _levelTimer = null;
+  }
+
+  /// One poll of the platform's loudness. Deliberately total: an unsupported
+  /// platform or a dead capture session must degrade to "no samples" (the
+  /// meter stays empty, the silence auto-stop never fires, the duration cap
+  /// still applies) rather than surfacing an error into the recording path.
+  Future<void> _sampleLevel() async {
+    if (_levels.isClosed) return;
+    try {
+      final amplitude = await _engine.getAmplitude();
+      _levelFailures = 0;
+      // A stop() racing this poll must not emit into the next recording.
+      if (_levelTimer != null && !_levels.isClosed) {
+        _levels.add(amplitude.current);
+      }
+    } catch (_) {
+      if (++_levelFailures >= 3) _stopSampling();
+    }
   }
 
   @override
   Future<({Uint8List bytes, String mime})?> stop() async {
+    _stopSampling();
     final stoppedPath = await _engine.stop();
     final path = stoppedPath ?? _pendingPath;
     _pendingPath = null;
@@ -183,6 +255,7 @@ class RecordAudioRecorder implements AudioRecorderPort {
 
   @override
   Future<void> cancel() async {
+    _stopSampling();
     await _engine.cancel();
     final path = _pendingPath;
     _pendingPath = null;
@@ -192,7 +265,11 @@ class RecordAudioRecorder implements AudioRecorderPort {
   }
 
   @override
-  Future<void> dispose() => _engine.dispose();
+  Future<void> dispose() async {
+    _stopSampling();
+    await _levels.close();
+    await _engine.dispose();
+  }
 
   /// Teardown between ladder rungs: the first rung may have left a partial
   /// session or temp file behind, and neither may block the retry, so every

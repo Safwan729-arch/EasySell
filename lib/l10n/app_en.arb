@@ -340,6 +340,13 @@
   "voice_errNoSpeech": "Didn't catch that. Try again.",
   "voice_errNoMatch": "Couldn't match anything you said.",
   "voice_errMicDenied": "Microphone access is off. Turn it on in Settings.",
+  "voice_errOffline": "You're offline. Reconnect and try again.",
+  "voice_errTooQuiet": "The microphone didn't pick up any sound. Hold the phone closer and try again.",
   "voice_retry": "Try again",
-  "voice_typeInstead": "Type it instead"
+  "voice_recordAgain": "Record again",
+  "voice_typeInstead": "Type it instead",
+  "voice_stoppingIn": "Stopping in {seconds}s",
+  "@voice_stoppingIn": { "placeholders": { "seconds": { "type": "int" } } },
+  "voice_speakCloser": "Can't hear you — hold the phone closer",
+  "voice_levelLabel": "Microphone level"
 }

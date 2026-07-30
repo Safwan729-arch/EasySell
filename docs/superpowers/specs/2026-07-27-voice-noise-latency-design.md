@@ -189,9 +189,19 @@ and its Bengali counterpart, following the existing `voice_*` naming.
   upload. Considered and rejected: on-device ASR degrades *worse* in noise than
   Gemini and has unreliable Bengali/code-switched support, trading a latency
   problem for an accuracy problem in exactly the conditions being fixed.
-- Live amplitude/level metering in the listening pane. `getAmplitude()` is
+- ~~Live amplitude/level metering in the listening pane. `getAmplitude()` is
   available cross-platform and would tell a shopkeeper whether they are being
-  heard, but it does not address the timeout and is deferred.
+  heard, but it does not address the timeout and is deferred.~~
+
+  > **Delivered later (quality-of-life wave, 2026-07-30).** Level metering
+  > shipped after all, together with silence-based auto-stop, a countdown before
+  > the 15s cap, an offline precheck, start/stop haptics, retry-without-
+  > re-recording, and recent-sales volume in the candidate payload. The reasoning
+  > in this bullet still holds — none of it addresses the timeout — so it was
+  > correctly out of scope *here*; it landed as its own follow-up.
+  > `AudioRecorderPort.levels` is the seam, `voice_level.dart` holds the pure
+  > maths, and a platform that cannot report loudness degrades to no samples,
+  > leaving the duration cap in charge exactly as before.
 - Streaming/chunked upload overlapping record and transmit.
 - Any change to the `parse-sale` request/response contract.
 - Scan (`recognize-product`) — untouched.

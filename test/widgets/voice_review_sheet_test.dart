@@ -24,6 +24,9 @@ import 'package:google_fonts/google_fonts.dart';
 /// needs.
 class _FakeAudioRecorder implements AudioRecorderPort {
   @override
+  Stream<double> get levels => const Stream<double>.empty();
+
+  @override
   Future<bool> hasPermission() async => true;
 
   @override

@@ -8,11 +8,21 @@ import 'package:record/record.dart' as record_pkg;
 /// be told to reject the first N attempts -- standing in for a device whose
 /// hardware refuses the 16kHz/mono profile (`PCMReader` throws in that case).
 class _FakeEngine implements RecorderEngine {
-  _FakeEngine({this.failFirstN = 0});
+  _FakeEngine({this.failFirstN = 0, this.amplitudes, this.amplitudeError});
 
   final int failFirstN;
+
+  /// Successive dBFS readings `getAmplitude()` hands back, cycling once
+  /// exhausted. Null means a flat -20.
+  final List<double>? amplitudes;
+
+  /// When set, `getAmplitude()` always throws it -- a platform that cannot
+  /// report loudness at all.
+  final Object? amplitudeError;
+
   final attempted = <record_pkg.RecordConfig>[];
   bool cancelled = false;
+  int amplitudeCalls = 0;
 
   @override
   Future<bool> hasPermission() async => true;
@@ -33,6 +43,17 @@ class _FakeEngine implements RecorderEngine {
 
   @override
   Future<void> cancel() async => cancelled = true;
+
+  @override
+  Future<record_pkg.Amplitude> getAmplitude() async {
+    if (amplitudeError case final error?) throw error;
+    final samples = amplitudes;
+    final value = samples == null || samples.isEmpty
+        ? -20.0
+        : samples[amplitudeCalls % samples.length];
+    amplitudeCalls++;
+    return record_pkg.Amplitude(current: value, max: value);
+  }
 
   @override
   Future<void> dispose() async {}
@@ -101,5 +122,88 @@ void main() {
         expect(engine.attempted, hasLength(2));
       },
     );
+  });
+
+  group('RecordAudioRecorder level sampling', () {
+    /// Long enough for several [micLevelInterval] ticks.
+    Future<void> sampleFor([int intervals = 4]) =>
+        Future<void>.delayed(micLevelInterval * intervals);
+
+    test('emits dBFS samples while recording', () async {
+      final engine = _FakeEngine(amplitudes: const [-30, -12]);
+      final recorder = _recorder(engine);
+      final seen = <double>[];
+      final sub = recorder.levels.listen(seen.add);
+      addTearDown(sub.cancel);
+
+      await recorder.start();
+      await sampleFor();
+
+      expect(seen, isNotEmpty);
+      expect(seen, everyElement(anyOf(-30.0, -12.0)));
+      await recorder.stop();
+    });
+
+    test('emits nothing before start', () async {
+      final recorder = _recorder(_FakeEngine());
+      final seen = <double>[];
+      final sub = recorder.levels.listen(seen.add);
+      addTearDown(sub.cancel);
+
+      await sampleFor();
+
+      expect(seen, isEmpty);
+    });
+
+    test('stops emitting after stop, so samples never leak into the next '
+        'recording', () async {
+      final engine = _FakeEngine();
+      final recorder = _recorder(engine);
+      final seen = <double>[];
+      final sub = recorder.levels.listen(seen.add);
+      addTearDown(sub.cancel);
+
+      await recorder.start();
+      await sampleFor();
+      await recorder.stop();
+      final afterStop = seen.length;
+      await sampleFor();
+
+      expect(seen, hasLength(afterStop));
+    });
+
+    test('stops emitting after cancel', () async {
+      final recorder = _recorder(_FakeEngine());
+      final seen = <double>[];
+      final sub = recorder.levels.listen(seen.add);
+      addTearDown(sub.cancel);
+
+      await recorder.start();
+      await sampleFor();
+      await recorder.cancel();
+      final afterCancel = seen.length;
+      await sampleFor();
+
+      expect(seen, hasLength(afterCancel));
+    });
+
+    test('a platform that cannot report loudness degrades to no samples '
+        'instead of failing the recording', () async {
+      final engine = _FakeEngine(amplitudeError: UnimplementedError());
+      final recorder = _recorder(engine);
+      final errors = <Object>[];
+      final seen = <double>[];
+      final sub = recorder.levels.listen(seen.add, onError: errors.add);
+      addTearDown(sub.cancel);
+
+      await recorder.start();
+      await sampleFor(8);
+
+      expect(seen, isEmpty);
+      expect(errors, isEmpty);
+      // Polling gives up rather than hammering a channel that cannot answer.
+      expect(engine.amplitudeCalls, lessThanOrEqualTo(3));
+      await recorder.stop();
+    });
   });
 }

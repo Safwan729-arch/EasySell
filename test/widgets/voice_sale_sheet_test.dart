@@ -33,6 +33,9 @@ class _FakeAudioRecorder implements AudioRecorderPort {
   bool canceled = false;
 
   @override
+  Stream<double> get levels => const Stream<double>.empty();
+
+  @override
   Future<bool> hasPermission() async => permissionOk;
 
   @override

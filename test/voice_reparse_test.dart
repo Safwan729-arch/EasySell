@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _FakeRecorder implements AudioRecorderPort {
   @override
+  Stream<double> get levels => const Stream<double>.empty();
+  @override
   Future<bool> hasPermission() async => true;
   @override
   Future<void> start() async {}
