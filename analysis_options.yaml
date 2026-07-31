@@ -9,6 +9,17 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  language:
+    # Unsound implicit downcasts from `dynamic` are the main way a Supabase JSON
+    # row silently becomes the wrong type and blows up at runtime instead of at
+    # compile time. The codebase already parses every row explicitly, so both of
+    # these are currently clean -- they are enabled to keep it that way.
+    # `strict-inference` is deliberately NOT enabled: its only findings here are
+    # untyped `rpc()`/collection literals, which is noise rather than risk.
+    strict-casts: true
+    strict-raw-types: true
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

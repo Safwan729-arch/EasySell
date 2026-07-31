@@ -30,11 +30,6 @@ class NetworkFailure extends Failure {
   const NetworkFailure(super.message);
 }
 
-/// Storage (image upload/download) failure.
-class StorageFailure extends Failure {
-  const StorageFailure(super.message);
-}
-
 /// Anything not covered above.
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);

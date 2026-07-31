@@ -20,6 +20,32 @@ const MODEL = Deno.env.get("GEMINI_VISION_MODEL") ?? "gemini-3.6-flash";
 // The app sends JPEG bytes today; the previous code hard-coded the same mime.
 const IMAGE_MIME = "image/jpeg";
 
+// Hard ceiling on generated output, and a server-side deadline for the Gemini
+// call. Both mirror `parse-sale`, which shipped them after unbounded generation
+// plus an unbounded fetch produced ~30s hangs that looked like outages. This
+// function had neither: a slow Gemini call could hang until the platform killed
+// it, with nothing on the client side bounding it either.
+//
+// A cap hit truncates the JSON, which fails JSON.parse and surfaces as a fast
+// 502 -- an honest error instead of a hang. An abort throws and lands in the
+// same catch, so no new error branch is needed.
+const MAX_OUTPUT_TOKENS = (() => {
+  const parsed = Number(Deno.env.get("GEMINI_VISION_MAX_TOKENS") ?? "1024");
+  // A malformed secret must never become a 0-token budget (which reads as a
+  // total outage) -- always fall back to the default.
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1024;
+})();
+
+// 20s composes with the app's 45s `scanRequestTimeout`, leaving ~25s for the
+// JPEG upload and cold start. The 30000 clamp stops a misconfigured secret from
+// pushing the abort past the client's own deadline, which would hide the fast
+// 502 behind a client-side hang -- the exact composition bug voice hit.
+const GEMINI_TIMEOUT_MS = (() => {
+  const parsed = Number(Deno.env.get("GEMINI_VISION_TIMEOUT_MS") ?? "20000");
+  if (!Number.isFinite(parsed) || parsed <= 0) return 20000;
+  return Math.min(parsed, 30000);
+})();
+
 const instruction = (candidates: Candidate[]) =>
   `You are identifying a retail product from a photo for a shop's point-of-sale.
 Below is the shop's product list (JSON). Decide which listed product(s) appear in the image.
@@ -63,6 +89,9 @@ async function recognize(imageB64: string, candidates: Candidate[]) {
     {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+      // Aborts throw, hit the handler's catch, and become a 502 -- the same
+      // path as any other Gemini failure. No new error branch needed.
+      signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
       body: JSON.stringify({
         contents: [
           {
@@ -77,6 +106,7 @@ async function recognize(imageB64: string, candidates: Candidate[]) {
           responseMimeType: "application/json",
           responseSchema,
           temperature: 0,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
           // Minimize the model's internal "thinking" — identifying a product from
           // a photo against a candidate list is a simple, structured job. Gemini 3
           // flash can't turn thinking fully off, so use the lowest level to cut

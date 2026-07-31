@@ -168,63 +168,71 @@ Future<String?> promptCategoryName({
   String? initialValue,
   String? title,
   String? actionLabel,
-}) {
+}) async {
   final controller = TextEditingController(text: initialValue ?? '');
-  return showModalBottomSheet<String>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (sheetContext) {
-      final l10n = sheetContext.l10n;
-      void submit() => Navigator.of(sheetContext).pop(controller.text.trim());
-      return Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 4,
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              title ?? l10n.category_newTitle,
-              style: Theme.of(sheetContext).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => submit(),
-              decoration: InputDecoration(
-                labelText: l10n.category_nameLabel,
-                hintText: l10n.category_nameHint,
+  try {
+    return await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final l10n = sheetContext.l10n;
+        void submit() => Navigator.of(sheetContext).pop(controller.text.trim());
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 4,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                title ?? l10n.category_newTitle,
+                style: Theme.of(sheetContext).textTheme.titleLarge,
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                    child: Text(l10n.common_cancel),
-                  ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => submit(),
+                decoration: InputDecoration(
+                  labelText: l10n.category_nameLabel,
+                  hintText: l10n.category_nameHint,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: submit,
-                    child: Text(actionLabel ?? l10n.common_add),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      child: Text(l10n.common_cancel),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    },
-  );
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: submit,
+                      child: Text(actionLabel ?? l10n.common_add),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  } finally {
+    // Deferred a frame for the same reason as `showVoiceTranscriptDialog`: the
+    // sheet's exit-transition route is still mounted the instant
+    // `showModalBottomSheet` resolves, so disposing synchronously here can race
+    // the TextField's own teardown.
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
+  }
 }
