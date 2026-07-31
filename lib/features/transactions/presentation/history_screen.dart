@@ -337,8 +337,7 @@ class _ReceiptRow {
     // A receipt bundles mixed units (kg + pcs …) that can't sum meaningfully,
     // so its Qty cell shows a dash; only a single sale shows a real quantity.
     if (!isSingle) return '—';
-    final qty = receipt.lines.single.quantity;
-    return qty == qty.roundToDouble() ? qty.toStringAsFixed(0) : qty.toString();
+    return Qty.format(receipt.lines.single.quantity);
   }
 
   /// True if any line's product name contains [query] (or [query] is empty).
@@ -660,8 +659,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
     return '$hm$ampm';
   }
 
-  String _lineQty(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+  String _lineQty(double v) => Qty.format(v);
 
   void _openDetail(Transaction line) =>
       context.push('${AppRoutes.saleDetail}/${line.id}', extra: line);

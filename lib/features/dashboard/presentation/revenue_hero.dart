@@ -94,7 +94,7 @@ class RevenueHero extends StatelessWidget {
                       ),
                       _HeroStat(
                         label: context.l10n.dashboard_margin,
-                        value: '${marginPercent.toStringAsFixed(1)}%',
+                        value: Pct.format(marginPercent),
                         onAccent: onAccent,
                       ),
                       _HeroStat(
@@ -186,9 +186,8 @@ class _DeltaPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final up = percent >= 0;
-    var num = percent.abs().toStringAsFixed(1);
-    if (num.endsWith('.0')) num = num.substring(0, num.length - 2);
-    final text = suffix == null ? '$num%' : '$num% $suffix';
+    final num = Pct.format(percent.abs());
+    final text = suffix == null ? num : '$num $suffix';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(

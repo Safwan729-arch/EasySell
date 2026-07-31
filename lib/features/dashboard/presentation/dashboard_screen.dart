@@ -618,9 +618,7 @@ class _LowStockRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.extension<AppColors>()!;
-    final qty = product.quantity == product.quantity.roundToDouble()
-        ? product.quantity.toStringAsFixed(0)
-        : product.quantity.toString();
+    final qty = Qty.format(product.quantity);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(

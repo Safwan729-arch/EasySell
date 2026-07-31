@@ -17,6 +17,26 @@ class Qty {
   }
 }
 
+/// Percentage formatting: one decimal place, with a trailing ".0" dropped so
+/// 14.0 reads "14%" but 8.2 stays "8.2%". The single home for this — the margin
+/// stat, the breakdown sheet and both delta indicators all route through here.
+///
+/// Goes through [NumberFormat] rather than `toStringAsFixed` so the digits
+/// follow `Intl.defaultLocale`. `%` is kept as-is: it is the percent sign the
+/// bn locale itself specifies, not an English character.
+class Pct {
+  const Pct._();
+
+  static String format(num percent) {
+    // Round to the displayed precision *before* asking whether the value is
+    // whole, so 14.04 reads "14%" and not "14.0%" — matching the hand-rolled
+    // `toStringAsFixed(1)` + trim-".0" this replaced.
+    final rounded = (percent.toDouble() * 10).round() / 10;
+    final pattern = rounded == rounded.roundToDouble() ? '#,##0' : '#,##0.0';
+    return '${NumberFormat(pattern).format(rounded)}%';
+  }
+}
+
 /// Money/number formatting helpers shared across screens.
 class Money {
   const Money._();
@@ -27,7 +47,9 @@ class Money {
     try {
       return NumberFormat.simpleCurrency(name: currencyCode).format(amount);
     } catch (_) {
-      return '${amount.toStringAsFixed(2)} $currencyCode';
+      // Still via NumberFormat: an unknown currency code must not also cost the
+      // user their own digits.
+      return '${NumberFormat('#,##0.00').format(amount)} $currencyCode';
     }
   }
 
@@ -44,7 +66,7 @@ class Money {
           decimalDigits: 0,
         ).format(amount);
       } catch (_) {
-        return '${amount.round()} $currencyCode';
+        return '${NumberFormat('#,##0').format(amount.round())} $currencyCode';
       }
     }
     String symbol;
@@ -63,12 +85,47 @@ class Money {
     return '${count < 0 ? '-' : ''}${_compactMagnitude(abs)}';
   }
 
-  /// Shared magnitude suffix for a non-negative value ≥ 100,000: `452K`,
-  /// `1.28M`, `19.3M`. A `K` value that rounds to 1000 rolls up to `1.00M`.
+  /// Whether to abbreviate on the Indian scale (লাখ / কোটি) instead of the
+  /// Western one (K / M).
+  ///
+  /// The app ships English and Bengali only (`supportedAppLocales`). A hard-coded
+  /// `K` was wrong for Bengali twice over: it is an English letter, and it is the
+  /// wrong unit — the bn locale already groups full figures in lakh style
+  /// (১,১৩,৩৩৫), so a shopkeeper reading "121K" gets a magnitude that matches
+  /// neither their language nor the number printed directly beneath it.
+  ///
+  /// Branching on the locale inside a formatter follows the precedent set by
+  /// `weekdayBarLabel`, and for the same reason: the correct output is not a
+  /// translation of the English one.
+  static bool get _indicScale => Intl.getCurrentLocale().startsWith('bn');
+
+  /// Shared magnitude suffix for a non-negative value ≥ 100,000. English:
+  /// `452K`, `1.28M`, `19.3M`. Bengali: `৪.৫২ লাখ`, `১.৯৩ কোটি`.
+  ///
+  /// Both scales share the 100,000 threshold because it is exactly 1 লাখ, and
+  /// both roll up when the rounded display would overflow its own unit (`999.6K`
+  /// → `1.00M`, `99.99 লাখ` → `১.০০ কোটি`).
   static String _compactMagnitude(num abs) {
+    if (_indicScale) {
+      final lakh = abs / 100000;
+      // Test the *rounded* value: 9,999,900 displays as "100.0 লাখ" otherwise.
+      if (_displayRound(lakh) < 100) return '${_scaled(lakh)} লাখ';
+      return '${_scaled(abs / 10000000)} কোটি';
+    }
     final k = (abs / 1000).round();
-    if (k < 1000) return '${k}K';
-    final m = abs / 1000000;
-    return '${m.toStringAsFixed(m >= 10 ? 1 : 2)}M';
+    // NumberFormat, not '$k', so the digits follow Intl.defaultLocale.
+    if (k < 1000) return '${NumberFormat('#,##0').format(k)}K';
+    return '${_scaled(abs / 1000000)}M';
+  }
+
+  /// Two decimals below 10, one at/above — keeps the abbreviation about the same
+  /// width at every magnitude. Localizes its digits.
+  static String _scaled(double v) =>
+      NumberFormat(v >= 10 ? '#,##0.0' : '#,##0.00').format(v);
+
+  /// The value [_scaled] will actually show, for roll-up comparisons.
+  static double _displayRound(double v) {
+    final f = v >= 10 ? 10 : 100;
+    return (v * f).round() / f;
   }
 }

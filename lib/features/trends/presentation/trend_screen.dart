@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
@@ -125,9 +126,13 @@ class _TrendCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            p.value.toStringAsFixed(
-                              p.value.truncateToDouble() == p.value ? 0 : 2,
-                            ),
+                            // NumberFormat, not toStringAsFixed, so the digits
+                            // follow the app language like every other figure.
+                            NumberFormat(
+                              p.value.truncateToDouble() == p.value
+                                  ? '#,##0'
+                                  : '#,##0.00',
+                            ).format(p.value),
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: scheme.primary,
                               fontWeight: FontWeight.w600,

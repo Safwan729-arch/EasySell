@@ -23,7 +23,7 @@ Future<void> showSummaryBreakdownSheet(
   final l10n = context.l10n;
 
   final margin = summary.revenue > 0
-      ? '${(summary.profit / summary.revenue * 100).toStringAsFixed(1)}%'
+      ? Pct.format(summary.profit / summary.revenue * 100)
       : '—';
   final avgPrice = summary.unitsSold > 0
       ? Money.format(

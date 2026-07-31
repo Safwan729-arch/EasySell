@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/extensions/format.dart';
 import '../config/theme.dart';
 
 /// Small colored delta indicator like `↗ 8.2%` (green) / `↘ 10% ` (red),
@@ -16,9 +17,7 @@ class DeltaChip extends StatelessWidget {
     final up = percent >= 0;
     final color = up ? colors.positive : colors.negative;
     final sign = up ? '+' : '';
-    // Trim a trailing ".0" so 14.0 reads "14%" but 8.2 stays "8.2%".
-    var num = percent.abs().toStringAsFixed(1);
-    if (num.endsWith('.0')) num = num.substring(0, num.length - 2);
+    final num = Pct.format(percent.abs());
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -29,7 +28,7 @@ class DeltaChip extends StatelessWidget {
         ),
         const SizedBox(width: 3),
         Text(
-          '$sign$num%',
+          '$sign$num',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
             color: color,
             fontWeight: FontWeight.w700,
