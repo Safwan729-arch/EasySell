@@ -57,8 +57,12 @@ ProviderContainer _container(TransactionRepository repo) {
     overrides: [
       cartControllerProvider.overrideWith(() => _SeededCart([_line])),
       myShopProvider.overrideWith(
-        (ref) =>
-            const Shop(id: 's', ownerId: 'o', name: 'Test Shop', currency: 'USD'),
+        (ref) => const Shop(
+          id: 's',
+          ownerId: 'o',
+          name: 'Test Shop',
+          currency: 'USD',
+        ),
       ),
       transactionRepositoryProvider.overrideWithValue(repo),
     ],
@@ -106,21 +110,23 @@ void main() {
       expect(repo.cartCalls, 2);
     });
 
-    test('a failed checkout releases the guard so the user can retry',
-        () async {
-      final repo = _PendingTxRepo();
-      final c = _container(repo);
-      await c.read(myShopProvider.future);
-      final notifier = c.read(cartCheckoutControllerProvider.notifier);
+    test(
+      'a failed checkout releases the guard so the user can retry',
+      () async {
+        final repo = _PendingTxRepo();
+        final c = _container(repo);
+        await c.read(myShopProvider.future);
+        final notifier = c.read(cartCheckoutControllerProvider.notifier);
 
-      final first = notifier.checkout();
-      repo.completer.complete(
-        const Result.failure(DatabaseFailure('Insufficient stock')),
-      );
-      expect(await first, isFalse);
+        final first = notifier.checkout();
+        repo.completer.complete(
+          const Result.failure(DatabaseFailure('Insufficient stock')),
+        );
+        expect(await first, isFalse);
 
-      await notifier.checkout();
-      expect(repo.cartCalls, 2);
-    });
+        await notifier.checkout();
+        expect(repo.cartCalls, 2);
+      },
+    );
   });
 }

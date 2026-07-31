@@ -64,7 +64,9 @@ class _CategoryFieldState extends ConsumerState<CategoryField> {
             key: ValueKey(_rev),
             initialValue: widget.value,
             isExpanded: true,
-            decoration: InputDecoration(labelText: context.l10n.category_fieldLabel),
+            decoration: InputDecoration(
+              labelText: context.l10n.category_fieldLabel,
+            ),
             items: [
               DropdownMenuItem<String?>(
                 value: null,
