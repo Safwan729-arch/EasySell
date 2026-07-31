@@ -12,13 +12,18 @@
 // GEMINI_API_KEY is required (shared with the scan function). MEMBER B owns
 // prompt tuning.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { resolveItemQuantity } from "./quantity_words.ts";
 
 interface Candidate {
   id: string;
   name: string;
   brand?: string;
   variant?: string;
+  /** How the shop sells it: "pcs" | "kg" | "g" | "litre" | "ml". Decides
+   *  whether a spoken amount is a product size or the quantity itself. */
   unit?: string;
+  /** Units sold in the last 30 days, when the app had the figure to hand. */
+  recent?: number;
 }
 
 // Google Gemini config. Only GEMINI_API_KEY must be set. Voice is pinned to
@@ -71,12 +76,45 @@ Bengali, or a mix. Do TWO things:
 1. Transcribe EXACTLY what was said into "heard_text" (verbatim, no commentary).
 2. Turn it into sale line items matched against the shop's product list below.
 
+LANGUAGE — the shopkeeper may speak Bengali, English, or romanized Bengali
+("Banglish": Bengali words typed in English letters, e.g. "arai kg khola chal").
+Treat romanized Bengali as Bengali: resolve its words to meaning, do not read
+them as English. Transcribe "heard_text" as spoken, but MATCH on meaning.
+
 CRITICAL RULE — quantity and size are DIFFERENT fields, never merge them:
 - Count words (piece, pcs, packet, ta, টা, টি, পিস) give "quantity".
-- Size words (500ml, 1 litre, kg, লিটার, কেজি) are part of "heard" and are used to
-  pick the RIGHT product. A size must NEVER become the quantity.
+- For a PACKAGED product (candidate "unit" is "pcs"), a size word
+  (500ml, 1 litre, লিটার) identifies WHICH product. It is part of "heard" and
+  must NEVER become the quantity.
   "pepsi 1 litre" => quantity 1, heard "pepsi 1 litre"  (matches the 1L product)
   "2 pepsi"       => quantity 2, heard "pepsi"
+- For a LOOSE product sold by weight or volume (candidate "unit" is "kg", "g",
+  "litre" or "ml"), the spoken amount in that unit IS the quantity, because the
+  shop sells it by that unit. Put the NUMBER in "quantity".
+  "আড়াই কেজি খোলা চাল" => quantity 2.5   (a kg product; 2.5 kg sold)
+  "500 gram chini"      => quantity 500   (a g product)
+  Include the amount in "heard" as well, verbatim.
+
+BENGALI FRACTION RULE — Bengali says half-quantities as single irregular words.
+These are NOT approximations; each has an exact value. Both scripts count:
+  আধা / আধ / adha / adh / half      = 0.5
+  দেড় / der / derh / dedh           = 1.5
+  আড়াই / arai / aarai / adai / arhai = 2.5
+And three modifiers that apply to the number AFTER them:
+  সোয়া / shoya / soya  N  = N + 0.25   ("সোয়া দুই" = 2.25)
+  সাড়ে / sare / share  N  = N + 0.5    ("সাড়ে তিন" = 3.5)
+  পৌনে / poune / pone  N  = N - 0.25   ("পৌনে চার" = 3.75)
+Never round these to a whole number. "arai kg rice" is quantity 2.5, NOT 2.
+Bengali cardinals: এক/ek 1, দুই/dui 2, তিন/tin 3, চার/char 4, পাঁচ/pach 5,
+ছয়/choy 6, সাত/sat 7, আট/at 8, নয়/noy 9, দশ/dosh 10.
+
+CROSS-SCRIPT MATCHING — a shop's product names may be in English or Bengali,
+and the shopkeeper may speak the other one. Match on MEANING, across scripts and
+transliteration; never require the spoken words to look like the stored name.
+  spoken "খোলা চাল" or "khola chal" => product named "Loose rice"  ✓
+  spoken "loose rice"               => product named "খোলা চাল"    ✓
+  spoken "chini" or "চিনি"          => product named "Sugar"       ✓
+"খোলা" / "khola" / "খুচরা" mean loose/unpackaged, matching a by-weight product.
 
 Match each spoken item against the shop's product list below. If the text does
 NOT distinguish between two candidates (e.g. "pepsi" when both 500ml and 1L
@@ -220,11 +258,35 @@ async function parseSale(input: ParseInput, candidates: Candidate[]) {
 function normalize(raw: Record<string, unknown>, candidates: Candidate[], transcript: string) {
   const ids = new Set(candidates.map((c) => c.id));
   const rawItems = Array.isArray(raw.items) ? raw.items : [];
+  // Fall back to the raw transcript so the review sheet can always show what was said.
+  const heardText = (typeof raw.heard_text === "string" && raw.heard_text) || transcript;
+  const soleItem = rawItems.length === 1;
+
   const items = rawItems.map((it: Record<string, unknown>) => {
     const matches = Array.isArray(it?.matches) ? it.matches : [];
+    const heard = typeof it?.heard === "string" ? it.heard : "";
+    const modelQuantity = typeof it?.quantity === "number" && it.quantity > 0
+      ? it.quantity
+      : null;
+    // Bengali half-quantities ("আড়াই কেজি" = 2.5) are irregular single words
+    // the model guesses at inconsistently -- it returned 2 for "arai kg" even
+    // at temperature 0. This is a deterministic correction; it only ever fires
+    // on an explicit fractional word and so cannot alter an ordinary count.
+    const { quantity, corrected } = resolveItemQuantity({
+      heard,
+      transcript: heardText,
+      modelQuantity,
+      soleItem,
+    });
+    if (corrected) {
+      console.error(
+        `parse-sale quantity-fix: matched="${corrected.matched}" ` +
+          `model=${modelQuantity} corrected=${quantity}`,
+      );
+    }
     return {
-      heard: typeof it?.heard === "string" ? it.heard : "",
-      quantity: typeof it?.quantity === "number" && it.quantity > 0 ? it.quantity : null,
+      heard,
+      quantity,
       unit_heard: typeof it?.unit_heard === "string" ? it.unit_heard : null,
       matches: matches
         .filter((m: Record<string, unknown>) => ids.has(m?.product_id as string))
@@ -234,8 +296,8 @@ function normalize(raw: Record<string, unknown>, candidates: Candidate[], transc
         })),
     };
   }).filter((it) => it.heard !== "" || it.matches.length > 0);
-  // Fall back to the raw transcript so the review sheet can always show what was said.
-  return { heard_text: (typeof raw.heard_text === "string" && raw.heard_text) || transcript, items };
+
+  return { heard_text: heardText, items };
 }
 
 function json(body: unknown, status = 200) {

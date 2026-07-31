@@ -81,6 +81,32 @@ Response (same shape regardless of which input was used):
 `quantity` is omitted when no count was spoken — the app defaults it to 1 and
 flags it as assumed.
 
+### Bengali half-quantities
+
+Bengali says half-quantities as single irregular words — "আড়াই কেজি" is 2.5 kg,
+and আড়াই contains no word for "two" to derive it from. Gemini guessed these
+inconsistently (returning `2` for "arai kg" even at `temperature: 0`, because
+each recording produced a slightly different romanized spelling), so the mapping
+lives in code as well as in the prompt: see `quantity_words.ts`.
+
+`resolveItemQuantity` runs over every parsed item and only ever fires on an
+explicit fractional word as a whole token, so it can correct a half-quantity but
+can never invent or alter an ordinary count. A correction logs
+
+```
+parse-sale quantity-fix: matched="arai" model=2 corrected=2.5
+```
+
+For a **single-item** sentence it also reads the whole transcript, since the
+model usually puts counts in `quantity` rather than `heard`. It deliberately
+does not do that for multi-item speech, where an amount found loose in the
+transcript cannot be safely attributed to one item.
+
+Run the tests (no Deno needed — the module is runtime-agnostic TypeScript):
+```
+node --test supabase/functions/parse-sale/quantity_words.test.ts
+```
+
 A silent/unintelligible audio clip is a real "nothing was said" result: Gemini
 returns empty `items` (and an empty `heard_text`) →
 `{ "heard_text": "", "items": [] }` with **200**.
