@@ -17,9 +17,11 @@ import '../../../shared/extensions/format.dart';
 import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../voice/presentation/voice_sale_sheet.dart';
+import '../domain/inventory_totals.dart';
 import '../domain/product.dart';
 import 'category_controller.dart';
 import 'inventory_controller.dart';
+import 'inventory_value_sheet.dart';
 
 /// Live inventory list with search, category filter, and a low-stock indicator.
 class InventoryListScreen extends ConsumerStatefulWidget {
@@ -91,10 +93,9 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
         : const _InvFilter.all();
 
     final products = productsAsync.value ?? const <Product>[];
-    final totalValue = products.fold<double>(
-      0,
-      (sum, p) => sum + p.inventoryValue,
-    );
+    // Whole-inventory figures, not the filtered view: the header describes the
+    // shop, and the value must not change when a category pill is tapped.
+    final totals = InventoryTotals.of(products);
 
     return Scaffold(
       body: SafeArea(
@@ -119,17 +120,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          l10n.inventory_itemsValue(
-                            products.length,
-                            Money.compact(totalValue, currencyCode: currency),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+                        _InventoryValueLine(totals: totals, currency: currency),
                       ],
                     ),
                   ),
@@ -267,6 +258,61 @@ class _InvFilter {
 
   @override
   int get hashCode => _key.hashCode;
+}
+
+/// The `N items · value` line under the Items title, tappable to reveal the
+/// exact figures.
+///
+/// This line shares a narrow row with up to three action buttons, and Bengali
+/// runs wider than English, so the full string frequently did not fit and was
+/// silently chopped mid-number ("২৬,৫১০…"). Two things fix that, in order:
+/// [Money.compact] keeps large totals short, and [FittedBox] shrinks whatever is
+/// left to fit rather than truncating it — the same technique [RevenueHero] uses
+/// on the dashboard. The exact figure is always one tap away regardless.
+class _InventoryValueLine extends StatelessWidget {
+  const _InventoryValueLine({required this.totals, required this.currency});
+
+  final InventoryTotals totals;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return InkWell(
+      onTap: () =>
+          showInventoryValueSheet(context, totals: totals, currency: currency),
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        // Vertical padding only: a horizontal inset would misalign this line
+        // with the title directly above it.
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  context.l10n.inventory_itemsValue(
+                    totals.productCount,
+                    Money.compact(totals.costValue, currencyCode: currency),
+                  ),
+                  maxLines: 1,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                ),
+              ),
+            ),
+            const SizedBox(width: 5),
+            // Same affordance as the dashboard hero's expand chip, sized down to
+            // sit on a subtitle without competing with it.
+            Icon(Icons.open_in_full_rounded, size: 11, color: muted),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ProductTile extends StatelessWidget {

@@ -5,6 +5,7 @@ import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/breakdown_row.dart';
 import '../../../shared/extensions/format.dart';
 import '../../analytics/domain/analytics.dart';
 
@@ -36,108 +37,69 @@ Future<void> showSummaryBreakdownSheet(
     context: context,
     showDragHandle: true,
     backgroundColor: theme.colorScheme.surface,
-    builder: (sheetContext) => Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.dashboard_breakdown,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+    // Six rows plus a button exceed the default 9/16-of-screen cap on a short
+    // phone (measured: 199px of overflow at 600dp tall), so let the sheet size
+    // to its content and scroll only if that content is taller than the screen.
+    isScrollControlled: true,
+    builder: (sheetContext) => SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.dashboard_breakdown,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            l10n.dashboard_exactFigures(periodLabel(l10n, period)),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            const SizedBox(height: 2),
+            Text(
+              l10n.dashboard_exactFigures(periodLabel(l10n, period)),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          _BreakdownRow(
-            label: l10n.dashboard_revenue,
-            value: Money.format(summary.revenue, currencyCode: currency),
-            emphasize: true,
-          ),
-          _BreakdownRow(
-            label: l10n.dashboard_costOfGoods,
-            value: Money.format(summary.cost, currencyCode: currency),
-          ),
-          _BreakdownRow(
-            label: l10n.dashboard_grossProfit,
-            value: Money.format(summary.profit, currencyCode: currency),
-            emphasize: true,
-            valueColor: summary.profit < 0 ? colors.negative : colors.positive,
-          ),
-          _BreakdownRow(label: l10n.dashboard_margin, value: margin),
-          _BreakdownRow(
-            label: l10n.dashboard_itemsSold,
-            value: Money.compactCount(summary.unitsSold),
-          ),
-          _BreakdownRow(label: l10n.dashboard_avgItemPrice, value: avgPrice),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.of(sheetContext).pop();
-                context.go('/analytics');
-              },
-              icon: const Icon(Icons.bar_chart_rounded, size: 18),
-              label: Text(l10n.dashboard_viewFullReport),
+            const SizedBox(height: 8),
+            BreakdownRow(
+              label: l10n.dashboard_revenue,
+              value: Money.format(summary.revenue, currencyCode: currency),
+              emphasize: true,
             ),
-          ),
-        ],
+            BreakdownRow(
+              label: l10n.dashboard_costOfGoods,
+              value: Money.format(summary.cost, currencyCode: currency),
+            ),
+            BreakdownRow(
+              label: l10n.dashboard_grossProfit,
+              value: Money.format(summary.profit, currencyCode: currency),
+              emphasize: true,
+              valueColor: summary.profit < 0
+                  ? colors.negative
+                  : colors.positive,
+            ),
+            BreakdownRow(label: l10n.dashboard_margin, value: margin),
+            BreakdownRow(
+              label: l10n.dashboard_itemsSold,
+              value: Money.compactCount(summary.unitsSold),
+            ),
+            BreakdownRow(label: l10n.dashboard_avgItemPrice, value: avgPrice),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  context.go('/analytics');
+                },
+                icon: const Icon(Icons.bar_chart_rounded, size: 18),
+                label: Text(l10n.dashboard_viewFullReport),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
-}
-
-/// One label/value line in the breakdown sheet, divided by a hairline rule.
-class _BreakdownRow extends StatelessWidget {
-  const _BreakdownRow({
-    required this.label,
-    required this.value,
-    this.emphasize = false,
-    this.valueColor,
-  });
-
-  final String label;
-  final String value;
-  final bool emphasize;
-  final Color? valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final valueStyle =
-        (emphasize ? theme.textTheme.titleMedium : theme.textTheme.titleSmall)
-            ?.copyWith(
-              fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
-              color: valueColor ?? theme.colorScheme.onSurface,
-            );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      child: Column(
-        children: [
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
-          const SizedBox(height: 11),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Text(value, style: valueStyle),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -249,8 +249,23 @@ class AppLocalizationsEn extends AppLocalizations {
         intl.NumberFormat.decimalPattern(localeName);
     final String countString = countNumberFormat.format(count);
 
-    return '$countString items · $value value';
+    return '$countString items · $value';
   }
+
+  @override
+  String get inventory_valueTitle => 'Inventory value';
+
+  @override
+  String get inventory_valueExact => 'Exact figures';
+
+  @override
+  String get inventory_valueProducts => 'Products';
+
+  @override
+  String get inventory_valueRetail => 'Retail value';
+
+  @override
+  String get inventory_valuePotentialProfit => 'Potential profit';
 
   @override
   String get inventory_filterAll => 'All';

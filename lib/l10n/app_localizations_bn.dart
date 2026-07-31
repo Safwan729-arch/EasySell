@@ -245,8 +245,23 @@ class AppLocalizationsBn extends AppLocalizations {
         intl.NumberFormat.decimalPattern(localeName);
     final String countString = countNumberFormat.format(count);
 
-    return '$countStringটি পণ্য · $value মূল্য';
+    return '$countStringটি পণ্য · $value';
   }
+
+  @override
+  String get inventory_valueTitle => 'স্টকের মূল্য';
+
+  @override
+  String get inventory_valueExact => 'সঠিক হিসাব';
+
+  @override
+  String get inventory_valueProducts => 'পণ্য';
+
+  @override
+  String get inventory_valueRetail => 'বিক্রয় মূল্য';
+
+  @override
+  String get inventory_valuePotentialProfit => 'সম্ভাব্য লাভ';
 
   @override
   String get inventory_filterAll => 'সব';

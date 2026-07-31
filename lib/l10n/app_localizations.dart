@@ -536,11 +536,41 @@ abstract class AppLocalizations {
   /// **'Inventory'**
   String get inventory_title;
 
-  /// No description provided for @inventory_itemsValue.
+  /// Items screen subtitle. The trailing 'value' word was dropped so the line fits a cramped header; the tap-to-expand sheet names the figure.
   ///
   /// In en, this message translates to:
-  /// **'{count} items · {value} value'**
+  /// **'{count} items · {value}'**
   String inventory_itemsValue(int count, String value);
+
+  /// No description provided for @inventory_valueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory value'**
+  String get inventory_valueTitle;
+
+  /// No description provided for @inventory_valueExact.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact figures'**
+  String get inventory_valueExact;
+
+  /// No description provided for @inventory_valueProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get inventory_valueProducts;
+
+  /// No description provided for @inventory_valueRetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Retail value'**
+  String get inventory_valueRetail;
+
+  /// No description provided for @inventory_valuePotentialProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Potential profit'**
+  String get inventory_valuePotentialProfit;
 
   /// No description provided for @inventory_filterAll.
   ///
