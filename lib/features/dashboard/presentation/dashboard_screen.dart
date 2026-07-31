@@ -121,7 +121,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           },
           child: ListView(
             controller: ref.watch(branchScrollControllerProvider(0)),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            // Bottom padding clears the floating _SellFab, which otherwise sits
+            // on top of the last card's trailing action once scrolled to the
+            // end. 96 matches the reserve used by History and Customers, the
+            // other screens with something floating over their list.
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
             children: [
               // Greeting header
               Entrance(
@@ -259,6 +263,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   currency: currency,
                 ),
               ),
+              // Cards carry `margin: EdgeInsets.zero` (see cardTheme), so every
+              // gap in this column is explicit. _TopPerformer leads with a bare
+              // section label rather than a Card, so without this it sits flush
+              // on the chart card's border above it.
+              const SizedBox(height: 20),
               Entrance(index: 5, child: _TopPerformer(currency: currency)),
               const SizedBox(height: 16),
               Entrance(

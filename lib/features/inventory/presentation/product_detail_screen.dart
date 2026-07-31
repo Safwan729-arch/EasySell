@@ -248,7 +248,10 @@ class _DetailView extends ConsumerWidget {
               child: Chip(label: Text(categoryName)),
             ),
           const SizedBox(height: 16),
-          if (product.isLowStock)
+          // The gap lives inside the conditional so it collapses with the card
+          // when stock is healthy, instead of doubling the space above the
+          // first stat row. Without it the card's border touches that row.
+          if (product.isLowStock) ...[
             Card(
               color: Theme.of(context).colorScheme.errorContainer,
               child: ListTile(
@@ -259,6 +262,8 @@ class _DetailView extends ConsumerWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+          ],
           _statTile(context, l10n.inventory_statInStock, product.quantityLabel),
           _statTile(
             context,
