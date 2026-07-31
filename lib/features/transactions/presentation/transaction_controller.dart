@@ -13,8 +13,18 @@ import '../domain/transaction.dart';
 /// Drives sale/restock actions. Stock changes show up live via the inventory
 /// realtime stream, so this controller only needs to model the action state.
 class TransactionController extends AsyncNotifier<void> {
+  /// Same guard, and same reasoning, as [CartCheckoutController]: the restock
+  /// sheet only disables its button on [AsyncLoading], which is a widget-layer
+  /// guard that lands a rebuild later. Two overlapping restocks would both
+  /// commit and add the stock twice, and neither the RPC nor any constraint can
+  /// tell that apart from a shopkeeper genuinely restocking the same item
+  /// twice.
+  bool _inFlight = false;
+
   @override
-  FutureOr<void> build() {}
+  FutureOr<void> build() {
+    _inFlight = false;
+  }
 
   TransactionRepository get _repo => ref.read(transactionRepositoryProvider);
   String? get _shopId => ref.read(myShopProvider).value?.id;
@@ -37,6 +47,8 @@ class TransactionController extends AsyncNotifier<void> {
   Future<bool> _run(
     Future<Result<Transaction>> Function(String shopId) action,
   ) async {
+    if (_inFlight) return false;
+
     final shopId = _shopId;
     if (shopId == null) {
       state = AsyncError(
@@ -47,7 +59,14 @@ class TransactionController extends AsyncNotifier<void> {
     }
 
     state = const AsyncLoading();
-    final result = await action(shopId);
+    _inFlight = true;
+    final Result<Transaction> result;
+    try {
+      result = await action(shopId);
+    } finally {
+      // Released in a finally so a throw can never wedge restock shut.
+      _inFlight = false;
+    }
     return result.when(
       success: (_) {
         // Refresh inventory immediately so the new stock level shows at once.
