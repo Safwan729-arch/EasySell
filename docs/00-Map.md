@@ -73,10 +73,18 @@ reasoning.
 ---
 
 ### Keeping this map useful
-New feature work under `superpowers:brainstorming` / `superpowers:writing-plans`
-still lands in `docs/superpowers/plans/` and `docs/superpowers/specs/` as
-`YYYY-MM-DD-feature-slug[-design].md` — that convention is what makes the
-`[[wikilink]]`s above resolve without a folder path. **Add one line to the
-right section above whenever a new plan/spec pair lands**, so this file stays
-the single place both you and I look first instead of re-scanning the whole
-`docs/` tree.
+Design and plan docs live in `docs/superpowers/specs/` and
+`docs/superpowers/plans/` as `YYYY-MM-DD-feature-slug[-design].md` — that
+convention is what makes the `[[wikilink]]`s above resolve without a folder
+path. **Add one line to the right section above whenever a new doc lands**, so
+this file stays the single place both you and I look first instead of
+re-scanning the whole `docs/` tree.
+
+This holds for work built straight from a conversation, not only for work
+driven by a `superpowers` skill — see the rule in
+[[CLAUDE.md]] §10. Skill-less work is the case most likely to leave this map
+quietly incomplete, because nothing automatic prompts the entry. A doc is
+worth writing for anything a future session would want the *reasoning* for,
+including approaches that were investigated and **rejected**; the map notes
+which entries carry a rejection record, since those are the ones that stop the
+same analysis being redone.

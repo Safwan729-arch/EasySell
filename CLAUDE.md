@@ -308,8 +308,18 @@ supabase db push
 - When unsure about a teammate's data shape, propose a contract in the integration section and flag it,
   rather than guessing silently.
 - Match the established folder structure; new features follow the `data/domain/presentation` pattern.
-- **Whenever a `superpowers` skill (brainstorming/writing-plans/etc.) writes a new file into
-  `docs/superpowers/plans/` or `docs/superpowers/specs/`, add one line for it to the matching section
-  of [`docs/00-Map.md`](docs/00-Map.md) in the same turn.** That file is the index I read first for
-  feature history instead of scanning the whole `docs/` tree — it goes stale the moment a new doc
-  lands without a corresponding entry.
+- **Every substantive piece of work gets a design doc and a map entry — whether or not a skill
+  wrote it.** "Substantive" means anything a future session would want the reasoning for: a new
+  feature, a behaviour change users can notice, a non-obvious fix, or an option investigated and
+  **rejected**. Trivial edits (typos, formatting, a renamed variable) do not qualify.
+  - Write it to `docs/superpowers/specs/YYYY-MM-DD-feature-slug-design.md`. That naming is what
+    makes the `[[wikilink]]`s in the map resolve without a folder path.
+  - Add one line for it to the matching section of [`docs/00-Map.md`](docs/00-Map.md) **in the same
+    turn**. That file is the index I read first for feature history instead of scanning the whole
+    `docs/` tree, and it goes stale the moment a doc lands without a corresponding entry.
+  - Record *why*, not *what* — the diff already says what changed. Capture the decisions that are
+    not recoverable from the code: thresholds and why they sit where they do, approaches ruled out
+    and the evidence that ruled them out, and any gotcha that cost real time to discover.
+  - This applies to work built straight from a conversation, not just work driven by a
+    `superpowers` skill. Building without a skill is the case most likely to leave the map
+    quietly incomplete, so it is exactly the case the rule has to cover.
