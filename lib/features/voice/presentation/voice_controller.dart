@@ -41,8 +41,9 @@ class VoiceSaleState {
   ///
   /// The parse deliberately keeps running: in a busy shop those few seconds are
   /// better spent taking cash than watching a spinner, so dismissing means
-  /// "carry on without me", not "cancel". [VoiceReadyBanner] watches for the
-  /// finished result and offers it back.
+  /// "carry on without me", not "cancel". [VoiceReadyBanner] takes over as the
+  /// sale's handle for the whole time it stays set -- while it is still being
+  /// parsed as much as once it finishes -- so the work is never invisible.
   final bool background;
 
   /// When the current recording will auto-stop, so the listening pane can warn
@@ -71,11 +72,25 @@ class VoiceSaleState {
 
   bool get canAdd => canAddToCart(lines);
 
-  /// A finished parse (good or bad) with no sheet on screen to show it -- the
-  /// exact condition [VoiceReadyBanner] announces.
-  bool get hasBackgroundResult =>
+  /// A voice sale that exists but has no sheet on screen -- whether it is still
+  /// being parsed or already finished. [VoiceReadyBanner] renders exactly this.
+  ///
+  /// Deliberately NOT limited to finished parses. It was, and that left a dead
+  /// zone: between dismissing the sheet and the result landing, nothing was
+  /// shown anywhere, so a spoken sale was invisible. The shopkeeper could not
+  /// watch it, reopen it, or cancel it -- and tapping the mic again would
+  /// silently supersede it (see [startListening]'s session bump), losing a sale
+  /// they had already spoken. The banner is the handle on that work for its
+  /// whole life, not just its last moment.
+  bool get hasBackgroundSale =>
       background &&
-      (phase == VoicePhase.reviewing || phase == VoicePhase.error);
+      (phase == VoicePhase.thinking ||
+          phase == VoicePhase.reviewing ||
+          phase == VoicePhase.error);
+
+  /// True while a backgrounded sale is still being parsed -- the state that had
+  /// no representation at all before.
+  bool get isBackgroundPending => background && phase == VoicePhase.thinking;
 
   /// [errorMessage], [listenDeadline], [canRetryAudio] and [background] are
   /// intentionally NOT defaulted to their current values: each describes one

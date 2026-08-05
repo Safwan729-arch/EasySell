@@ -1085,8 +1085,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get voice_stageMatching => 'আপনার পণ্য খুঁজছি';
 
   @override
-  String get voice_thinkingDismissHint =>
-      'এটি বন্ধ করতে পারেন — তৈরি হলে জানিয়ে দেব';
+  String get voice_thinkingDismissHint => 'তৈরি হলে জানিয়ে দেব';
+
+  @override
+  String get voice_thinkingMinimize => 'পিছনে চলতে থাকুক';
+
+  @override
+  String get voice_bannerWorking => 'ভয়েস বিক্রি নিয়ে কাজ চলছে…';
+
+  @override
+  String get voice_bannerCancel => 'এই ভয়েস বিক্রি বাতিল করুন';
 
   @override
   String get voice_bannerReady => 'আপনার ভয়েস বিক্রি তৈরি';

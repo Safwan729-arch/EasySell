@@ -173,7 +173,7 @@ void main() {
     final state = container.read(voiceControllerProvider);
     expect(state.phase, VoicePhase.reviewing);
     expect(state.lines, hasLength(1));
-    expect(state.hasBackgroundResult, isTrue);
+    expect(state.hasBackgroundSale, isTrue);
     expect(log, contains('ready'), reason: 'the buzz is the only notification');
   });
 
@@ -195,7 +195,7 @@ void main() {
 
     final state = container.read(voiceControllerProvider);
     expect(state.phase, VoicePhase.error);
-    expect(state.hasBackgroundResult, isTrue);
+    expect(state.hasBackgroundSale, isTrue);
     expect(log, contains('ready'));
   });
 
@@ -233,7 +233,7 @@ void main() {
 
       final state = container.read(voiceControllerProvider);
       expect(state.background, isFalse);
-      expect(state.hasBackgroundResult, isFalse);
+      expect(state.hasBackgroundSale, isFalse);
       expect(state.phase, VoicePhase.reviewing);
       expect(state.lines, hasLength(1), reason: 'the parsed sale must survive');
     },
@@ -259,6 +259,97 @@ void main() {
       isFalse,
       reason: 'the banner must not linger over a fresh recording',
     );
+  });
+
+  test('a sale still parsing is visible the whole time it runs', () async {
+    // The dead zone this feature originally shipped with: between dismissing
+    // the sheet and the result landing, nothing was shown anywhere, so a spoken
+    // sale simply vanished from the UI until it finished.
+    final repo = _PendingRepo();
+    final container = _container(
+      recorder: _FakeRecorder(),
+      repo: repo,
+      hapticLog: [],
+    );
+    final notifier = await _upToThinking(container, repo);
+    notifier.releaseSheet();
+
+    final pendingState = container.read(voiceControllerProvider);
+    expect(pendingState.phase, VoicePhase.thinking);
+    expect(
+      pendingState.hasBackgroundSale,
+      isTrue,
+      reason: 'a sale mid-parse must still have a handle on screen',
+    );
+    expect(pendingState.isBackgroundPending, isTrue);
+
+    // ...and it stays visible, changing state rather than disappearing.
+    repo.completer.complete(const Result.success(_parsed));
+    await Future<void>.delayed(Duration.zero);
+
+    final doneState = container.read(voiceControllerProvider);
+    expect(doneState.hasBackgroundSale, isTrue);
+    expect(doneState.isBackgroundPending, isFalse);
+  });
+
+  test(
+    'reopening mid-parse claims the sale instead of restarting it',
+    () async {
+      final repo = _PendingRepo();
+      final container = _container(
+        recorder: _FakeRecorder(),
+        repo: repo,
+        hapticLog: [],
+      );
+      final notifier = await _upToThinking(container, repo);
+      notifier.releaseSheet();
+
+      // What tapping the mic (or the banner) now does -- both route through
+      // `showVoiceSaleSheet`, which always resumes first.
+      notifier.resumeFromBackground();
+
+      expect(
+        container.read(voiceControllerProvider).phase,
+        VoicePhase.thinking,
+      );
+      expect(container.read(voiceControllerProvider).background, isFalse);
+
+      // The parse was never superseded, so its result still arrives.
+      repo.completer.complete(const Result.success(_parsed));
+      await Future<void>.delayed(Duration.zero);
+
+      final state = container.read(voiceControllerProvider);
+      expect(state.phase, VoicePhase.reviewing);
+      expect(
+        state.lines,
+        hasLength(1),
+        reason: 'reopening must not cost the shopkeeper the sale they spoke',
+      );
+    },
+  );
+
+  test('cancelling a pending background sale drops it deliberately', () async {
+    final repo = _PendingRepo();
+    final container = _container(
+      recorder: _FakeRecorder(),
+      repo: repo,
+      hapticLog: [],
+    );
+    final notifier = await _upToThinking(container, repo);
+    notifier.releaseSheet();
+
+    notifier.reset(); // the banner's ✕
+
+    expect(container.read(voiceControllerProvider).phase, VoicePhase.idle);
+    expect(container.read(voiceControllerProvider).hasBackgroundSale, isFalse);
+
+    // A result arriving after the cancel must not resurrect the sale.
+    repo.completer.complete(const Result.success(_parsed));
+    await Future<void>.delayed(Duration.zero);
+
+    final state = container.read(voiceControllerProvider);
+    expect(state.phase, VoicePhase.idle);
+    expect(state.lines, isEmpty);
   });
 
   test('recording start warms the Edge Function', () async {

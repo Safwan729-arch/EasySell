@@ -1091,8 +1091,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voice_stageMatching => 'Finding your items';
 
   @override
-  String get voice_thinkingDismissHint =>
-      'You can close this — we\'ll buzz you when it\'s ready';
+  String get voice_thinkingDismissHint => 'We\'ll buzz you when it\'s ready';
+
+  @override
+  String get voice_thinkingMinimize => 'Continue in background';
+
+  @override
+  String get voice_bannerWorking => 'Working on your voice sale…';
+
+  @override
+  String get voice_bannerCancel => 'Discard this voice sale';
 
   @override
   String get voice_bannerReady => 'Your voice sale is ready';

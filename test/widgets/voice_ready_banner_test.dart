@@ -127,14 +127,16 @@ Widget _app(ProviderContainer container) => UncontrolledProviderScope(
   ),
 );
 
-/// Drives a sale to a finished-but-unclaimed state: spoken, sheet dismissed,
-/// result landed.
-Future<void> _backgroundResult(
+/// Speaks a sale and dismisses the sheet, leaving the parse in flight -- the
+/// state that used to render nothing at all.
+///
+/// Never `pumpAndSettle` from here on: the pending banner carries a
+/// [CircularProgressIndicator], which by design never settles.
+Future<void> _dismissMidParse(
   WidgetTester tester,
   ProviderContainer container,
-  _PendingRepo repo, {
-  required Result<VoiceParseResult> result,
-}) async {
+  _PendingRepo repo,
+) async {
   final notifier = container.read(voiceControllerProvider.notifier);
   await notifier.startListening();
   // Not awaited: `stopAndParse` only completes when the parse does, and the
@@ -149,6 +151,28 @@ Future<void> _backgroundResult(
   expect(repo.parseCalled, isTrue, reason: 'parse must be genuinely in flight');
 
   notifier.releaseSheet();
+  // Past the banner's AnimatedSwitcher entrance. A single pump leaves it
+  // mid-transition, where it is still wrapped in an IgnorePointer and taps miss
+  // it -- but `pumpAndSettle` is not an option, because the pending banner's
+  // spinner never settles.
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
+/// Lets the pending parse resolve so no spinner or timer outlives the test.
+Future<void> _finish(WidgetTester tester, _PendingRepo repo) async {
+  repo.completer.complete(const Result.failure(NetworkFailure('done')));
+  await tester.pumpAndSettle();
+}
+
+/// Drives a sale all the way to a finished-but-unclaimed state.
+Future<void> _backgroundResult(
+  WidgetTester tester,
+  ProviderContainer container,
+  _PendingRepo repo, {
+  required Result<VoiceParseResult> result,
+}) async {
+  await _dismissMidParse(tester, container, repo);
   repo.completer.complete(result);
   await tester.pumpAndSettle();
 }
@@ -162,6 +186,70 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Your voice sale is ready'), findsNothing);
+    expect(find.byKey(const ValueKey('voice-ready-banner')), findsNothing);
+  });
+
+  testWidgets('a sale still parsing is announced, not hidden', (tester) async {
+    // The regression that prompted all of this: dismissing the sheet mid-parse
+    // used to leave nothing on screen until the result landed.
+    final repo = _PendingRepo();
+    final container = _container(repo);
+    await tester.pumpWidget(_app(container));
+    await tester.pump();
+
+    await _dismissMidParse(tester, container, repo);
+
+    expect(find.text('Working on your voice sale…'), findsOneWidget);
+    expect(
+      find.byType(CircularProgressIndicator),
+      findsOneWidget,
+      reason: 'the spinner is what reads as "still going" at a glance',
+    );
+    // Not offered as finished work.
+    expect(find.text('Review'), findsNothing);
+
+    await _finish(tester, repo);
+  });
+
+  testWidgets('tapping a parsing sale reopens it without restarting', (
+    tester,
+  ) async {
+    final repo = _PendingRepo();
+    final container = _container(repo);
+    await tester.pumpWidget(_app(container));
+    await tester.pump();
+    await _dismissMidParse(tester, container, repo);
+
+    await tester.tap(find.text('Working on your voice sale…'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // Back in the sheet, still in the same parse.
+    expect(container.read(voiceControllerProvider).phase, VoicePhase.thinking);
+    expect(container.read(voiceControllerProvider).background, isFalse);
+    expect(find.text('Heard you'), findsOneWidget);
+
+    await _finish(tester, repo);
+  });
+
+  testWidgets('the parsing banner can discard the sale deliberately', (
+    tester,
+  ) async {
+    final repo = _PendingRepo();
+    final container = _container(repo);
+    await tester.pumpWidget(_app(container));
+    await tester.pump();
+    await _dismissMidParse(tester, container, repo);
+
+    await tester.tap(find.byTooltip('Discard this voice sale'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(voiceControllerProvider).phase, VoicePhase.idle);
+    expect(find.text('Working on your voice sale…'), findsNothing);
+
+    // A late result must not resurrect it.
+    repo.completer.complete(const Result.success(_parsed));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('voice-ready-banner')), findsNothing);
   });
 

@@ -346,9 +346,21 @@
   "@voice_stageMatching": {
     "description": "Final step of the voice-parse progress checklist, while spoken names are matched to shop products."
   },
-  "voice_thinkingDismissHint": "You can close this — we'll buzz you when it's ready",
+  "voice_thinkingDismissHint": "We'll buzz you when it's ready",
   "@voice_thinkingDismissHint": {
-    "description": "Tells the shopkeeper the sheet can be dismissed while parsing continues in the background."
+    "description": "Reassurance under the minimize button: parsing continues after the sheet is dismissed."
+  },
+  "voice_thinkingMinimize": "Continue in background",
+  "@voice_thinkingMinimize": {
+    "description": "Button that dismisses the voice sheet while the parse keeps running."
+  },
+  "voice_bannerWorking": "Working on your voice sale…",
+  "@voice_bannerWorking": {
+    "description": "Banner shown while a backgrounded voice sale is still being parsed."
+  },
+  "voice_bannerCancel": "Discard this voice sale",
+  "@voice_bannerCancel": {
+    "description": "Tooltip on the banner button that abandons a voice sale still being parsed."
   },
   "voice_bannerReady": "Your voice sale is ready",
   "@voice_bannerReady": {

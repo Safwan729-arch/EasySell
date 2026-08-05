@@ -1904,11 +1904,29 @@ abstract class AppLocalizations {
   /// **'Finding your items'**
   String get voice_stageMatching;
 
-  /// Tells the shopkeeper the sheet can be dismissed while parsing continues in the background.
+  /// Reassurance under the minimize button: parsing continues after the sheet is dismissed.
   ///
   /// In en, this message translates to:
-  /// **'You can close this — we\'ll buzz you when it\'s ready'**
+  /// **'We\'ll buzz you when it\'s ready'**
   String get voice_thinkingDismissHint;
+
+  /// Button that dismisses the voice sheet while the parse keeps running.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in background'**
+  String get voice_thinkingMinimize;
+
+  /// Banner shown while a backgrounded voice sale is still being parsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Working on your voice sale…'**
+  String get voice_bannerWorking;
+
+  /// Tooltip on the banner button that abandons a voice sale still being parsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this voice sale'**
+  String get voice_bannerCancel;
 
   /// Banner shown when a backgrounded voice sale finished parsing successfully.
   ///

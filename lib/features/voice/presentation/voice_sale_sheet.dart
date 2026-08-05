@@ -26,14 +26,19 @@ import 'voice_transcript_dialog.dart';
 /// before (and doing so twice is harmless -- [VoiceController.reset] is
 /// idempotent).
 ///
-/// [resume] is set when the sheet is being reopened from [VoiceReadyBanner], so
-/// the already-finished result is claimed rather than announced again.
-Future<void> showVoiceSaleSheet(
-  BuildContext context,
-  WidgetRef ref, {
-  bool resume = false,
-}) {
-  if (resume) ref.read(voiceControllerProvider.notifier).resumeFromBackground();
+/// Opening always claims a backgrounded sale if one exists, whatever phase it
+/// is in ([VoiceController.resumeFromBackground] is a no-op otherwise).
+///
+/// This is what stops the mic from eating a sale. [VoiceController.startListening]
+/// bumps the session counter, so beginning a fresh recording discards any parse
+/// still in flight -- silently, since the result is simply dropped when it
+/// lands. Routing every entry point through the resume path means tapping the
+/// mic while a background sale is pending REOPENS that sale rather than
+/// replacing it. Two voice sales can't be in progress at once anyway, so there
+/// is nothing to choose between: showing the one that exists is always the
+/// answer that cannot lose work.
+Future<void> showVoiceSaleSheet(BuildContext context, WidgetRef ref) {
+  ref.read(voiceControllerProvider.notifier).resumeFromBackground();
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -502,29 +507,25 @@ class _ThinkingPaneState extends State<_ThinkingPane> {
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
             ),
           ),
-          const SizedBox(height: 16),
-          // The whole point of backgrounding the parse: without this line the
-          // shopkeeper has no way to know that closing the sheet is safe, and
-          // would keep standing there watching it.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.touch_app_outlined,
-                size: 15,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  l10n.voice_thinkingDismissHint,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(height: 12),
+          // A real control, not just the hint that used to sit here alone.
+          // Telling someone "you can close this" while giving them nothing to
+          // press makes them hunt for the gesture -- tap-outside and swipe-down
+          // both work, but a shopkeeper mid-transaction should not have to
+          // guess. Popping the sheet routes through `showVoiceSaleSheet`'s
+          // `whenComplete`, so this is exactly the same path as a swipe: the
+          // parse carries on and `VoiceReadyBanner` takes over.
+          TextButton.icon(
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+            label: Text(l10n.voice_thinkingMinimize),
+          ),
+          Text(
+            l10n.voice_thinkingDismissHint,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -554,15 +555,15 @@ class _ThinkingStageRow extends StatelessWidget {
     final Widget leading = done
         ? Icon(Icons.check_circle, size: 18, color: colors.positive)
         : active
+        // Full 18px, matching the tick and the outline it sits between. It was
+        // inset by 2 with a thinner stroke, which on-device read as a faint dot
+        // rather than something spinning.
         ? SizedBox(
             width: 18,
             height: 18,
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: theme.colorScheme.primary,
-              ),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: theme.colorScheme.primary,
             ),
           )
         : Icon(

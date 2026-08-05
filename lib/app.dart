@@ -69,7 +69,7 @@ class App extends ConsumerWidget {
                 // backgrounded voice sale flips.
                 final isOnline = ref.watch(isOnlineProvider).value ?? true;
                 final voiceWaiting = ref.watch(
-                  voiceControllerProvider.select((s) => s.hasBackgroundResult),
+                  voiceControllerProvider.select((s) => s.hasBackgroundSale),
                 );
                 return Column(
                   children: [

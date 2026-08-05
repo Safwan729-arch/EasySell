@@ -148,7 +148,13 @@ void main() {
     expect(find.text('Understanding what you said'), findsOneWidget);
     expect(find.text('Finding your items'), findsOneWidget);
     expect(
-      find.textContaining("we'll buzz you"),
+      find.text('Continue in background'),
+      findsOneWidget,
+      reason:
+          'the hint used to stand alone, leaving people to guess the gesture',
+    );
+    expect(
+      find.textContaining("buzz you"),
       findsOneWidget,
       reason: 'without this nobody discovers they can walk away',
     );
