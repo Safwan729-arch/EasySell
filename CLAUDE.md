@@ -308,3 +308,8 @@ supabase db push
 - When unsure about a teammate's data shape, propose a contract in the integration section and flag it,
   rather than guessing silently.
 - Match the established folder structure; new features follow the `data/domain/presentation` pattern.
+- **Whenever a `superpowers` skill (brainstorming/writing-plans/etc.) writes a new file into
+  `docs/superpowers/plans/` or `docs/superpowers/specs/`, add one line for it to the matching section
+  of [`docs/00-Map.md`](docs/00-Map.md) in the same turn.** That file is the index I read first for
+  feature history instead of scanning the whole `docs/` tree — it goes stale the moment a new doc
+  lands without a corresponding entry.
