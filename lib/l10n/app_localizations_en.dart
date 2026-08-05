@@ -1082,6 +1082,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voice_thinking => 'Working it out…';
 
   @override
+  String get voice_stageHeard => 'Heard you';
+
+  @override
+  String get voice_stageUnderstanding => 'Understanding what you said';
+
+  @override
+  String get voice_stageMatching => 'Finding your items';
+
+  @override
+  String get voice_thinkingDismissHint =>
+      'You can close this — we\'ll buzz you when it\'s ready';
+
+  @override
+  String get voice_bannerReady => 'Your voice sale is ready';
+
+  @override
+  String get voice_bannerFailed => 'Your voice sale needs a look';
+
+  @override
+  String get voice_bannerAction => 'Review';
+
+  @override
   String get voice_heard => 'I heard';
 
   @override

@@ -41,6 +41,10 @@ class _FakeRecorder implements AudioRecorderPort {
 /// Fails the first audio parse (like a noisy-room timeout) and succeeds after,
 /// so the "retry the same recording" path can be exercised end to end.
 class _FlakyRepo implements VoiceSaleRepository {
+  // Fire-and-forget optimization with no observable effect on parsing.
+  @override
+  Future<void> warmUp() async {}
+
   _FlakyRepo(this.success);
 
   final Result<VoiceParseResult> success;

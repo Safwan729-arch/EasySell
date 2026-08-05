@@ -31,9 +31,19 @@ class VoiceSaleState {
     this.errorMessage,
     this.listenDeadline,
     this.canRetryAudio = false,
+    this.background = false,
   });
 
   final VoicePhase phase;
+
+  /// True once the shopkeeper dismissed the sheet while the parse was still in
+  /// flight, so the result has nowhere on screen to land.
+  ///
+  /// The parse deliberately keeps running: in a busy shop those few seconds are
+  /// better spent taking cash than watching a spinner, so dismissing means
+  /// "carry on without me", not "cancel". [VoiceReadyBanner] watches for the
+  /// finished result and offers it back.
+  final bool background;
 
   /// When the current recording will auto-stop, so the listening pane can warn
   /// before it happens instead of cutting the shopkeeper off mid-sentence. Null
@@ -61,10 +71,17 @@ class VoiceSaleState {
 
   bool get canAdd => canAddToCart(lines);
 
-  /// [errorMessage], [listenDeadline] and [canRetryAudio] are intentionally NOT
-  /// defaulted to their current values: each describes one specific moment, so
-  /// every transition must state it explicitly and a stale error, a deadline
-  /// from a finished recording, or a retry offer for discarded audio can never
+  /// A finished parse (good or bad) with no sheet on screen to show it -- the
+  /// exact condition [VoiceReadyBanner] announces.
+  bool get hasBackgroundResult =>
+      background &&
+      (phase == VoicePhase.reviewing || phase == VoicePhase.error);
+
+  /// [errorMessage], [listenDeadline], [canRetryAudio] and [background] are
+  /// intentionally NOT defaulted to their current values: each describes one
+  /// specific moment, so every transition must state it explicitly and a stale
+  /// error, a deadline from a finished recording, a retry offer for discarded
+  /// audio, or a backgrounded flag left over from the previous sale can never
   /// leak into a later state.
   VoiceSaleState copyWith({
     VoicePhase? phase,
@@ -73,6 +90,7 @@ class VoiceSaleState {
     String? errorMessage,
     DateTime? listenDeadline,
     bool canRetryAudio = false,
+    bool background = false,
   }) => VoiceSaleState(
     phase: phase ?? this.phase,
     heardText: heardText ?? this.heardText,
@@ -80,6 +98,7 @@ class VoiceSaleState {
     errorMessage: errorMessage,
     listenDeadline: listenDeadline,
     canRetryAudio: canRetryAudio,
+    background: background,
   );
 }
 
@@ -160,6 +179,13 @@ class VoiceController extends Notifier<VoiceSaleState> {
     // speaking, so [stopAndParse] can read whatever arrived without ever
     // waiting on it. Not autoDispose, so a plain read keeps the result.
     ref.read(recentUnitsSoldProvider);
+
+    // Same idea, for the server: spend the seconds they are talking booting the
+    // Edge Function container, so the cold start is not sitting between "stop"
+    // and the cart appearing. Unawaited on purpose -- recording must never wait
+    // on the network, and [VoiceSaleRepository.warmUp] already swallows
+    // everything.
+    unawaited(ref.read(voiceSaleRepositoryProvider).warmUp());
 
     state = state.copyWith(phase: VoicePhase.listening);
     try {
@@ -297,7 +323,10 @@ class VoiceController extends Notifier<VoiceSaleState> {
     ({Uint8List bytes, String mime}) recording,
     int session,
   ) async {
-    state = state.copyWith(phase: VoicePhase.thinking);
+    state = state.copyWith(
+      phase: VoicePhase.thinking,
+      background: state.background,
+    );
 
     final result = await ref
         .read(voiceSaleRepositoryProvider)
@@ -322,7 +351,10 @@ class VoiceController extends Notifier<VoiceSaleState> {
     final text = transcript.trim();
     if (text.isEmpty) return;
     final session = ++_session; // supersede any in-flight recording/parse
-    state = state.copyWith(phase: VoicePhase.thinking);
+    state = state.copyWith(
+      phase: VoicePhase.thinking,
+      background: state.background,
+    );
 
     final result = await ref
         .read(voiceSaleRepositoryProvider)
@@ -355,6 +387,9 @@ class VoiceController extends Notifier<VoiceSaleState> {
     required bool canRetryAudio,
     String? fallbackHeardText,
   }) {
+    // Captured before the transitions below overwrite it.
+    final wasBackgrounded = state.background;
+
     result.when(
       success: (parsed) {
         final lines = buildVoiceLines(
@@ -367,6 +402,7 @@ class VoiceController extends Notifier<VoiceSaleState> {
           heardText: parsed.heardText ?? fallbackHeardText,
           lines: lines,
           errorMessage: lines.isEmpty ? 'noMatch' : null,
+          background: wasBackgrounded,
           // Deliberately false even for `noMatch`. The upload succeeded and the
           // model gave a real answer -- it just matched nothing in this shop.
           // Re-sending identical bytes would produce the identical answer, so
@@ -380,8 +416,15 @@ class VoiceController extends Notifier<VoiceSaleState> {
         phase: VoicePhase.error,
         errorMessage: f.message,
         canRetryAudio: canRetryAudio,
+        background: wasBackgrounded,
       ),
     );
+
+    // Nobody is looking at the screen -- that was the whole point of letting
+    // them walk away -- so the result has to reach them some other way. The
+    // buzz is what turns [VoiceReadyBanner] from something they must notice
+    // into something that tells them to look.
+    if (wasBackgrounded) ref.read(voiceHapticsProvider).resultReady();
   }
 
   /// Debug-only trace of what the model was confident about versus what
@@ -416,6 +459,35 @@ class VoiceController extends Notifier<VoiceSaleState> {
 
   void removeLine(int index) =>
       state = state.copyWith(lines: removeLineAt(state.lines, index));
+
+  /// Called whenever the sheet goes away, by any route.
+  ///
+  /// A parse still in flight is deliberately NOT cancelled: the shopkeeper has
+  /// already spoken the sale and is now serving the customer, so throwing the
+  /// work away would make them say it all again. The session is left alone
+  /// (cancelling it is what [reset] does, and that is exactly what must not
+  /// happen here) and the result is announced by [VoiceReadyBanner] instead.
+  ///
+  /// Every other phase is a genuine dismissal, so it resets as before.
+  void releaseSheet() {
+    if (state.phase == VoicePhase.thinking) {
+      state = state.copyWith(phase: VoicePhase.thinking, background: true);
+      return;
+    }
+    reset();
+  }
+
+  /// Hands a backgrounded result back to a freshly opened sheet: clears the
+  /// flag so [VoiceReadyBanner] stops offering what is now on screen, without
+  /// disturbing the parsed lines the sheet is about to render.
+  void resumeFromBackground() {
+    if (!state.background) return;
+    state = state.copyWith(
+      phase: state.phase,
+      errorMessage: state.errorMessage,
+      canRetryAudio: state.canRetryAudio,
+    );
+  }
 
   void reset() {
     _capTimer?.cancel();
@@ -505,6 +577,12 @@ class VoiceHaptics {
   void recordingStarted() => _fire(HapticFeedback.mediumImpact);
 
   void recordingStopped() => _fire(HapticFeedback.selectionClick);
+
+  /// A backgrounded parse finished. Heavier than the other two on purpose: the
+  /// phone is likely in a pocket or face-down on the counter while the
+  /// shopkeeper handles the customer, so this one has to be felt rather than
+  /// merely noticed.
+  void resultReady() => _fire(HapticFeedback.heavyImpact);
 
   static void _fire(Future<void> Function() effect) {
     try {

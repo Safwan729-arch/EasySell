@@ -58,6 +58,10 @@ class _FakeAudioRecorder implements AudioRecorderPort {
 /// [VoiceSaleRepository]'s private Supabase client field never needs
 /// constructing -- same trick `voice_review_sheet_test.dart` uses.
 class _FakeVoiceRepo implements VoiceSaleRepository {
+  // Fire-and-forget optimization with no observable effect on parsing.
+  @override
+  Future<void> warmUp() async {}
+
   _FakeVoiceRepo(this._result);
   final Result<VoiceParseResult> _result;
 

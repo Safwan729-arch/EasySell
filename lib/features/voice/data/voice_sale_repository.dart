@@ -34,6 +34,31 @@ class VoiceSaleRepository {
 
   final SupabaseClient _client;
 
+  /// Fire-and-forget nudge that gets `parse-sale` running *before* there is
+  /// anything to send it.
+  ///
+  /// Edge Functions are scaled to zero when idle, so the first call after a
+  /// quiet spell pays a container cold start on top of the model time. Today
+  /// that cost lands entirely after the shopkeeper stops speaking, which is the
+  /// one moment they are actively waiting. Sending a throwaway request when
+  /// recording *starts* moves it into the seconds they spend talking, which
+  /// were dead time anyway.
+  ///
+  /// `{'ping': true}` short-circuits server-side before any Gemini call, so a
+  /// warm-up costs no tokens. Deliberately total: this is pure optimization, so
+  /// every failure -- offline, a deploy that predates the ping branch, a
+  /// timeout -- must be swallowed. Nothing downstream may depend on it, and the
+  /// real [parse] call behaves identically whether or not this ever landed.
+  Future<void> warmUp() async {
+    try {
+      await _client.functions
+          .invoke('parse-sale', body: {'ping': true})
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Intentionally empty -- see the doc comment above.
+    }
+  }
+
   Future<Result<VoiceParseResult>> parse({
     required Uint8List audioBytes,
     required String audioMime,

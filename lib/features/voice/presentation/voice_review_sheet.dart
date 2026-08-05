@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../../shared/extensions/format.dart';
 import '../../cart/domain/cart_math.dart';
@@ -114,11 +115,18 @@ class VoiceReviewSheet extends ConsumerWidget {
               shrinkWrap: true,
               itemCount: state.lines.length,
               separatorBuilder: (_, _) => const Divider(height: 24),
-              itemBuilder: (context, i) => _buildLine(
-                i,
-                state.lines[i],
-                byId,
-                settled: settled(state.lines[i]),
+              // Staggered so the rows cascade in rather than all appearing at
+              // once. The delay is tiny (45ms apart), but after a wait it reads
+              // as the app finding the items one by one instead of having been
+              // stuck and then dumping everything at the last moment.
+              itemBuilder: (context, i) => Entrance(
+                index: i,
+                child: _buildLine(
+                  i,
+                  state.lines[i],
+                  byId,
+                  settled: settled(state.lines[i]),
+                ),
               ),
             ),
           ),

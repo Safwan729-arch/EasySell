@@ -334,6 +334,34 @@
   "voice_hintIdle": "Tap the mic and say what you sold",
   "voice_recording": "Listening…",
   "voice_thinking": "Working it out…",
+  "voice_stageHeard": "Heard you",
+  "@voice_stageHeard": {
+    "description": "First step of the voice-parse progress checklist, shown once the recording has been captured."
+  },
+  "voice_stageUnderstanding": "Understanding what you said",
+  "@voice_stageUnderstanding": {
+    "description": "Second step of the voice-parse progress checklist, while the audio is being transcribed and read."
+  },
+  "voice_stageMatching": "Finding your items",
+  "@voice_stageMatching": {
+    "description": "Final step of the voice-parse progress checklist, while spoken names are matched to shop products."
+  },
+  "voice_thinkingDismissHint": "You can close this — we'll buzz you when it's ready",
+  "@voice_thinkingDismissHint": {
+    "description": "Tells the shopkeeper the sheet can be dismissed while parsing continues in the background."
+  },
+  "voice_bannerReady": "Your voice sale is ready",
+  "@voice_bannerReady": {
+    "description": "Banner shown when a backgrounded voice sale finished parsing successfully."
+  },
+  "voice_bannerFailed": "Your voice sale needs a look",
+  "@voice_bannerFailed": {
+    "description": "Banner shown when a backgrounded voice sale finished with an error."
+  },
+  "voice_bannerAction": "Review",
+  "@voice_bannerAction": {
+    "description": "Call-to-action on the backgrounded voice sale banner; tapping reopens the sheet."
+  },
   "voice_heard": "I heard",
   "voice_recheck": "Re-check",
   "voice_whichOne": "Which one?",

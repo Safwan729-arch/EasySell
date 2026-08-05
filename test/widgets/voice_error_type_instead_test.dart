@@ -37,6 +37,10 @@ class _FakeRecorder implements AudioRecorderPort {
 /// Audio parse fails the way a noisy-room timeout does; the typed text path
 /// then succeeds.
 class _FakeRepo implements VoiceSaleRepository {
+  // Fire-and-forget optimization with no observable effect on parsing.
+  @override
+  Future<void> warmUp() async {}
+
   _FakeRepo(this.text);
   final Result<VoiceParseResult> text;
 

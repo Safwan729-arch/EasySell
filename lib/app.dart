@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/config/theme.dart';
 import 'core/router/app_router.dart';
 import 'core/widgets/offline_banner.dart';
+import 'features/voice/presentation/voice_controller.dart';
+import 'features/voice/presentation/voice_ready_banner.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/providers/connectivity_provider.dart';
 import 'shared/providers/locale_provider.dart';
@@ -59,19 +61,28 @@ class App extends ConsumerWidget {
             maxScaleFactor: 1.0,
             child: Consumer(
               builder: (context, ref, _) {
-                // While offline the banner sits above the routed screen and its
-                // own SafeArea already consumes the status-bar inset, so strip
-                // the top padding from the screen below it to avoid reserving
-                // that gap twice. Scoped to this Consumer so only this subtree
-                // rebuilds when connectivity flips.
+                // Either banner sits above the routed screen and its own
+                // SafeArea already consumes the status-bar inset, so strip the
+                // top padding from the screen below whenever one is showing --
+                // otherwise that gap is reserved twice. Scoped to this Consumer
+                // so only this subtree rebuilds when connectivity or a
+                // backgrounded voice sale flips.
                 final isOnline = ref.watch(isOnlineProvider).value ?? true;
+                final voiceWaiting = ref.watch(
+                  voiceControllerProvider.select((s) => s.hasBackgroundResult),
+                );
                 return Column(
                   children: [
                     const OfflineBanner(),
+                    // Sits with the offline banner rather than inside any one
+                    // screen: a backgrounded voice sale must still be
+                    // reachable after the shopkeeper has navigated away from
+                    // wherever they started it.
+                    const VoiceReadyBanner(),
                     Expanded(
                       child: MediaQuery.removePadding(
                         context: context,
-                        removeTop: !isOnline,
+                        removeTop: !isOnline || voiceWaiting,
                         child: child!,
                       ),
                     ),

@@ -79,7 +79,7 @@ class SpeechEndDetector {
     this.speechMarginDb = 10.0,
     this.minSpeechThresholdDbfs = micSilenceFloorDbfs,
     this.speechOnsetSamples = 2,
-    this.trailingSilenceSamples = 6,
+    this.trailingSilenceSamples = 4,
   });
 
   /// How many opening samples are spent measuring the room.
@@ -99,6 +99,13 @@ class SpeechEndDetector {
   final int speechOnsetSamples;
 
   /// Consecutive below-threshold samples needed, after speech, to end it.
+  ///
+  /// At [micLevelInterval]'s five samples a second the default is 800ms of
+  /// quiet. This is dead time on every single sale -- the shopkeeper has
+  /// finished speaking and is waiting on us -- so it is deliberately near the
+  /// floor of what still spans a natural mid-sentence pause. Below ~600ms the
+  /// gap between "two kilos of rice" and "and one Pepsi" starts cutting the
+  /// second half off, which costs far more than the 200ms it saves.
   final int trailingSilenceSamples;
 
   final List<double> _calibration = <double>[];

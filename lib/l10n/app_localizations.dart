@@ -1886,6 +1886,48 @@ abstract class AppLocalizations {
   /// **'Working it out…'**
   String get voice_thinking;
 
+  /// First step of the voice-parse progress checklist, shown once the recording has been captured.
+  ///
+  /// In en, this message translates to:
+  /// **'Heard you'**
+  String get voice_stageHeard;
+
+  /// Second step of the voice-parse progress checklist, while the audio is being transcribed and read.
+  ///
+  /// In en, this message translates to:
+  /// **'Understanding what you said'**
+  String get voice_stageUnderstanding;
+
+  /// Final step of the voice-parse progress checklist, while spoken names are matched to shop products.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your items'**
+  String get voice_stageMatching;
+
+  /// Tells the shopkeeper the sheet can be dismissed while parsing continues in the background.
+  ///
+  /// In en, this message translates to:
+  /// **'You can close this — we\'ll buzz you when it\'s ready'**
+  String get voice_thinkingDismissHint;
+
+  /// Banner shown when a backgrounded voice sale finished parsing successfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Your voice sale is ready'**
+  String get voice_bannerReady;
+
+  /// Banner shown when a backgrounded voice sale finished with an error.
+  ///
+  /// In en, this message translates to:
+  /// **'Your voice sale needs a look'**
+  String get voice_bannerFailed;
+
+  /// Call-to-action on the backgrounded voice sale banner; tapping reopens the sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get voice_bannerAction;
+
   /// No description provided for @voice_heard.
   ///
   /// In en, this message translates to:

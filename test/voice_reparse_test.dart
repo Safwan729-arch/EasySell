@@ -27,6 +27,10 @@ class _FakeRecorder implements AudioRecorderPort {
 }
 
 class _FakeRepo implements VoiceSaleRepository {
+  // Fire-and-forget optimization with no observable effect on parsing.
+  @override
+  Future<void> warmUp() async {}
+
   _FakeRepo(this.audioResult, this.textResult);
   final Result<VoiceParseResult> audioResult;
   final Result<VoiceParseResult> textResult;

@@ -42,6 +42,33 @@ void main() {
       expect(d.speechThresholdDbfs, isNull);
     });
 
+    test('the default trailing-silence window is 800ms of quiet', () {
+      // Four samples at `micLevelInterval`'s 200ms. This is dead time on every
+      // sale -- the shopkeeper has stopped talking and is waiting on us -- so
+      // it is pinned here rather than left to drift back up.
+      final d = SpeechEndDetector();
+      expect(d.trailingSilenceSamples, 4);
+
+      final phase = _feed(d, [
+        ..._repeat(-40, 5), // calibrate -> threshold -30
+        ..._repeat(-12, 8), // speech
+        ..._repeat(-40, 4), // exactly the trailing window
+      ]);
+      expect(phase, SpeechPhase.ended);
+    });
+
+    test('does not end on a pause shorter than the window', () {
+      // The reason it is not shortened further: a natural mid-sentence gap
+      // ("two kilos of rice ... and one Pepsi") must not cut the sale in half.
+      final d = SpeechEndDetector();
+      final phase = _feed(d, [
+        ..._repeat(-40, 5),
+        ..._repeat(-12, 8),
+        ..._repeat(-40, 3), // 600ms pause -- still mid-sentence
+      ]);
+      expect(phase, SpeechPhase.speaking);
+    });
+
     test('ends the recording after speech followed by trailing silence', () {
       final d = SpeechEndDetector(
         calibrationSamples: 5,

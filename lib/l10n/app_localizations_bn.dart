@@ -1076,6 +1076,28 @@ class AppLocalizationsBn extends AppLocalizations {
   String get voice_thinking => 'বুঝে নিচ্ছি…';
 
   @override
+  String get voice_stageHeard => 'শুনেছি';
+
+  @override
+  String get voice_stageUnderstanding => 'কী বললেন বুঝছি';
+
+  @override
+  String get voice_stageMatching => 'আপনার পণ্য খুঁজছি';
+
+  @override
+  String get voice_thinkingDismissHint =>
+      'এটি বন্ধ করতে পারেন — তৈরি হলে জানিয়ে দেব';
+
+  @override
+  String get voice_bannerReady => 'আপনার ভয়েস বিক্রি তৈরি';
+
+  @override
+  String get voice_bannerFailed => 'ভয়েস বিক্রিটি একবার দেখুন';
+
+  @override
+  String get voice_bannerAction => 'দেখুন';
+
+  @override
   String get voice_heard => 'আমি শুনেছি';
 
   @override

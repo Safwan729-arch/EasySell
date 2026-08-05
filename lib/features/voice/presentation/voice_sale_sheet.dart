@@ -1,12 +1,13 @@
 import 'dart:async' show Timer;
+import 'dart:math' as math;
 
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/motion.dart';
+import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
-import '../../../core/widgets/skeleton.dart';
 import '../../../l10n/app_localizations.dart';
 import 'voice_controller.dart';
 import 'voice_review_sheet.dart';
@@ -16,17 +17,32 @@ import 'voice_transcript_dialog.dart';
 /// `show*Sheet` entry points (`showAddToCartSheet`, `showProductPickerSheet`).
 /// A live recorder must never keep recording once the sheet is gone, so
 /// dismissal by ANY route -- swipe, back button, or the phase reaching
-/// `reviewing` and the review sheet popping itself -- always resets the
-/// controller via `whenComplete` (harmless if already reset: [VoiceController.reset]
-/// is idempotent).
-Future<void> showVoiceSaleSheet(BuildContext context, WidgetRef ref) {
+/// `reviewing` and the review sheet popping itself -- always goes through
+/// [VoiceController.releaseSheet] via `whenComplete`.
+///
+/// `releaseSheet`, not `reset`: dismissing mid-parse now backgrounds the work
+/// instead of cancelling it, so the shopkeeper can serve the customer while the
+/// sale is still being understood. Every other phase still resets exactly as
+/// before (and doing so twice is harmless -- [VoiceController.reset] is
+/// idempotent).
+///
+/// [resume] is set when the sheet is being reopened from [VoiceReadyBanner], so
+/// the already-finished result is claimed rather than announced again.
+Future<void> showVoiceSaleSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  bool resume = false,
+}) {
+  if (resume) ref.read(voiceControllerProvider.notifier).resumeFromBackground();
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => const VoiceSaleSheet(),
-  ).whenComplete(() => ref.read(voiceControllerProvider.notifier).reset());
+  ).whenComplete(
+    () => ref.read(voiceControllerProvider.notifier).releaseSheet(),
+  );
 }
 
 /// Hosts the whole voice-sale flow in one bottom sheet, switching on
@@ -373,24 +389,202 @@ class _AutoStopCountdownState extends State<_AutoStopCountdown> {
   }
 }
 
-class _ThinkingPane extends StatelessWidget {
+/// How long each stage of [_ThinkingPane] is shown before the next takes over.
+///
+/// Paced on a timer, NOT on server progress. `parse-sale` transcribes and parses
+/// in a single Gemini call and reports nothing until it returns, so there is no
+/// real intermediate signal to display -- these are honest *labels* for what is
+/// happening, on a plausible schedule, not measurements. They exist because one
+/// unbroken blank wait reads as "frozen" while a sequence that visibly moves
+/// reads as "working"; the seconds are identical either way.
+///
+/// The last stage has no duration: it stays until the result lands, however
+/// long that takes, rather than advancing into a lie about being nearly done.
+const _thinkingStageDurations = <Duration>[
+  Duration(milliseconds: 900),
+  Duration(milliseconds: 1500),
+];
+
+/// Ceiling for the progress bar's estimate. It creeps toward this and waits: a
+/// bar that reaches 100% before the answer arrives is worse than no bar at all.
+const _thinkingProgressCeiling = 0.92;
+
+/// Time constant for that creep -- progress is `1 - e^(-t/tau)`, so it is quick
+/// early (where most parses finish) and slows down the longer it runs, which is
+/// also roughly how the real wait is distributed.
+const _thinkingProgressTau = Duration(milliseconds: 2600);
+
+/// The wait between "stop talking" and "cart appears".
+///
+/// Replaces two static grey skeleton cards. Those told the shopkeeper nothing:
+/// a frozen screen and a broken screen look the same, which is what made a
+/// three-second wait feel like a hang. This shows named stages that advance, a
+/// bar that moves, and -- most importantly -- says out loud that they can close
+/// the sheet and get on with serving the customer.
+class _ThinkingPane extends StatefulWidget {
   const _ThinkingPane();
+
+  @override
+  State<_ThinkingPane> createState() => _ThinkingPaneState();
+}
+
+class _ThinkingPaneState extends State<_ThinkingPane> {
+  /// Same `clock.now()` discipline as [_AutoStopCountdown]: identical to
+  /// `DateTime.now()` in production, but advances with virtual time under
+  /// `fake_async` so this pane is testable without real waiting.
+  final DateTime _startedAt = clock.now();
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    // 100ms keeps the bar visibly smooth without rebuilding a subtree that is
+    // only ever a few Texts and a progress bar.
+    _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  /// Index of the stage the elapsed time has reached, saturating at the last.
+  int _stageIndex(Duration elapsed) {
+    var remaining = elapsed;
+    for (var i = 0; i < _thinkingStageDurations.length; i++) {
+      if (remaining < _thinkingStageDurations[i]) return i;
+      remaining -= _thinkingStageDurations[i];
+    }
+    return _thinkingStageDurations.length;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final elapsed = clock.now().difference(_startedAt);
+    final stage = _stageIndex(elapsed);
+    final labels = [
+      l10n.voice_stageHeard,
+      l10n.voice_stageUnderstanding,
+      l10n.voice_stageMatching,
+    ];
+
+    final progress =
+        (1 -
+            math.exp(
+              -elapsed.inMilliseconds / _thinkingProgressTau.inMilliseconds,
+            )) *
+        _thinkingProgressCeiling;
+
     return _PanePadding(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.voice_thinking, style: theme.textTheme.titleMedium),
+          for (var i = 0; i < labels.length; i++) ...[
+            _ThinkingStageRow(
+              label: labels[i],
+              done: i < stage,
+              active: i == stage,
+            ),
+            if (i < labels.length - 1) const SizedBox(height: 10),
+          ],
           const SizedBox(height: 20),
-          const Skeleton.card(height: 56),
-          const SizedBox(height: 12),
-          const Skeleton.card(height: 56),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: AppMotion.reduced(context) ? null : progress,
+              minHeight: 6,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // The whole point of backgrounding the parse: without this line the
+          // shopkeeper has no way to know that closing the sheet is safe, and
+          // would keep standing there watching it.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.touch_app_outlined,
+                size: 15,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  l10n.voice_thinkingDismissHint,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// One line of [_ThinkingPane]'s checklist: a tick once passed, a live spinner
+/// while current, and dimmed until reached.
+class _ThinkingStageRow extends StatelessWidget {
+  const _ThinkingStageRow({
+    required this.label,
+    required this.done,
+    required this.active,
+  });
+
+  final String label;
+  final bool done;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<AppColors>()!;
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    final Widget leading = done
+        ? Icon(Icons.check_circle, size: 18, color: colors.positive)
+        : active
+        ? SizedBox(
+            width: 18,
+            height: 18,
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          )
+        : Icon(
+            Icons.circle_outlined,
+            size: 18,
+            color: muted.withValues(alpha: 0.4),
+          );
+
+    return Row(
+      children: [
+        leading,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: done || active ? theme.colorScheme.onSurface : muted,
+              fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

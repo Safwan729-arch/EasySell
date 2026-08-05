@@ -103,6 +103,10 @@ List<double> _sentenceThenSilence() => [
 /// records the last audio it was called with, for tests that need to assert
 /// what was actually sent to `parse-sale`.
 class _FakeVoiceRepo implements VoiceSaleRepository {
+  // Fire-and-forget optimization with no observable effect on parsing.
+  @override
+  Future<void> warmUp() async {}
+
   _FakeVoiceRepo(this._result, {Result<VoiceParseResult>? transcriptResult})
     : _transcriptResult = transcriptResult ?? _result;
   final Result<VoiceParseResult> _result;
@@ -139,6 +143,10 @@ class _FakeVoiceRepo implements VoiceSaleRepository {
 /// distinguished from a first attempt. Counts audio calls to prove the retry
 /// went over the wire rather than being served from stale state.
 class _RetryVoiceRepo implements VoiceSaleRepository {
+  // Fire-and-forget optimization with no observable effect on parsing.
+  @override
+  Future<void> warmUp() async {}
+
   _RetryVoiceRepo(this._first, this._rest);
 
   final Result<VoiceParseResult> _first;
@@ -169,6 +177,10 @@ class _RetryVoiceRepo implements VoiceSaleRepository {
 /// is invoked, so a test can pump the event loop until the controller has
 /// actually reached the in-flight call (not merely scheduled it).
 class _PendingVoiceRepo implements VoiceSaleRepository {
+  // Fire-and-forget optimization with no observable effect on parsing.
+  @override
+  Future<void> warmUp() async {}
+
   final completer = Completer<Result<VoiceParseResult>>();
   bool called = false;
 

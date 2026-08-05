@@ -316,14 +316,29 @@ Deno.serve(async (req) => {
   let audioBase64: unknown;
   let audioMime: unknown;
   let candidates: unknown;
+  let ping: unknown;
   try {
     const body = await req.json();
     transcript = body.transcript;
     audioBase64 = body.audio_base64;
     audioMime = body.audio_mime;
     candidates = body.candidates;
+    ping = body.ping;
   } catch (_e) {
     return json({ error: "invalid JSON body" }, 400);
+  }
+
+  // Warm-up handshake. The app fires this the moment recording starts so the
+  // container is already booted by the time real audio arrives -- the cold
+  // start then overlaps the seconds the shopkeeper spends speaking instead of
+  // landing after it. Answered before every validation branch below and before
+  // any Gemini call, so a ping costs no tokens and needs no candidates.
+  //
+  // A deploy that predates this branch simply 400s on the ping; the client
+  // swallows that, and the container is warm either way -- which is the entire
+  // point. See `VoiceSaleRepository.warmUp`.
+  if (ping === true) {
+    return json({ ok: true, warm: true });
   }
 
   if (!Array.isArray(candidates)) {
