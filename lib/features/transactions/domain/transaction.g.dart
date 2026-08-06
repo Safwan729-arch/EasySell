@@ -14,6 +14,7 @@ _Transaction _$TransactionFromJson(Map<String, dynamic> json) => _Transaction(
   quantity: (json['quantity'] as num).toDouble(),
   buyingPrice: (json['buying_price'] as num?)?.toDouble() ?? 0,
   sellingPrice: (json['selling_price'] as num?)?.toDouble() ?? 0,
+  discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0,
   source: json['source'] as String?,
   saleGroupId: json['sale_group_id'] as String?,
   createdAt: json['created_at'] == null
@@ -30,6 +31,7 @@ Map<String, dynamic> _$TransactionToJson(_Transaction instance) =>
       'quantity': instance.quantity,
       'buying_price': instance.buyingPrice,
       'selling_price': instance.sellingPrice,
+      'discount_amount': instance.discountAmount,
       'source': instance.source,
       'sale_group_id': instance.saleGroupId,
       'created_at': instance.createdAt?.toIso8601String(),

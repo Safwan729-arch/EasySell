@@ -18,6 +18,12 @@ abstract class Transaction with _$Transaction {
     required double quantity, // decimal: 12 pcs OR 2.5 kg
     @Default(0) double buyingPrice,
     @Default(0) double sellingPrice,
+    /// This line's share of a cart-level discount, allocated by
+    /// `record_sale_cart`. Summing it over a `saleGroupId` reproduces the
+    /// discount the shopkeeper typed, exactly -- the split floors and then
+    /// hands the remainder out a paisa at a time, so nothing is lost to
+    /// rounding and the receipt total never needs storing separately.
+    @Default(0) double discountAmount,
     String? source, // 'voice' | 'image' | 'manual'
     String? saleGroupId, // shared by every line from one cart checkout
     DateTime? createdAt,
@@ -26,7 +32,7 @@ abstract class Transaction with _$Transaction {
   factory Transaction.fromJson(Map<String, dynamic> json) =>
       _$TransactionFromJson(json);
 
-  double get revenue => sellingPrice * quantity;
+  double get revenue => sellingPrice * quantity - discountAmount;
   double get cost => buyingPrice * quantity;
   double get profit => revenue - cost;
 }
