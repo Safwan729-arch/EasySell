@@ -615,6 +615,29 @@ class AppLocalizationsBn extends AppLocalizations {
   String get cart_checkoutFailed => 'চেকআউট ব্যর্থ। আবার চেষ্টা করুন।';
 
   @override
+  String get cart_addDiscount => 'ছাড় দিন';
+
+  @override
+  String get cart_discount => 'ছাড়';
+
+  @override
+  String get cart_discountTitle => 'ছাড়';
+
+  @override
+  String get cart_discountAmount => 'ছাড়ের পরিমাণ';
+
+  @override
+  String get cart_discountRemove => 'ছাড় সরান';
+
+  @override
+  String cart_discountBelowCost(String amount) {
+    return 'এই বিক্রিতে $amount লোকসান হবে';
+  }
+
+  @override
+  String get cart_apply => 'প্রয়োগ করুন';
+
+  @override
   String cart_pricePerUnit(String price, String unit) {
     return '$price / $unit';
   }

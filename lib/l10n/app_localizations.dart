@@ -1100,6 +1100,48 @@ abstract class AppLocalizations {
   /// **'Checkout failed. Please try again.'**
   String get cart_checkoutFailed;
 
+  /// No description provided for @cart_addDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Add discount'**
+  String get cart_addDiscount;
+
+  /// No description provided for @cart_discount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get cart_discount;
+
+  /// No description provided for @cart_discountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get cart_discountTitle;
+
+  /// No description provided for @cart_discountAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount off'**
+  String get cart_discountAmount;
+
+  /// No description provided for @cart_discountRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove discount'**
+  String get cart_discountRemove;
+
+  /// No description provided for @cart_discountBelowCost.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'d lose {amount} on this sale'**
+  String cart_discountBelowCost(String amount);
+
+  /// No description provided for @cart_apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get cart_apply;
+
   /// No description provided for @cart_pricePerUnit.
   ///
   /// In en, this message translates to:

@@ -620,6 +620,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cart_checkoutFailed => 'Checkout failed. Please try again.';
 
   @override
+  String get cart_addDiscount => 'Add discount';
+
+  @override
+  String get cart_discount => 'Discount';
+
+  @override
+  String get cart_discountTitle => 'Discount';
+
+  @override
+  String get cart_discountAmount => 'Amount off';
+
+  @override
+  String get cart_discountRemove => 'Remove discount';
+
+  @override
+  String cart_discountBelowCost(String amount) {
+    return 'You\'d lose $amount on this sale';
+  }
+
+  @override
+  String get cart_apply => 'Apply';
+
+  @override
   String cart_pricePerUnit(String price, String unit) {
     return '$price / $unit';
   }
