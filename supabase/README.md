@@ -267,3 +267,32 @@ Expected output: `OK:` notices ending with **`ALL CART CHECKS PASSED`**. Any `FA
 - `get_dashboard_summary.units_sold` still casts the summed quantity to `bigint`,
   so it rounds decimal (weight/volume) sales and mixes unit types. This is a known
   analytics limitation to revisit; it is intentionally out of scope for `0003`.
+
+## 0009 — cart discount
+
+Apply `migrations/0009_cart_discount.sql` in the Dashboard SQL editor, then run
+these in the same editor. `record_sale_cart` MUST be applied before the app
+build that sends `p_discount` — a new build against the old function fails
+EVERY sale, not just discounted ones.
+
+1. Exactly one function, five arguments:
+   `select pg_get_function_identity_arguments(oid) from pg_proc where proname = 'record_sale_cart';`
+   Expect ONE row ending `, p_discount numeric`.
+
+2. Old sales unaffected:
+   `select count(*) from transactions where discount_amount <> 0;`
+   Expect 0 before any discounted sale is made.
+
+3. **The paisa case.** In the app, cart three items whose line totals do not
+   divide evenly (e.g. 100 / 100 / 100) and discount 7. Then:
+   `select sum(discount_amount) from transactions where sale_group_id = '<id>';`
+   Expect exactly **7.00**, not 6.99.
+
+4. Over-discount is rejected: discount more than the bill in the app.
+   Expect the error `Discount exceeds total`, and no stock movement.
+
+5. Credit sale: check out on credit with a discount, then
+   `select amount from customer_ledger where sale_group_id = '<id>';`
+   Expect the DISCOUNTED total.
+
+6. Dashboard revenue drops by the discount, and `cost` does NOT change.
