@@ -111,6 +111,30 @@ line, which is why step 5 can hand it out a paisa at a time and always
 terminate. The headroom check in step 5 covers the only case where the largest
 line cannot absorb it: a discount equal to the entire subtotal.
 
+**The PL/pgSQL locals must be untyped `numeric`, and that is load-bearing.**
+Declaring them `numeric(12,2)` — the obvious, tidy-looking choice — silently
+undoes everything above, because **PL/pgSQL coerces a value to the declared
+typmod on assignment**. The remainder loop then rounds 0.005 of headroom up to
+0.01, the line exceeds its own value, and the `transactions_discount_within_line`
+constraint added by this very migration rejects a legal sale. Review caught
+this; it was not caught by reading the SQL for intent, only by tracing a
+fractional-quantity cart through it by hand.
+
+**Consequently the maximum discount is `floor(subtotal × 100) / 100`, not the
+subtotal.** A cart's true subtotal can carry up to five decimals
+(`numeric(10,2)` price × `numeric(10,3)` quantity), and `discount_amount` is
+`numeric(10,2)` — so a "100% discount" on such a cart leaves a sub-paisa
+remainder that simply cannot be discounted away. **Dart must clamp to the same
+floored figure**, or the UI offers a discount the database refuses and an
+ordinary checkout fails.
+
+**Anywhere a rounded value is stored, the guard must test the rounded value
+too.** The credit-ledger insert tests `> 0` against what it stores, not against
+the exact remainder: `customer_ledger.amount` is `numeric(12,2)` with
+`check (amount > 0)`, so testing an exact 0.00499 and then storing 0.00 fails
+the constraint and rolls back the entire checkout. Same class of bug as the
+typmod one — a value silently changing shape between the test and the write.
+
 Step 5 is also why the sum is exact. Three ৳100 lines with ৳7 off each compute
 to 2.3333 → ৳2.33, summing to ৳6.99; the stray paisa lands on the biggest line,
 where it is invisible. On the *smallest* line it would be visible and look like

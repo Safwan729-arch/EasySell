@@ -178,6 +178,26 @@ analyzer will name any mismatch.
 
 This task ships a file, not a database change. There is no local Postgres, so nothing here is testable by `flutter test` — the verification is the checklist in Step 2, which the user runs.
 
+> **⚠️ The SQL below is the version this plan was WRITTEN with, and it is wrong
+> in four ways that review caught.** `supabase/migrations/0009_cart_discount.sql`
+> as committed is the source of truth; read that, not this. The defects, kept
+> here because the reasoning is worth more than the code:
+>
+> 1. `v_share` / `v_left` / `v_assigned` / `v_subtotal` were declared
+>    `numeric(12,2)`. **PL/pgSQL coerces to the declared typmod on assignment**,
+>    so the remainder loop rounded sub-paisa headroom UP and violated the
+>    `transactions_discount_within_line` constraint the same migration adds —
+>    defeating the entire point of flooring. The locals must be plain `numeric`.
+> 2. The rounded `v_subtotal` made the over-discount guard admit a discount
+>    larger than the true bill. It compares against
+>    `floor(v_subtotal * 100) / 100` now.
+> 3. `customer_ledger.amount` has `check (amount > 0)`, so a 100%-discounted
+>    **credit** sale failed the ledger insert and rolled back the whole
+>    checkout, stock included. The insert is guarded, and the guard tests the
+>    same *rounded* value it stores — testing the exact remainder while storing
+>    a rounded one reintroduces the identical failure.
+> 4. A negative `p_discount` was silently ignored instead of raising.
+
 - [ ] **Step 1: Write the migration**
 
 Create `supabase/migrations/0009_cart_discount.sql`:
@@ -701,6 +721,28 @@ void main() {
     test('an empty cart takes no discount', () {
       expect(clampDiscount(entered: 60, subtotal: 0), 0);
     });
+
+    // The next three exist because `record_sale_cart` REJECTS anything above
+    // floor(subtotal * 100) / 100. Clamping to the raw subtotal would let the
+    // UI offer a discount the database then refuses, failing the checkout.
+    test('caps at the floored bill, not the raw one', () {
+      // 45.00 x 2.501 = 112.545; the payable maximum is 112.54.
+      expect(clampDiscount(entered: 112.545, subtotal: 112.545), 112.54);
+    });
+
+    test('floors the entered amount to whole paisa', () {
+      // discount_amount is numeric(10,2); a third decimal cannot be stored,
+      // so the sum would not match what was asked for.
+      expect(clampDiscount(entered: 7.005, subtotal: 200), 7);
+    });
+
+    test('binary floating point does not eat a paisa', () {
+      // 0.29 * 100 is 28.999999999999996 in IEEE 754. A naive floor returns
+      // 0.28 and quietly short-changes the customer on a very ordinary amount.
+      expect(clampDiscount(entered: 0.29, subtotal: 100), 0.29);
+      expect(clampDiscount(entered: 1.15, subtotal: 100), 1.15);
+      expect(clampDiscount(entered: 8.07, subtotal: 100), 8.07);
+    });
   });
 
   group('cartCost', () {
@@ -746,6 +788,14 @@ Create `lib/features/cart/domain/discount_math.dart`:
 ```dart
 import 'cart_line.dart';
 
+/// Rounds down to whole paisa.
+///
+/// The epsilon is not paranoia. `0.29 * 100` is 28.999999999999996 in IEEE
+/// 754, so a bare `.floor()` returns 0.28 and short-changes the customer on a
+/// perfectly ordinary amount. Nudging up by a billionth clears the
+/// representation error without ever promoting a genuine 0.005 to 0.01.
+double _floorPaisa(double v) => (v * 100 + 1e-9).floor() / 100;
+
 /// The discount actually chargeable against a bill of [subtotal].
 ///
 /// Clamping is not cosmetic: a discount is entered against one cart and the
@@ -753,9 +803,19 @@ import 'cart_line.dart';
 /// entered figure and display a smaller one, the controller stores the clamped
 /// value -- a gap between the number on screen and the number sent to the
 /// database is where money bugs live.
+///
+/// The cap is the FLOORED subtotal, not the raw one, because `record_sale_cart`
+/// raises `Discount exceeds total` above `floor(subtotal * 100) / 100`. A cart
+/// can carry a fractional subtotal (`selling_price numeric(10,2)` times
+/// `quantity numeric(10,3)`), so clamping to the raw value would let the UI
+/// offer a discount the database then refuses -- turning a legal sale into a
+/// failed checkout. The entered amount is floored for the same reason:
+/// `discount_amount` is `numeric(10,2)` and cannot store a third decimal.
 double clampDiscount({required double entered, required double subtotal}) {
   if (entered <= 0 || subtotal <= 0) return 0;
-  return entered > subtotal ? subtotal : entered;
+  final cap = _floorPaisa(subtotal);
+  final wanted = _floorPaisa(entered);
+  return wanted > cap ? cap : wanted;
 }
 
 /// What the staged cart cost the shop -- buying price x quantity, summed.
