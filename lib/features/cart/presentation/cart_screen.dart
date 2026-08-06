@@ -14,6 +14,8 @@ import '../domain/cart_line.dart';
 import '../domain/cart_math.dart';
 import 'cart_checkout_controller.dart';
 import 'cart_controller.dart';
+import 'cart_discount_controller.dart';
+import 'discount_sheet.dart';
 import 'payment_method_controller.dart';
 
 /// Full-screen cart review + checkout. This IS the review-before-commit step
@@ -163,7 +165,7 @@ class CartScreen extends ConsumerWidget {
       bottomNavigationBar: lines.isEmpty
           ? null
           : _CheckoutBar(
-              total: cartTotal(lines),
+              total: cartTotal(lines) - ref.watch(cartDiscountControllerProvider),
               itemCount: lines.length,
               currency: currency,
               isLoading: checkoutState.isLoading,
@@ -468,6 +470,7 @@ class _CheckoutBar extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final l10n = context.l10n;
     final selection = ref.watch(paymentMethodControllerProvider);
+    final discount = ref.watch(cartDiscountControllerProvider);
     final notifier = ref.read(paymentMethodControllerProvider.notifier);
     final isCredit = selection.method == PaymentMethod.credit;
     final customer = selection.customer;
@@ -527,6 +530,63 @@ class _CheckoutBar extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 14),
+              if (discount > 0) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.common_subtotal,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      Money.format(total + discount, currencyCode: currency),
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.cart_discount,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '−${Money.format(discount, currencyCode: currency)}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    IconButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => ref
+                              .read(cartDiscountControllerProvider.notifier)
+                              .clear(),
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: l10n.cart_discountRemove,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+              ] else ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () => showDiscountSheet(context),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(l10n.cart_addDiscount),
+                  ),
+                ),
+              ],
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
