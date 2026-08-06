@@ -194,6 +194,7 @@
   "cart_discountRemove": "Remove discount",
   "cart_discountBelowCost": "You'd lose {amount} on this sale",
   "@cart_discountBelowCost": { "placeholders": { "amount": { "type": "String" } } },
+  "cart_discountInvalid": "Enter a valid amount",
   "cart_apply": "Apply",
   "cart_pricePerUnit": "{price} / {unit}",
   "@cart_pricePerUnit": { "placeholders": { "price": { "type": "String" }, "unit": { "type": "String" } } },

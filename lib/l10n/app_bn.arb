@@ -194,6 +194,7 @@
   "cart_discountRemove": "ছাড় সরান",
   "cart_discountBelowCost": "এই বিক্রিতে {amount} লোকসান হবে",
   "@cart_discountBelowCost": { "placeholders": { "amount": { "type": "String" } } },
+  "cart_discountInvalid": "সঠিক পরিমাণ লিখুন",
   "cart_apply": "প্রয়োগ করুন",
   "cart_pricePerUnit": "{price} / {unit}",
   "@cart_pricePerUnit": { "placeholders": { "price": { "type": "String" }, "unit": { "type": "String" } } },

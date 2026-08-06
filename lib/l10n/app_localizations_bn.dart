@@ -635,6 +635,9 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get cart_discountInvalid => 'সঠিক পরিমাণ লিখুন';
+
+  @override
   String get cart_apply => 'প্রয়োগ করুন';
 
   @override

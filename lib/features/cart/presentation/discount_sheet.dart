@@ -10,6 +10,15 @@ import '../domain/discount_math.dart';
 import 'cart_controller.dart';
 import 'cart_discount_controller.dart';
 
+/// Seeds the field with a plain, re-parseable amount: "60", not "60.0".
+///
+/// Deliberately NOT `Qty.format`/`Money.format` -- those localise digits and
+/// add grouping separators, so in Bengali the field would seed with text that
+/// `double.tryParse` cannot read back, silently zeroing the discount the
+/// moment the shopkeeper pressed Apply.
+String _seedText(double v) =>
+    v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
 /// Enters a flat amount off the whole cart. Mirrors `showAddToCartSheet`'s
 /// wrapper so the discount step feels like the rest of the cart flow.
 Future<void> showDiscountSheet(BuildContext context) {
@@ -36,7 +45,7 @@ class _DiscountSheetState extends ConsumerState<_DiscountSheet> {
   void initState() {
     super.initState();
     final current = ref.read(cartDiscountControllerProvider);
-    _field = TextEditingController(text: current > 0 ? '$current' : '');
+    _field = TextEditingController(text: current > 0 ? _seedText(current) : '');
     _field.addListener(() => setState(() {}));
   }
 
@@ -47,6 +56,15 @@ class _DiscountSheetState extends ConsumerState<_DiscountSheet> {
   }
 
   double get _typed => double.tryParse(_field.text.trim()) ?? 0;
+
+  /// Non-empty text that [double.tryParse] cannot read back (e.g. a
+  /// fat-fingered "1.2.3" -- the input formatter allows a second "." to be
+  /// typed). Distinct from an empty field, which is a legitimate way to clear
+  /// an existing discount and must keep working.
+  bool get _isInvalid {
+    final t = _field.text.trim();
+    return t.isNotEmpty && double.tryParse(t) == null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +123,27 @@ class _DiscountSheetState extends ConsumerState<_DiscountSheet> {
               border: const OutlineInputBorder(),
             ),
           ),
-          if (loss > 0) ...[
+          if (_isInvalid) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: scheme.error,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    l10n.cart_discountInvalid,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else if (loss > 0) ...[
             const SizedBox(height: 10),
             Row(
               children: [
@@ -140,14 +178,18 @@ class _DiscountSheetState extends ConsumerState<_DiscountSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  // Never disabled by the warning above: selling below cost to
-                  // clear stock is a deliberate act, not a mistake.
-                  onPressed: () {
-                    ref
-                        .read(cartDiscountControllerProvider.notifier)
-                        .setAmount(_typed);
-                    Navigator.of(context).pop();
-                  },
+                  // Disabled ONLY when the text can't be parsed at all --
+                  // never by the below-cost warning above. Selling below cost
+                  // to clear stock is a deliberate act, not a mistake; an
+                  // unparseable amount is not an act at all.
+                  onPressed: _isInvalid
+                      ? null
+                      : () {
+                          ref
+                              .read(cartDiscountControllerProvider.notifier)
+                              .setAmount(_typed);
+                          Navigator.of(context).pop();
+                        },
                   child: Text(l10n.cart_apply),
                 ),
               ),

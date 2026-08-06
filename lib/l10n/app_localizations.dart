@@ -1136,6 +1136,12 @@ abstract class AppLocalizations {
   /// **'You\'d lose {amount} on this sale'**
   String cart_discountBelowCost(String amount);
 
+  /// No description provided for @cart_discountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount'**
+  String get cart_discountInvalid;
+
   /// No description provided for @cart_apply.
   ///
   /// In en, this message translates to:

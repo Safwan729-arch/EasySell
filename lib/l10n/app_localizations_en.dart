@@ -640,6 +640,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get cart_discountInvalid => 'Enter a valid amount';
+
+  @override
   String get cart_apply => 'Apply';
 
   @override
