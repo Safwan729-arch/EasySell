@@ -373,6 +373,31 @@ requires holding two tasks at once.
    `115.02099`, not `115.02999`) and this document claiming ties break by
    insertion order when the SQL orders by a random uuid.
 
+### What a whole-branch review caught that nine task reviews did not
+
+Each task was reviewed in isolation and passed. Reviewing the branch as one
+thing found two Criticals, both of which live in the *gaps* between tasks:
+
+1. **The success snackbar reported the gross total.** Task 8 converted the
+   checkout bar to net and Task 5 converted the RPC, but `_checkout`'s own local
+   `total` was a third copy nobody's task owned. Every discounted sale confirmed
+   the wrong amount — and on credit, the toast misstated the debt at the moment
+   it was created. Fixed by passing the **gross** into `_CheckoutBar` and
+   deriving the net once, so there is no longer a variable whose meaning depends
+   on where you read it.
+2. **Dart and Postgres could disagree on the subtotal.** `transactions.quantity`
+   is `numeric(10,3)` and rounds on insert; `clampCartQuantity` did not round at
+   all. A quantity of `0.1234` gave Dart a subtotal of ৳123.40 and the database
+   ৳123.00 — so a near-total discount the app accepted was rejected by the RPC
+   and the whole checkout failed, silently and repeatably.
+
+The same pass showed the maximum discount must be **`sum(floor(line))`, not
+`floor(sum(lines))`**. On a cart of two ৳112.545 lines the two differ by a
+paisa, and the floor-of-sum version permitted a discount the split could not
+actually place — quietly falsifying §6's "the sum is exact". Both languages now
+use the per-line form; agreement was verified across 200,000 generated carts in
+exact integer-paisa arithmetic rather than by inspection.
+
 ### Still outstanding
 
 **The migration has never been executed.** Every claim about its behaviour in
@@ -381,3 +406,37 @@ checklist, including the paisa case (three ৳100 lines, ৳7 off, `sum` must be
 exactly 7.00) and the fractional-quantity credit sale. Apply the migration
 **before** installing a build that sends `p_discount` — a new build against the
 old function fails *every* sale, not only discounted ones.
+
+### Known follow-ups, deliberately not fixed on this branch
+
+Recorded so they are decisions rather than surprises.
+
+1. **Sale detail shows the line's share, not the receipt's discount.** §8 says
+   "the group's discount"; `SaleDetailScreen` renders a single `Transaction` and
+   gates on that row's `discountAmount`. On a 3-line receipt with ৳7 off, the
+   detail reads `Discount −৳2.33` and **the ৳7 the shopkeeper typed appears
+   nowhere in History**. Every screen is internally consistent and no money is
+   wrong — the stated user need in §2 simply is not met for multi-line receipts,
+   which are the only kind the cart exists to make. Fixing it means showing the
+   receipt-level figure on the expanded receipt tile in `history_screen.dart`.
+2. **The voice path stages an unrounded quantity.** `voice_review_sheet.dart`
+   calls `cart.addOrIncrement` with the quantity straight from Member B's JSON,
+   bypassing `clampCartQuantity`. It is the one remaining live path where Dart's
+   cap can exceed the database's — a model returning `2.5004` for a kg item
+   reproduces the failure described above. Pre-existing, but the discount
+   feature is what turns it into a failed checkout. Scan is unaffected: it goes
+   through `showAddToCartSheet`.
+3. **`record_sale_cart`'s over-discount exception prints the raw subtotal, not
+   the per-line-floored maximum it compared against** — so the message can read
+   as self-contradictory. Unreachable from the app while Dart clamps to the same
+   maximum; the probe checklist documents it.
+4. **Raw `PostgrestException.message` reaches the shopkeeper**
+   (`transaction_repository.dart`), against CLAUDE.md §6's "never raw Postgres
+   errors". Pre-existing and consistent with `Insufficient stock: have 3,
+   need 5`, so changing it is a separate, app-wide decision.
+5. **Unrelated, but found while tracing and worth knowing: a Bengali-only bug in
+   the add-to-cart quantity field.** It snaps its text back through
+   `Qty.format`, which *localises digits* — so in Bengali the field becomes
+   `০.১২৩`, `double.tryParse` returns null on the next edit, and the quantity
+   zeroes. This is precisely the trap `discount_sheet.dart` documents avoiding,
+   already present in the primary locale.
