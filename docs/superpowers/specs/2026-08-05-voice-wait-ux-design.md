@@ -5,8 +5,13 @@
 **Scope:** `lib/features/voice/**`, `lib/app.dart`, `supabase/functions/parse-sale/index.ts`
 **Shipped as:** commit `53ee72b` on `feat/voice-wait-ux`, then two follow-up
 fixes to the backgrounding half of it — `96830d2` (§8) and `e6e672d` (§9)
-**Related:** [2026-07-27-voice-noise-latency-design](2026-07-27-voice-noise-latency-design.md)
-(fixed the 30s *hang*; this one addresses the normal-case *wait*)
+**Related:**
+- [[2026-07-27-voice-noise-latency-design]] — fixed the 30s *hang*; this one
+  addresses the normal-case *wait*
+- [[2026-07-22-voice-sale-assistant-design]] — the original "speak a sale →
+  cart" flow this is the waiting room for
+- [[2026-07-12-offline-banner-design]] — the banner in §4 sits beside that one,
+  and §9 is a hazard they share
 
 ---
 
@@ -188,8 +193,9 @@ like the mic was "restoring" the sale.
 **Root cause: the banner has no `Navigator` above it.** `WidgetsApp` calls
 `builder` with the router as its *child*
 (`flutter/lib/src/widgets/app.dart`, `result = Builder(...builder(context,
-routing))`), so anything mounted in `app.dart`'s builder — both banners — is an
-**ancestor** of the router's Navigator. `showModalBottomSheet` resolves
+routing))`), so anything mounted in `app.dart`'s builder — this banner and
+[[2026-07-12-offline-banner-design|the offline one]] — is an **ancestor** of
+the router's Navigator. `showModalBottomSheet` resolves
 `Navigator.of(context)`, which only ever searches upwards, so pushing from the
 banner's context threw *"Navigator operation requested with a context that does
 not include a Navigator"*. The exception surfaced only in the console.

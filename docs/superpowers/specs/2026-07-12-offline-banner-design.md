@@ -3,6 +3,11 @@
 **Date:** 2026-07-12
 **Feature branch:** feat/bengali-localization (or a new branch)
 **Owner:** Member A (Flutter + Supabase)
+**Related:** [[2026-08-05-voice-wait-ux-design]] §9 — the voice banner shares
+this one's mounting point in `app.dart`'s builder, which sits *above* the
+router. Anything there has no `Navigator` ancestor, so **if this banner ever
+becomes tappable it cannot push a route from its own context** — it must go
+through `rootNavigatorKey` the same way. Read §9 before adding a tap here.
 
 ## Problem
 
