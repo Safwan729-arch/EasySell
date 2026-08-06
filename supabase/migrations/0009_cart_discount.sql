@@ -173,6 +173,15 @@ begin
       into v_subtotal
       from transactions where sale_group_id = v_group;
 
+    -- Round ONCE, here, and test/insert that same rounded value. selling_price
+    -- numeric(10,2) * quantity numeric(10,3) can carry up to five decimals, so
+    -- the exact remainder (e.g. 0.00499) can pass `> 0` and still round to
+    -- 0.00 when customer_ledger.amount (numeric(12,2)) stores it -- tripping
+    -- amount's `check (amount > 0)` on a value the guard never actually
+    -- tested. Rounding before the comparison keeps the guard and the stored
+    -- value the same number, so they can never disagree.
+    v_subtotal := round(v_subtotal, 2);
+
     -- A discount equal to the whole bill is legal, which can drive the
     -- discounted total to exactly 0. customer_ledger.amount requires > 0
     -- (0008), so a zero-total ledger insert must be skipped rather than

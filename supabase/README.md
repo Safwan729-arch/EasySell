@@ -319,3 +319,15 @@ EVERY sale, not just discounted ones.
    122.545 or 122.55 on this same cart is **rejected** with `Discount exceeds
    total` — the residual half-paisa (122.545 - 122.54) can never be
    discounted, by design.
+
+9. **Credit sale on a fractional-quantity line, discounted to its floored
+   maximum.** In the app, cart one fractional-quantity line whose subtotal
+   carries more than two decimals (e.g. 45.99/kg x 2.501 kg = 115.02999), and
+   discount it by its floored maximum (115.02). Check out **on credit**.
+   Expect: the checkout **succeeds** — never a rollback — and either writes
+   ONE rounded `customer_ledger` row (`select amount from customer_ledger
+   where sale_group_id = '<id>';`) or none at all, if the discounted
+   remainder rounds to 0.00. Stock must decrement in every case. (A raw
+   remainder as small as 0.00499 previously passed the `> 0` guard but
+   rounded to 0.00 on insert, tripping `customer_ledger`'s
+   `check (amount > 0)` and rolling back the whole checkout.)
