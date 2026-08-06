@@ -8,7 +8,32 @@ import 'cart_line.dart';
 /// representation error without ever promoting a genuine 0.005 to 0.01.
 double _floorPaisa(double v) => (v * 100 + 1e-9).floor() / 100;
 
-/// The discount actually chargeable against a bill of [subtotal].
+/// The largest discount `record_sale_cart` will accept for [lines]: the sum of
+/// each line's FLOORED subtotal, not the floor of the summed subtotal.
+///
+/// The distinction is invisible on ordinary 2-decimal carts, where the two are
+/// identical, and load-bearing on fractional-quantity ones. `discount_amount`
+/// is `numeric(10,2)` and each line's share is floored so it can never exceed
+/// that line's own value (`transactions_discount_within_line`), so the largest
+/// amount the split can actually place is the sum of the per-line floors. Two
+/// lines of 45.00 x 2.501 = 112.545 sum to exactly 225.09 -- which the floor of
+/// the total permits -- but each line can only absorb 112.54, so a paisa would
+/// be left unallocated and `sum(discount_amount)` would come to 225.08. Capping
+/// at 225.08 instead makes the maximum exactly allocatable by construction, so
+/// "the entered discount equals the sum of the stored shares" becomes true
+/// rather than approximately true.
+///
+/// The outer floor only repairs binary drift: each term is already a whole
+/// number of paisa, but summing them in doubles can land a hair above.
+///
+/// This MUST match `record_sale_cart`'s `v_max`. A Dart cap above the SQL one
+/// offers a discount the database refuses, turning an ordinary checkout into a
+/// failure; a Dart cap below it silently short-changes the shopkeeper.
+double maxDiscount(List<CartLine> lines) => _floorPaisa(
+  lines.fold<double>(0, (sum, l) => sum + _floorPaisa(l.subtotal)),
+);
+
+/// The discount actually chargeable against the bill for [lines].
 ///
 /// Clamping is not cosmetic: a discount is entered against one cart and the
 /// shopkeeper can then remove lines from it. Rather than remember the larger
@@ -16,16 +41,17 @@ double _floorPaisa(double v) => (v * 100 + 1e-9).floor() / 100;
 /// value -- a gap between the number on screen and the number sent to the
 /// database is where money bugs live.
 ///
-/// The cap is the FLOORED subtotal, not the raw one, because `record_sale_cart`
-/// raises `Discount exceeds total` above `floor(subtotal * 100) / 100`. A cart
-/// can carry a fractional subtotal (`selling_price numeric(10,2)` times
-/// `quantity numeric(10,3)`), so clamping to the raw value would let the UI
-/// offer a discount the database then refuses -- turning a legal sale into a
-/// failed checkout. The entered amount is floored for the same reason:
-/// `discount_amount` is `numeric(10,2)` and cannot store a third decimal.
-double clampDiscount({required double entered, required double subtotal}) {
-  if (entered <= 0 || subtotal <= 0) return 0;
-  final cap = _floorPaisa(subtotal);
+/// The cap is [maxDiscount], not the raw subtotal, because `record_sale_cart`
+/// raises `Discount exceeds total` above it. The entered amount is floored for
+/// the same reason the cap is: `discount_amount` is `numeric(10,2)` and cannot
+/// store a third decimal.
+double clampDiscount({
+  required double entered,
+  required List<CartLine> lines,
+}) {
+  if (entered <= 0) return 0;
+  final cap = maxDiscount(lines);
+  if (cap <= 0) return 0;
   final wanted = _floorPaisa(entered);
   return wanted > cap ? cap : wanted;
 }

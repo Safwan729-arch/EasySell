@@ -62,6 +62,7 @@ declare
   v_item     record;
   v_product  products;
   v_subtotal numeric;
+  v_max      numeric;
   v_share    numeric;
   v_assigned numeric := 0;
   v_left     numeric;
@@ -119,7 +120,30 @@ begin
     select coalesce(sum(selling_price * quantity), 0) into v_subtotal
       from transactions where sale_group_id = v_group;
 
-    if p_discount > floor(v_subtotal * 100) / 100 then
+    -- The ceiling is the sum of the PER-LINE floored subtotals, not the floor
+    -- of the summed subtotal. Each line's share is floored (see below) and can
+    -- never exceed that line's own value, so the sum of those floors is the
+    -- most the split can actually place -- and capping there makes the maximum
+    -- exactly allocatable by construction.
+    --
+    -- floor(sum) is strictly larger on some carts, and the difference is a
+    -- paisa that goes missing: two lines of 45.00 * 2.501 = 112.545 sum to
+    -- exactly 225.09, which floor(sum) permits, but each line floors to 112.54
+    -- and neither has the headroom for the last paisa -- so the top-up loop
+    -- skips both and sum(discount_amount) comes to 225.08, not the 225.09 that
+    -- was asked for. The invariant "the stored shares sum to the entered
+    -- discount" has to be true, not approximately true: it is the only thing
+    -- that lets a receipt display one honest discount figure without storing
+    -- it a second time.
+    --
+    -- Dart's `maxDiscount` (lib/features/cart/domain/discount_math.dart) is the
+    -- same formula and must change with this one: a Dart cap above this offers
+    -- a discount the database refuses, which fails an ordinary checkout.
+    select coalesce(sum(floor(selling_price * quantity * 100) / 100), 0)
+      into v_max
+      from transactions where sale_group_id = v_group;
+
+    if p_discount > v_max then
       raise exception 'Discount exceeds total: bill is %, discount was %',
         v_subtotal, p_discount;
     end if;

@@ -74,8 +74,23 @@ double stepForUnit(ProductUnit unit) => switch (unit) {
   ProductUnit.ml => 50,
 };
 
+/// Rounds a quantity to whole thousandths, the precision the database keeps.
+///
+/// `transactions.quantity` is `numeric(10,3)` (0003 widened it for kg/litre),
+/// so the INSERT rounds a fourth decimal away no matter what Dart holds. Dart
+/// does not round, so without this the cart can stage a quantity the database
+/// will never store, and every figure derived from it disagrees: at 1000/kg a
+/// typed 0.1234 gives Dart a line subtotal of 123.40 and the database 123.00.
+/// A discount of 123.40 -- which the app happily accepts against its own
+/// subtotal -- then exceeds the bill `record_sale_cart` actually builds, so it
+/// raises `Discount exceeds total` and the whole checkout fails with no stock
+/// moved and nothing on screen explaining why. Rounding here means Dart can
+/// never stage a quantity the database would change underneath it.
+double _round3(double v) => (v * 1000).roundToDouble() / 1000;
+
 /// Clamps a typed or stepped cart quantity to a valid range: never below 0,
-/// never above [remaining] stock, and floored to a whole number when the
+/// never above [remaining] stock, rounded to the `numeric(10,3)` precision the
+/// database stores (see [_round3]), and floored to a whole number when the
 /// product is sold by the piece ([allowsDecimal] false). Used by the
 /// add-to-cart sheet's quantity field and stepper.
 double clampCartQuantity({
@@ -83,7 +98,7 @@ double clampCartQuantity({
   required double remaining,
   required bool allowsDecimal,
 }) {
-  var v = allowsDecimal ? value : value.floorToDouble();
+  var v = allowsDecimal ? _round3(value) : value.floorToDouble();
   if (v < 0) v = 0;
   if (v > remaining) v = remaining;
   return v;

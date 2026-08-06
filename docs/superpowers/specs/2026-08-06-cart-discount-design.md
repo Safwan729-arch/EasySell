@@ -94,10 +94,15 @@ built:
 
 1. `subtotal := sum(selling_price × quantity)`
 2. `p_discount <= 0` → nothing to allocate
-3. `p_discount > subtotal` → `raise exception 'Discount exceeds total'`
+3. `p_discount > max` → `raise exception 'Discount exceeds total'`, where
+   `max := sum(floor(selling_price × quantity × 100) / 100)` — the sum of the
+   **per-line** floors, not the floor of the sum. See below.
 4. each line: **`floor`** to 2dp of `p_discount × line_subtotal / subtotal`
-5. distribute the remainder a paisa at a time, largest line first (ties broken
-   by insertion order), skipping any line already at its own subtotal
+5. distribute the remainder a paisa at a time, largest line first, skipping any
+   line already at its own subtotal. Ties are broken by `id` — a random
+   `gen_random_uuid()`, so the tie-break is arbitrary, not insertion order.
+   That is acceptable only because a tie means the lines are the same size, so
+   whichever absorbs the stray paisa hides it equally well.
 
 **Floor, not round — this is load-bearing.** `quantity` is `numeric(10,3)`
 (0003 widened it for kg/litre), so a line subtotal can carry three decimals:
@@ -121,13 +126,23 @@ constraint added by this very migration rejects a legal sale. Review caught
 this; it was not caught by reading the SQL for intent, only by tracing a
 fractional-quantity cart through it by hand.
 
-**Consequently the maximum discount is `floor(subtotal × 100) / 100`, not the
-subtotal.** A cart's true subtotal can carry up to five decimals
-(`numeric(10,2)` price × `numeric(10,3)` quantity), and `discount_amount` is
-`numeric(10,2)` — so a "100% discount" on such a cart leaves a sub-paisa
-remainder that simply cannot be discounted away. **Dart must clamp to the same
-floored figure**, or the UI offers a discount the database refuses and an
-ordinary checkout fails.
+**Consequently the maximum discount is not the subtotal.** A cart's true
+subtotal can carry up to five decimals (`numeric(10,2)` price ×
+`numeric(10,3)` quantity), and `discount_amount` is `numeric(10,2)` — so a
+"100% discount" on such a cart leaves a sub-paisa remainder that simply cannot
+be discounted away. **Dart must clamp to the same figure**, or the UI offers a
+discount the database refuses and an ordinary checkout fails.
+
+**And that figure is `sum(floor(line))`, not `floor(sum(line))`.** The obvious
+form — floor the whole bill — is wrong on multi-line fractional carts, and
+wrong in the direction that breaks the invariant below. Two lines of
+৳45.00 × 2.501 = ৳112.545 sum to *exactly* ৳225.09, so `floor(sum)` permits the
+lot; but each line's own share floors to ৳112.54 and neither has the headroom
+for the last paisa, so step 5 skips both and `sum(discount_amount)` comes to
+৳225.08 against an entered ৳225.09. Capping at the sum of the per-line floors
+(৳225.08) makes the maximum **exactly allocatable by construction** — every
+paisa it permits is a paisa some line can hold. The two forms are identical on
+ordinary 2-decimal carts, which is why the weaker one survived review.
 
 **Anywhere a rounded value is stored, the guard must test the rounded value
 too.** The credit-ledger insert tests `> 0` against what it stores, not against
@@ -307,6 +322,56 @@ the field with the project's `Money.format`/`Qty.format`, which **localise
 digits and add grouping separators** — in Bengali that produces text
 `double.tryParse` cannot read back, recreating the silent-zeroing bug in one
 locale only. The seed uses a plain ASCII amount, and says so in a comment.
+
+### The whole-branch review found nine more (fixed in one pass)
+
+Task-by-task review passed every task. A review of the **assembled branch**
+still found nine defects, six of them in seams no single task owned. The
+pattern from §12's opening repeats: what survives per-task review is whatever
+requires holding two tasks at once.
+
+1. **The success snackbar reported the gross total.** `_checkout` read
+   `cartTotal(lines)` and never subtracted the discount. On credit this was
+   worse than cosmetic: `customer_ledger.amount` was written as ৳835 while the
+   toast said "Added to Rahim's khata · ৳895", misstating a debt at the moment
+   it was created. The discount must be read *before* `checkout()` — a
+   successful checkout clears it, so reading it afterwards silently reproduces
+   the same gross figure.
+2. **`_CheckoutBar` took the NET total and rebuilt the gross** as
+   `total + discount` while also watching the discount provider itself. The
+   same number in two shapes, one derived from the other in the wrong
+   direction — exactly the ambiguity that produced (1). It now takes the GROSS
+   and derives the net once, internally.
+3. **Dart and Postgres could disagree on the subtotal.** `transactions.quantity`
+   is `numeric(10,3)` so the INSERT rounds; `clampCartQuantity` did not. At
+   ৳1000/kg a typed 0.1234 gave Dart 123.40 and the database 123.00, so a
+   123.40 discount — which the app accepted — made `record_sale_cart` raise
+   `Discount exceeds total` and killed the checkout with nothing on screen
+   explaining why. This was a **pre-existing, pre-discount bug**: the cart
+   already displayed a total the database would not record. The discount only
+   turned a silent wrong number into a hard failure.
+4. **The last paisa could go unallocated** — see the `sum(floor)` vs
+   `floor(sum)` argument in §6. The migration and Dart's cap both changed.
+5. **An applied discount could not be edited.** `showDiscountSheet`'s only call
+   site was inside the `else` of `if (discount > 0)`, so the sheet could only
+   ever open at zero and the seeding logic §12 describes was dead code in
+   production. The amount is now a tap target of its own, kept deliberately
+   separate from the ✕ so a mis-tap costs a re-open, not the discount.
+6. **Two probe steps were unperformable as written.** They told the tester to
+   over-discount "in the app" — which `clampDiscount` makes impossible, so the
+   tester would see a clean checkout and tick a box having tested nothing.
+   Rewritten as direct `select record_sale_cart(...)` calls with an oversized
+   `p_discount`. A checklist that cannot fail is worse than no checklist:
+   `0009` has still never been executed, and this checklist is the entire
+   verification story.
+7. **The new widget tests asserted labels, never amounts** — they would have
+   passed on a bar showing the gross as the total, or the discount unsigned,
+   which is (1) and (2) exactly. Amount assertions added, routed through
+   `Money.format` rather than a hardcoded ৳ so they test arithmetic and not
+   intl's symbol table.
+8. Plus a wrong worked example in the checklist (`45.99 × 2.501` is
+   `115.02099`, not `115.02999`) and this document claiming ties break by
+   insertion order when the SQL orders by a random uuid.
 
 ### Still outstanding
 

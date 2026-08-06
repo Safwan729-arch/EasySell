@@ -632,6 +632,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cart_discountAmount => 'Amount off';
 
   @override
+  String get cart_discountEdit => 'Edit discount';
+
+  @override
   String get cart_discountRemove => 'Remove discount';
 
   @override

@@ -191,6 +191,7 @@
   "cart_discount": "Discount",
   "cart_discountTitle": "Discount",
   "cart_discountAmount": "Amount off",
+  "cart_discountEdit": "Edit discount",
   "cart_discountRemove": "Remove discount",
   "cart_discountBelowCost": "You'd lose {amount} on this sale",
   "@cart_discountBelowCost": { "placeholders": { "amount": { "type": "String" } } },

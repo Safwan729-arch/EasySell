@@ -191,6 +191,7 @@
   "cart_discount": "ছাড়",
   "cart_discountTitle": "ছাড়",
   "cart_discountAmount": "ছাড়ের পরিমাণ",
+  "cart_discountEdit": "ছাড় সম্পাদনা",
   "cart_discountRemove": "ছাড় সরান",
   "cart_discountBelowCost": "এই বিক্রিতে {amount} লোকসান হবে",
   "@cart_discountBelowCost": { "placeholders": { "amount": { "type": "String" } } },

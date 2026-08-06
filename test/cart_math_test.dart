@@ -162,5 +162,39 @@ void main() {
         0,
       );
     });
+
+    // transactions.quantity is numeric(10,3), so the INSERT rounds a fourth
+    // decimal away. Dart does not, so without rounding here the cart shows a
+    // subtotal the database will never record: at 1000/kg, a typed 0.1234
+    // totals 123.40 in Dart and 123.00 in Postgres. Post-discount that gap
+    // fails the whole checkout on `Discount exceeds total`; PRE-discount it
+    // already displayed a total the database would not store.
+    test('rounds a 4-decimal quantity to the stored precision', () {
+      expect(
+        clampCartQuantity(value: 0.1234, remaining: 10, allowsDecimal: true),
+        0.123,
+      );
+    });
+
+    test('rounds up past the halfway point, as numeric(10,3) does', () {
+      expect(
+        clampCartQuantity(value: 2.5006, remaining: 10, allowsDecimal: true),
+        2.501,
+      );
+    });
+
+    test('a 3-decimal quantity passes through untouched', () {
+      expect(
+        clampCartQuantity(value: 2.501, remaining: 10, allowsDecimal: true),
+        2.501,
+      );
+    });
+
+    test('rounding never pushes the quantity past remaining stock', () {
+      expect(
+        clampCartQuantity(value: 2.4999, remaining: 2.4, allowsDecimal: true),
+        2.4,
+      );
+    });
   });
 }

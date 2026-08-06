@@ -80,7 +80,7 @@ class _DiscountSheetState extends ConsumerState<_DiscountSheet> {
     final loss = lossFromDiscount(
       subtotal: subtotal,
       cost: cartCost(lines),
-      discount: clampDiscount(entered: _typed, subtotal: subtotal),
+      discount: clampDiscount(entered: _typed, lines: lines),
     );
 
     return Padding(

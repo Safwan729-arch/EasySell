@@ -288,8 +288,46 @@ EVERY sale, not just discounted ones.
    `select sum(discount_amount) from transactions where sale_group_id = '<id>';`
    Expect exactly **7.00**, not 6.99.
 
-4. Over-discount is rejected: discount more than the bill in the app.
-   Expect the error `Discount exceeds total`, and no stock movement.
+4. **Over-discount is rejected.** This one CANNOT be done from the app — the
+   discount sheet clamps whatever is typed down to the legal maximum and sends
+   a value the function accepts, so an "over-discount" attempt in the UI checks
+   out successfully and proves nothing. Call the function directly instead.
+
+   First get real ids to substitute (any shop with at least one in-stock
+   product):
+
+   ```sql
+   select p.id as product_id, p.shop_id, p.name, p.selling_price, p.quantity
+     from products p
+     where p.quantity > 0
+     limit 2;
+   ```
+
+   Then paste the two ids into the call below, keeping `p_discount` far larger
+   than the bill. The uuids here are placeholders — replace both.
+
+   ```sql
+   select record_sale_cart(
+     'a1b2c3d4-1111-4a1a-9c11-0123456789ab'::uuid,   -- p_shop_id
+     jsonb_build_array(
+       jsonb_build_object(
+         'product_id', 'b2c3d4e5-2222-4b2b-9c22-0123456789ab'::uuid,
+         'quantity', 1
+       )
+     ),                                              -- p_items
+     'manual',                                       -- p_source
+     null,                                           -- p_customer_id
+     999999                                          -- p_discount
+   );
+   ```
+
+   Expect it to FAIL with exactly:
+   `ERROR: Discount exceeds total: bill is <the line total>, discount was 999999`
+   — e.g. `bill is 850.00, discount was 999999`. Because the exception aborts
+   the function, nothing it did survives: re-run the `select` above and the
+   product's `quantity` must be unchanged, and
+   `select count(*) from transactions where product_id = '<product-uuid>';`
+   must not have grown.
 
 5. Credit sale: check out on credit with a discount, then
    `select amount from customer_ledger where sale_group_id = '<id>';`
@@ -315,14 +353,46 @@ EVERY sale, not just discounted ones.
    Expect: the checkout **succeeds**, `sum(discount_amount)` for the
    `sale_group_id` is exactly 122.54, and neither row's `discount_amount`
    exceeds its own `selling_price * quantity` (no
-   `transactions_discount_within_line` violation). Also confirm a discount of
-   122.545 or 122.55 on this same cart is **rejected** with `Discount exceeds
-   total` — the residual half-paisa (122.545 - 122.54) can never be
-   discounted, by design.
+   `transactions_discount_within_line` violation).
+
+   The maximum is the sum of the **per-line** floored subtotals
+   (`floor(112.545) + 10.00 = 122.54`), not the floor of the summed subtotal.
+   The two agree here; they do not on a cart of two 112.545 lines, where
+   floor-of-sum would permit 225.09 but only 225.08 can actually be placed.
+
+   Then confirm the rejection — again NOT from the app, whose sheet clamps a
+   too-large amount down to the legal one and checks out successfully. Call the
+   function directly, substituting the real shop/product ids (uuids below are
+   placeholders) and asking for one paisa past the maximum:
+
+   ```sql
+   select record_sale_cart(
+     'a1b2c3d4-1111-4a1a-9c11-0123456789ab'::uuid,   -- p_shop_id
+     jsonb_build_array(
+       jsonb_build_object(
+         'product_id', 'c3d4e5f6-3333-4c3c-9c33-0123456789ab'::uuid, -- 45.00/kg
+         'quantity', 2.501
+       ),
+       jsonb_build_object(
+         'product_id', 'd4e5f6a7-4444-4d4d-9c44-0123456789ab'::uuid, -- 10.00 ea
+         'quantity', 1
+       )
+     ),
+     'manual',
+     null,
+     122.545                                         -- one notch over the max
+   );
+   ```
+
+   Expect it to FAIL with exactly:
+   `ERROR: Discount exceeds total: bill is 122.545, discount was 122.545`
+   (and the same for 122.55). The residual half-paisa can never be discounted,
+   by design: `discount_amount` is `numeric(10,2)`. Stock must be unchanged
+   afterwards — the exception rolls the whole call back.
 
 9. **Credit sale on a fractional-quantity line, discounted to its floored
    maximum.** In the app, cart one fractional-quantity line whose subtotal
-   carries more than two decimals (e.g. 45.99/kg x 2.501 kg = 115.02999), and
+   carries more than two decimals (e.g. 45.99/kg x 2.501 kg = 115.02099), and
    discount it by its floored maximum (115.02). Check out **on credit**.
    Expect: the checkout **succeeds** — never a rollback — and either writes
    ONE rounded `customer_ledger` row (`select amount from customer_ledger

@@ -627,6 +627,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get cart_discountAmount => 'ছাড়ের পরিমাণ';
 
   @override
+  String get cart_discountEdit => 'ছাড় সম্পাদনা';
+
+  @override
   String get cart_discountRemove => 'ছাড় সরান';
 
   @override

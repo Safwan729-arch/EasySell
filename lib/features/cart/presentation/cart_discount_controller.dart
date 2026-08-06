@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/cart_math.dart';
 import '../domain/discount_math.dart';
 import 'cart_controller.dart';
 
@@ -20,15 +19,21 @@ class CartDiscountController extends Notifier<double> {
 
   @override
   double build() {
-    final subtotal = cartTotal(ref.watch(cartControllerProvider));
-    final clamped = clampDiscount(entered: _entered, subtotal: subtotal);
+    // The LINES, not their total: the cap is the sum of each line's floored
+    // subtotal, which a summed total can no longer reconstruct.
+    final clamped = clampDiscount(
+      entered: _entered,
+      lines: ref.watch(cartControllerProvider),
+    );
     _entered = clamped;
     return clamped;
   }
 
   void setAmount(double amount) {
-    final subtotal = cartTotal(ref.read(cartControllerProvider));
-    _entered = clampDiscount(entered: amount, subtotal: subtotal);
+    _entered = clampDiscount(
+      entered: amount,
+      lines: ref.read(cartControllerProvider),
+    );
     state = _entered;
   }
 

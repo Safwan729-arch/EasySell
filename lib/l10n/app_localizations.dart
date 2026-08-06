@@ -1124,6 +1124,12 @@ abstract class AppLocalizations {
   /// **'Amount off'**
   String get cart_discountAmount;
 
+  /// No description provided for @cart_discountEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit discount'**
+  String get cart_discountEdit;
+
   /// No description provided for @cart_discountRemove.
   ///
   /// In en, this message translates to:

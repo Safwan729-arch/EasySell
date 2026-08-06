@@ -27,7 +27,12 @@ class CartScreen extends ConsumerWidget {
   Future<void> _checkout(BuildContext context, WidgetRef ref) async {
     final lines = ref.read(cartControllerProvider);
     final itemCount = lines.length;
-    final total = cartTotal(lines);
+    // NET, and read BEFORE checkout() runs -- a successful checkout clears the
+    // discount, so reading it afterwards silently reports the gross bill. This
+    // number is not decoration: on credit the snackbar names the debt that was
+    // just written to customer_ledger, so a gross figure here misstates what
+    // the customer owes at the exact moment the debt is created.
+    final total = cartTotal(lines) - ref.read(cartDiscountControllerProvider);
     final currency = ref.read(myShopProvider).value?.currency ?? 'USD';
     final selection = ref.read(paymentMethodControllerProvider);
 
@@ -165,7 +170,7 @@ class CartScreen extends ConsumerWidget {
       bottomNavigationBar: lines.isEmpty
           ? null
           : _CheckoutBar(
-              total: cartTotal(lines) - ref.watch(cartDiscountControllerProvider),
+              subtotal: cartTotal(lines),
               itemCount: lines.length,
               currency: currency,
               isLoading: checkoutState.isLoading,
@@ -451,14 +456,19 @@ class _StepButton extends StatelessWidget {
 /// [paymentMethodControllerProvider].
 class _CheckoutBar extends ConsumerWidget {
   const _CheckoutBar({
-    required this.total,
+    required this.subtotal,
     required this.itemCount,
     required this.currency,
     required this.isLoading,
     required this.onCheckout,
   });
 
-  final double total;
+  /// The GROSS bill, before any discount. The bar watches the discount itself
+  /// and derives the net exactly once, below. It previously took the NET and
+  /// reconstructed the gross as `total + discount` -- the same figure in two
+  /// shapes, which is precisely the ambiguity that let the success snackbar
+  /// ship the gross total while the database recorded the net one.
+  final double subtotal;
   final int itemCount;
   final String currency;
   final bool isLoading;
@@ -471,6 +481,7 @@ class _CheckoutBar extends ConsumerWidget {
     final l10n = context.l10n;
     final selection = ref.watch(paymentMethodControllerProvider);
     final discount = ref.watch(cartDiscountControllerProvider);
+    final total = subtotal - discount;
     final notifier = ref.read(paymentMethodControllerProvider.notifier);
     final isCredit = selection.method == PaymentMethod.credit;
     final customer = selection.customer;
@@ -542,7 +553,7 @@ class _CheckoutBar extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      Money.format(total + discount, currencyCode: currency),
+                      Money.format(subtotal, currencyCode: currency),
                       style: theme.textTheme.bodyMedium,
                     ),
                   ],
@@ -558,9 +569,32 @@ class _CheckoutBar extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    Text(
-                      '−${Money.format(discount, currencyCode: currency)}',
-                      style: theme.textTheme.bodyMedium,
+                    // The amount reopens the sheet, seeded with the current
+                    // value. Without this the sheet is only reachable from the
+                    // "Add discount" button below, which exists only while the
+                    // discount is zero -- so an applied discount could never be
+                    // edited, and a customer haggling 60 down to 80 meant
+                    // clearing and retyping. Deliberately a SEPARATE target
+                    // from the ✕: one edits, the other destroys, and merging
+                    // them would make a mis-tap cost the whole discount.
+                    Tooltip(
+                      message: l10n.cart_discountEdit,
+                      child: InkWell(
+                        onTap: isLoading
+                            ? null
+                            : () => showDiscountSheet(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            '−${Money.format(discount, currencyCode: currency)}',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ),
                     ),
                     IconButton(
                       onPressed: isLoading
