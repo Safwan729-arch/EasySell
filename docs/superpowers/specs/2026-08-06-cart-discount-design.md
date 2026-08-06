@@ -1,0 +1,212 @@
+# Cart Discount — Design
+
+**Date:** 2026-08-06
+**Feature owner:** Member A (Full Stack)
+**Scope:** `supabase/migrations/0009_cart_discount.sql`, `lib/features/cart/**`,
+`lib/features/transactions/**`, `lib/l10n/**`
+**Status:** designed, not yet implemented
+**Related:**
+- [[2026-07-07-sale-cart-design]] — the cart and `record_sale_cart` this extends
+- [[2026-07-17-customer-credit-khata-design]] — the khata debt must record the
+  *discounted* total, so this touches that ledger
+- [[2026-07-21-history-sale-detail-design]] — where the discount is displayed
+
+---
+
+## 1. Problem
+
+Shopkeepers routinely knock money off a bill at the counter — rounding ৳487
+down to ৳480, or giving a regular customer ৳50 off. The app has no way to
+express that, so the shopkeeper either edits quantities to fake it (which
+corrupts stock) or records the full amount (which corrupts revenue).
+
+## 2. Decisions taken up front
+
+| Question | Decision | Why |
+|---|---|---|
+| Discount shape | **Flat amount off the total** | Matches the real behaviour — rounding the bill to a clean number. A percentage produces ৳438.30 and the shopkeeper rounds it anyway, so `%` is one extra step to reach the same place. |
+| Over-discount | **Hard cap at the total, soft warning below cost** | The cap prevents a negative bill. The warning respects that clearing near-expiry stock at a loss is deliberate, not a mistake. |
+| Visibility | **Sale detail in History only** | A shopkeeper looking at an old receipt must be able to see why ৳1360 became ৳1300. A Reports "discounts given" card was explicitly deferred. |
+| Placement | **A row inside the existing checkout bar** | Where the shopkeeper already looks before pressing Checkout, and the bar already owns the total. One tap, no extra screen for the majority of sales that have no discount. |
+
+## 3. The structural problem: there is no receipt
+
+`transactions` is the only sales record. A "receipt" is several rows sharing a
+`sale_group_id` — there is no header table. So a cart-level discount has no
+natural home, and revenue is **derived, not stored**: `selling_price × quantity`
+is recomputed in four places (`get_dashboard_summary`, `get_sales_series`, the
+khata total inside `record_sale_cart`, and `Transaction.revenue` in Dart). Any
+discount that fails to reach all four makes the books disagree with the
+receipts.
+
+## 4. Options considered
+
+| # | Option | Verdict |
+|---|---|---|
+| A | `discount_amount` column per transaction row, split across lines | **Chosen** |
+| B | Separate `sale_discounts` table keyed by `sale_group_id` | Rejected — grain mismatch |
+| C | Bake the discount into `selling_price` | Rejected — falsifies history |
+
+**Why not C, despite it needing zero query changes.** `selling_price` is
+defined as the product's price *at sale time* (CLAUDE.md §4). Writing ৳43.24
+into it makes history claim that was the price that day, and permanently
+destroys the distinction between "a discount was given" and "the price
+changed". It trades a lie in the books for an evening of work.
+
+**Why not B, despite being the better textbook schema.** The discount would sit
+at receipt grain while every aggregate sums at line grain. Subtracting one from
+the other requires a subquery; written as a join instead, a 3-line receipt
+subtracts its discount three times. That bug reconciles perfectly against
+single-line carts and only appears against a real 6-item basket.
+`get_sales_series` would also need the discount to carry its own timestamp so it
+could be bucketed.
+
+**Why A wins.** Every revenue figure in the app is already a flat sum over
+transaction rows. A changes each by **one term** and leaves the query shape
+untouched; B changes the shape of all of them. For the one feature in the app
+that moves money, the option with no new failure mode beats the tidier schema.
+
+## 5. Data model
+
+```sql
+alter table transactions
+  add column if not exists discount_amount numeric(10,2) not null default 0
+  check (discount_amount >= 0);
+
+alter table transactions
+  add constraint transactions_discount_within_line
+  check (discount_amount <= selling_price * quantity);
+```
+
+Existing rows default to `0`, so there is no backfill and no behaviour change
+until the term is added to the queries.
+
+The second constraint is the real guard: **a negative bill becomes structurally
+impossible**, not merely blocked by UI code. Voice and scan already exist as
+alternate entry paths and more may follow; the database is the only door all of
+them pass through.
+
+## 6. The split rule
+
+`record_sale_cart` gains `p_discount numeric default 0`. After the lines are
+built:
+
+1. `subtotal := sum(selling_price × quantity)`
+2. `p_discount <= 0` → nothing to allocate
+3. `p_discount > subtotal` → `raise exception 'Discount exceeds total'`
+4. each line: **`floor`** to 2dp of `p_discount × line_subtotal / subtotal`
+5. distribute the remainder a paisa at a time, largest line first (ties broken
+   by insertion order), skipping any line already at its own subtotal
+
+**Floor, not round — this is load-bearing.** `quantity` is `numeric(10,3)`
+(0003 widened it for kg/litre), so a line subtotal can carry three decimals:
+৳45.00 × 2.501 = ৳112.545. Rounding a full-discount allocation *up* to ৳112.55
+would exceed that line's own value and trip the
+`transactions_discount_within_line` constraint, failing the whole checkout on a
+sale that is perfectly legal. Flooring can never overshoot, so the constraint
+and the allocation cannot contradict each other.
+
+Flooring makes the remainder always **positive** and smaller than one paisa per
+line, which is why step 5 can hand it out a paisa at a time and always
+terminate. The headroom check in step 5 covers the only case where the largest
+line cannot absorb it: a discount equal to the entire subtotal.
+
+Step 5 is also why the sum is exact. Three ৳100 lines with ৳7 off each compute
+to 2.3333 → ৳2.33, summing to ৳6.99; the stray paisa lands on the biggest line,
+where it is invisible. On the *smallest* line it would be visible and look like
+a bug. Because the sum is exact, `sum(discount_amount)` over a group reproduces
+the entered discount to the paisa — which is why the receipt can display one
+honest number without the discount being stored a second time anywhere.
+
+### The overload trap
+
+`p_discount` changes the signature, so `create or replace` would leave the old
+function **alongside** the new one and PostgREST could no longer resolve which
+to call — silently breaking checkout. This already bit this project once; the
+warning is at the top of `0006_dashboard_summary_day.sql`. The migration must
+`drop function if exists` **all three** prior `record_sale_cart` signatures
+first.
+
+## 7. Knock-on changes
+
+| Where | Change |
+|---|---|
+| `get_dashboard_summary` | `revenue` and `profit` subtract `discount_amount` |
+| `get_sales_series` | same, inside the `sales` CTE |
+| `record_sale_cart` khata total | the debt written to `customer_ledger` is the **discounted** total |
+| `Transaction.revenue` (Dart) | `sellingPrice * quantity - discountAmount` |
+
+**`cost` deliberately does not change.** A discount does not alter what was paid
+to the supplier, so it comes out of margin:
+`profit = sum((selling_price − buying_price) × quantity − discount_amount)`.
+
+The khata line matters more than it appears: ৳50 off a credit sale must record
+৳1310 owed, not ৳1360. Computing it inside the same atomic function means
+stock, sale, and debt can never disagree.
+
+## 8. UI and state
+
+**A separate `CartDiscountController extends Notifier<double>`**, mirroring the
+existing `payment_method_controller.dart` rather than widening
+`CartController`'s `List<CartLine>`. Resets on checkout, clear, and empty —
+the same three points the payment method resets at.
+
+**Clamping, not hidden state.** If the cart shrinks below the discount, the
+controller lowers the *stored* value rather than remembering a larger entered
+one and displaying a smaller one. A gap between the number on screen and the
+number in the machine is where money bugs live.
+
+**Entry is a modal sheet** matching `showAddToCartSheet` / `showProductPickerSheet`:
+one amount field, Apply, and the below-cost warning ("You'd lose ৳12 on this
+sale") computed client-side from the cart's `buyingPrice` values. The warning
+never disables Apply — see §2.
+
+**The checkout bar shows Subtotal/Discount rows only when a discount exists**,
+so the common no-discount sale looks exactly as it does today. A ✕ on the
+Discount row clears it in one tap.
+
+**History detail** gets the same three rows when the group's discount is
+non-zero.
+
+New `app_en.arb` / `app_bn.arb` keys: the action, sheet title, field label,
+below-cost warning, and row label.
+
+## 9. Testing
+
+| Layer | Cases |
+|---|---|
+| Split maths (`discount_math.dart`, pure functions) | sums back to the paisa; remainder to the largest line; single-line cart takes all; zero → all zeros; **discount == subtotal on a 3-decimal quantity** (the floor-vs-round case in §6) → revenue 0 and no line over its own subtotal |
+| Controller | resets on checkout/clear/empty; clamps down as the cart shrinks; stored value never exceeds the total |
+| Widgets | rows hidden with no discount; ✕ clears; warning shows at the right threshold and does not disable Apply |
+| Repository | the payload carries `p_discount` |
+
+The split rule lives in its own file of pure functions because the paisa
+rounding is the part most worth testing exhaustively, and pure functions are the
+cheapest thing here to test.
+
+## 10. Rollout — order is not symmetric
+
+The SQL is the user's to run — Supabase CLI and credentials are not available
+from this repo, so migrations are pasted into the Dashboard SQL editor by hand.
+**Run the migration before installing the new build:**
+
+- Old app + new function → fine, `p_discount` defaults to 0.
+- New app + old function → **every sale fails**, not just discounted ones,
+  because PostgREST cannot find a signature accepting `p_discount`.
+
+A probe checklist ships with the migration.
+
+## 11. Out of scope — deliberately
+
+Do not add these without a new decision:
+
+- **Percentage discounts.** Ruled out in §2; a `%` toggle doubles the UI and
+  validation for a path that would go unused.
+- **A "discounts given" card in Reports.** Deferred by the user. The data will
+  already exist, so it stays cheap to add later.
+- **Per-item discounts.** More tapping per sale, which is the opposite of what
+  a queue needs.
+- **Discounts on `record_sale` / `record_restock`.** Nothing reaches those from
+  the cart — `recordSaleCart` has exactly one caller, the cart checkout
+  controller, so voice and scan sales already funnel through the cart screen and
+  inherit discounts for free.
