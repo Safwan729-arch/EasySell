@@ -173,16 +173,27 @@ below-cost warning, and row label.
 
 ## 9. Testing
 
+**The split itself is not testable from this repo.** It runs inside
+`record_sale_cart`, and there is no local Postgres here — so the paisa rule,
+the floor-vs-round case, and the `Discount exceeds total` rejection are all
+verified by the probe checklist the user runs against the real database (§10).
+Duplicating the allocation in Dart purely to have something to unit-test would
+put the same money logic in two languages, which is a worse failure mode than
+the one it solves.
+
+What Dart *does* own, and therefore what `flutter test` covers:
+
 | Layer | Cases |
 |---|---|
-| Split maths (`discount_math.dart`, pure functions) | sums back to the paisa; remainder to the largest line; single-line cart takes all; zero → all zeros; **discount == subtotal on a 3-decimal quantity** (the floor-vs-round case in §6) → revenue 0 and no line over its own subtotal |
+| `discount_math.dart` (pure) | clamping an entered discount to the subtotal; computing the cart's cost; the below-cost loss figure and its threshold |
 | Controller | resets on checkout/clear/empty; clamps down as the cart shrinks; stored value never exceeds the total |
 | Widgets | rows hidden with no discount; ✕ clears; warning shows at the right threshold and does not disable Apply |
 | Repository | the payload carries `p_discount` |
+| `Transaction` | `revenue` is net of `discountAmount`; `cost` is not |
 
-The split rule lives in its own file of pure functions because the paisa
-rounding is the part most worth testing exhaustively, and pure functions are the
-cheapest thing here to test.
+The probe checklist must therefore include the paisa case explicitly — a
+3-line cart with a discount that does not divide evenly, checked by summing
+`discount_amount` over the group.
 
 ## 10. Rollout — order is not symmetric
 
