@@ -296,3 +296,26 @@ EVERY sale, not just discounted ones.
    Expect the DISCOUNTED total.
 
 6. Dashboard revenue drops by the discount, and `cost` does NOT change.
+
+7. **Credit sale discounted to zero.** In the app, check out on credit with a
+   discount equal to the full bill (e.g. one line, 50.00 x 1, discount 50.00).
+   Expect: the sale succeeds, stock decrements as normal, and
+   `select * from customer_ledger where sale_group_id = '<id>';` returns
+   **NO rows** — a fully discounted credit sale still happens, it just creates
+   no debt. (It must NOT roll back the whole checkout: `customer_ledger.amount`
+   has `check (amount > 0)`, so a naive unconditional insert of a zero total
+   would fail and take the stock decrements down with it.)
+
+8. **Fractional quantity discounted in full.** In the app, cart a line with a
+   fractional (weight/volume) quantity that produces a 3-decimal line total —
+   e.g. 2.501 kg at 45.00/kg = 112.545 — alongside a second, ordinary line
+   (e.g. 1 unit at 10.00 = 10.00), for a subtotal of 122.545. Discount by
+   122.54 (the bill floored to the nearest paisa — the true max, since
+   `discount_amount` is `numeric(10,2)` and can't hold a third decimal).
+   Expect: the checkout **succeeds**, `sum(discount_amount)` for the
+   `sale_group_id` is exactly 122.54, and neither row's `discount_amount`
+   exceeds its own `selling_price * quantity` (no
+   `transactions_discount_within_line` violation). Also confirm a discount of
+   122.545 or 122.55 on this same cart is **rejected** with `Discount exceeds
+   total` — the residual half-paisa (122.545 - 122.54) can never be
+   discounted, by design.

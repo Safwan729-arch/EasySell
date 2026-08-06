@@ -61,10 +61,10 @@ declare
   v_group    uuid := gen_random_uuid();
   v_item     record;
   v_product  products;
-  v_subtotal numeric(12,2);
-  v_share    numeric(12,2);
-  v_assigned numeric(12,2) := 0;
-  v_left     numeric(12,2);
+  v_subtotal numeric;
+  v_share    numeric;
+  v_assigned numeric := 0;
+  v_left     numeric;
   v_row      transactions;
 begin
   if p_items is null or jsonb_array_length(p_items) = 0 then
@@ -111,11 +111,15 @@ begin
   -- -------------------------------------------------------------------------
   -- Allocate the discount across the rows just inserted.
   -- -------------------------------------------------------------------------
+  if p_discount is not null and p_discount < 0 then
+    raise exception 'Discount cannot be negative';
+  end if;
+
   if p_discount is not null and p_discount > 0 then
     select coalesce(sum(selling_price * quantity), 0) into v_subtotal
       from transactions where sale_group_id = v_group;
 
-    if p_discount > v_subtotal then
+    if p_discount > floor(v_subtotal * 100) / 100 then
       raise exception 'Discount exceeds total: bill is %, discount was %',
         v_subtotal, p_discount;
     end if;
@@ -125,7 +129,12 @@ begin
     -- share UP to 112.55 would exceed the line's own value and trip
     -- transactions_discount_within_line, failing a perfectly legal sale.
     -- Flooring can never overshoot, so the constraint and the allocation
-    -- cannot contradict each other.
+    -- cannot contradict each other. This also depends on v_subtotal, v_share,
+    -- v_left, and v_assigned being declared as UNTYPED `numeric` above: a
+    -- `numeric(12,2)` local rounds to two decimals on assignment (PL/pgSQL
+    -- coerces to the declared typmod), which silently reintroduces the exact
+    -- overshoot this comment says flooring prevents. The typmod is load-bearing
+    -- — do not add one back.
     for v_row in
       select * from transactions where sale_group_id = v_group
     loop
@@ -147,7 +156,7 @@ begin
     loop
       exit when v_left <= 0;
       v_share := least(v_left,
-                       v_row.selling_price * v_row.quantity - v_row.discount_amount);
+        floor((v_row.selling_price * v_row.quantity - v_row.discount_amount) * 100) / 100);
       if v_share > 0 then
         update transactions
           set discount_amount = discount_amount + v_share
@@ -164,8 +173,16 @@ begin
       into v_subtotal
       from transactions where sale_group_id = v_group;
 
-    insert into customer_ledger(shop_id, customer_id, entry_type, amount, sale_group_id)
-    values (p_shop_id, p_customer_id, 'credit_sale', v_subtotal, v_group);
+    -- A discount equal to the whole bill is legal, which can drive the
+    -- discounted total to exactly 0. customer_ledger.amount requires > 0
+    -- (0008), so a zero-total ledger insert must be skipped rather than
+    -- attempted -- otherwise it would fail and roll back the whole sale,
+    -- including the stock decrements already applied above. A fully
+    -- discounted credit sale still happens; it just creates no debt.
+    if v_subtotal > 0 then
+      insert into customer_ledger(shop_id, customer_id, entry_type, amount, sale_group_id)
+      values (p_shop_id, p_customer_id, 'credit_sale', v_subtotal, v_group);
+    end if;
   end if;
 
   return query select * from transactions where sale_group_id = v_group;
