@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/motion.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/router/app_router.dart';
 import '../../../l10n/app_localizations.dart';
 import 'voice_controller.dart';
 import 'voice_review_sheet.dart';
@@ -37,13 +38,29 @@ import 'voice_transcript_dialog.dart';
 /// replacing it. Two voice sales can't be in progress at once anyway, so there
 /// is nothing to choose between: showing the one that exists is always the
 /// answer that cannot lose work.
+///
+/// The caller's context is not always usable. `VoiceReadyBanner` is mounted in
+/// `app.dart`'s builder, which `WidgetsApp` places *above* the router — so the
+/// banner has no `Navigator` ancestor and pushing from its context threw
+/// "Navigator operation requested with a context that does not include a
+/// Navigator". `useRootNavigator: true` does not help: `Navigator.of` only ever
+/// searches upwards, and in router mode there is nothing above to find. So fall
+/// back to the root navigator's own context, which is by definition inside one.
 Future<void> showVoiceSaleSheet(BuildContext context, WidgetRef ref) {
+  // Resolved before any state is touched: a tap that cannot open the sheet must
+  // not consume the background sale on its way to doing nothing, which is
+  // exactly how the banner used to vanish while leaving the cart unreachable.
+  final host = Navigator.maybeOf(context) != null
+      ? context
+      : rootNavigatorKey.currentContext;
+  if (host == null || !host.mounted) return Future<void>.value();
+
   ref.read(voiceControllerProvider.notifier).resumeFromBackground();
   return showModalBottomSheet<void>(
-    context: context,
+    context: host,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
+    backgroundColor: Theme.of(host).colorScheme.surface,
     builder: (_) => const VoiceSaleSheet(),
   ).whenComplete(
     () => ref.read(voiceControllerProvider.notifier).releaseSheet(),

@@ -50,7 +50,13 @@ class AppRoutes {
   static const String saleDetail = '/history/sale';
 }
 
-final _rootKey = GlobalKey<NavigatorState>();
+/// The root navigator's key.
+///
+/// Public because anything mounted *above* the router — `app.dart`'s builder
+/// hosts the offline and voice banners there so they outlive navigation — has
+/// no `Navigator` ancestor of its own and so cannot push a route from its own
+/// context. This key is the only handle on a context that can.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Wraps a screen in a shared slide-and-fade page transition. Forward navigation
 /// eases the new screen in from a short rightward offset while fading; back
@@ -97,7 +103,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   ref.listen(onboardingSeenProvider, (_, _) => refresh.value++);
 
   return GoRouter(
-    navigatorKey: _rootKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.dashboard,
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -191,12 +197,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Full-screen routes (root navigator — no bottom bar).
       GoRoute(
         path: '/inventory/new',
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const ProductFormScreen()),
       ),
       GoRoute(
         path: '/cart',
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const CartScreen()),
       ),
       GoRoute(
@@ -205,58 +211,58 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/inventory/:id',
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, state) => _transitionPage(
           ProductDetailScreen(productId: state.pathParameters['id']!),
         ),
       ),
       GoRoute(
         path: '/inventory/:id/edit',
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, state) => _transitionPage(
           ProductFormScreen(product: state.extra as Product?),
         ),
       ),
       GoRoute(
         path: AppRoutes.insights,
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const InsightsScreen()),
       ),
       GoRoute(
         path: AppRoutes.trends,
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const TrendScreen()),
       ),
       GoRoute(
         path: AppRoutes.settings,
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const SettingsScreen()),
       ),
       GoRoute(
         path: AppRoutes.categories,
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const ManageCategoriesScreen()),
       ),
       GoRoute(
         path: AppRoutes.archivedProducts,
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const ArchivedProductsScreen()),
       ),
       GoRoute(
         path: AppRoutes.customers,
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const CustomersScreen()),
       ),
       GoRoute(
         path: '/customers/:id',
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, state) => _transitionPage(
           CustomerDetailScreen(customerId: state.pathParameters['id']!),
         ),
       ),
       GoRoute(
         path: '/history/sale/:id',
-        parentNavigatorKey: _rootKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, state) => _transitionPage(
           SaleDetailScreen(sale: state.extra as Transaction?),
         ),

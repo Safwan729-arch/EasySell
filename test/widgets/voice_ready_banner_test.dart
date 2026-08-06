@@ -102,8 +102,13 @@ ProviderContainer _container(VoiceSaleRepository repo) {
   return container;
 }
 
-/// Mirrors `app.dart`: the banner sits above the routed screen, so the tap
-/// handler has to reach a Navigator that lives *below* it.
+/// Deliberately NOT how `app.dart` mounts the banner. `MaterialApp(home:)`
+/// builds a Navigator around its child, so here the banner has one overhead;
+/// in the app it is inside `MaterialApp.router`'s builder, above the router,
+/// with no Navigator ancestor at all. That gap let a crash-on-tap ship past a
+/// green suite -- `voice_banner_reopen_test.dart` exists to cover the real
+/// mounting. Keep this harness for behaviour that does not involve pushing a
+/// route, and add navigation cases there.
 Widget _app(ProviderContainer container) => UncontrolledProviderScope(
   container: container,
   child: MaterialApp(

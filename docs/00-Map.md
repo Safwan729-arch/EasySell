@@ -30,7 +30,7 @@ reasoning.
   - [[supabase/functions/recognize-product/README|recognize-product Edge Function]] — item photo → matched product (Gemini vision)
 
 ## Voice sale
-- [[2026-08-05-voice-wait-ux-design|Design]] (no separate plan — built straight from the brief) — shorten the post-speech wait and let the parse finish in the background; **records why chunked upload was rejected**
+- [[2026-08-05-voice-wait-ux-design|Design]] (no separate plan — built straight from the brief) — shorten the post-speech wait and let the parse finish in the background; **records why chunked upload was rejected**, plus two follow-up fixes to the background banner (§8 the dead zone where a parsing sale was invisible and the mic silently ate it; §9 why a widget mounted above `MaterialApp.router` cannot push a route — and why the test suite stayed green through both)
 - [[2026-07-27-voice-noise-latency-design|Design]] / [[2026-07-27-voice-noise-latency|Plan]] — fix ~30s timeout hang in noisy environments
 - [[2026-07-27-voice-brain-gemini-migration-design|Design]] (no separate plan — folded into the scan/voice migration below) — merge transcribe+parse into one Gemini 3.6 Flash call
 - [[2026-07-22-voice-sale-assistant-design|Design]] / [[2026-07-22-voice-sale-assistant|Plan]] — "speak a sale → cart" voice assistant, on-device speech-to-text pivot

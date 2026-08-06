@@ -3,7 +3,8 @@
 **Date:** 2026-08-05
 **Feature owner:** Member A (Full Stack)
 **Scope:** `lib/features/voice/**`, `lib/app.dart`, `supabase/functions/parse-sale/index.ts`
-**Shipped as:** commit `53ee72b` on `feat/voice-wait-ux`
+**Shipped as:** commit `53ee72b` on `feat/voice-wait-ux`, then two follow-up
+fixes to the backgrounding half of it — `96830d2` (§8) and `e6e672d` (§9)
 **Related:** [2026-07-27-voice-noise-latency-design](2026-07-27-voice-noise-latency-design.md)
 (fixed the 30s *hang*; this one addresses the normal-case *wait*)
 
@@ -113,13 +114,110 @@ connections.
 `test/voice_level_test.dart` pinning the silence window at both ends. Suite went
 299 → 314.
 
-Note for future widget tests here: never `pumpAndSettle` the thinking pane — its
-active stage carries a `CircularProgressIndicator`, which by design never
-settles. And inside `testWidgets` time is fake, so polling with
-`Future.delayed` spins forever; use `tester.pump()`.
+The follow-ups (§8, §9) took it to 322: `voice_background_parse_test.dart` grew
+to 9, `voice_ready_banner_test.dart` to 7, and
+`test/widgets/voice_banner_reopen_test.dart` (2) covers the real mounting.
+
+Gotchas here, all of which cost time:
+
+- **Never `pumpAndSettle` the thinking pane or a *pending* banner.** Both carry
+  a `CircularProgressIndicator`, which by design never settles — the suite
+  hangs with no output rather than failing.
+- **A single `pump()` is not enough before tapping the banner.** It is
+  mid-`AnimatedSwitcher` entrance, wrapped in an `IgnorePointer`, so taps miss
+  with only a "would not hit test" warning. Pump ~300ms — and, per above, not
+  `pumpAndSettle`.
+- **Inside `testWidgets` time is fake**, so polling with `Future.delayed` spins
+  forever. Use `tester.pump()`, bounded, with an `expect` after the loop so a
+  regression fails instead of hanging.
+- **`await` on a call that only completes when a faked future does** deadlocks
+  the test the same way; `unawaited` it.
 
 ## 7. Follow-up
 
 `parse-sale` must be redeployed (needs **both** `index.ts` and
 `quantity_words.ts`) for the ping to stop costing a rejected request. Until
 then the container still warms, which is most of the benefit.
+
+---
+
+## 8. Follow-up fix: the dead zone (commit `96830d2`)
+
+Reported from the device: the thinking pane had no minimize button (you had to
+tap empty space), and once minimized *there was no way back* until the parse
+finished on its own.
+
+**Root cause: one over-narrow condition.** The banner keyed off
+`hasBackgroundResult`, which required `reviewing || error` — a *finished*
+parse. Between dismissal and the result landing, `hasBackgroundSale` was false
+everywhere, so the sale existed but rendered nowhere. §4 shipped the banner as
+"here is your finished cart" when what backgrounding actually needs is a
+**live task indicator**: the handle must cover the sale's whole life, and
+being able to reopen a finished one is almost a side effect.
+
+The getter now spans `thinking` too, and `isBackgroundPending` distinguishes
+the states. Everything else follows from that one widening.
+
+**The unreported symptom was the serious one.** During that dead zone, tapping
+the mic called `startListening`, which bumps the session counter — so the
+in-flight parse's result was dropped when it landed. A sale the shopkeeper had
+*already spoken* vanished with no error and no trace. The three reported
+symptoms were annoying; this one silently lost work.
+
+**Fixed by routing, not by asking.** A "you have a sale in progress, discard
+it?" dialog was rejected: two voice sales cannot run at once, so there is
+nothing to choose between. Every entry point (mic *and* banner) now calls
+`resumeFromBackground()` first, so tapping the mic mid-parse **reopens** the
+existing sale. There is no path left that can lose it by accident.
+
+**Discarding therefore needed its own affordance** — the ✕ on the working
+banner. Abandoning a misspoken sale is legitimate; it just has to be a
+deliberate act with a button behind it rather than a side effect of tapping
+something else.
+
+Also: an explicit "Continue in background" button (the hint pointed at a
+gesture nothing advertised), and the stage spinner was inset 2px inside an 18px
+box at 2px stroke, rendering as a faint dot — it now fills its slot.
+
+## 9. Follow-up fix: the banner could not open anything (commit `e6e672d`)
+
+Reported next: tapping the ready banner made **the banner disappear and nothing
+open**. Tapping the mic afterwards showed the cart intact, which made it look
+like the mic was "restoring" the sale.
+
+**Root cause: the banner has no `Navigator` above it.** `WidgetsApp` calls
+`builder` with the router as its *child*
+(`flutter/lib/src/widgets/app.dart`, `result = Builder(...builder(context,
+routing))`), so anything mounted in `app.dart`'s builder — both banners — is an
+**ancestor** of the router's Navigator. `showModalBottomSheet` resolves
+`Navigator.of(context)`, which only ever searches upwards, so pushing from the
+banner's context threw *"Navigator operation requested with a context that does
+not include a Navigator"*. The exception surfaced only in the console.
+
+`useRootNavigator: true` does **not** fix this. It changes
+`findAncestorStateOfType` to `findRootAncestorStateOfType` — still upwards, and
+in router mode there is nothing above to find. The fix is to push from a
+context that is *inside* a Navigator: `app_router.dart`'s navigator key was
+private, is now `rootNavigatorKey`, and `showVoiceSaleSheet` falls back to
+`rootNavigatorKey.currentContext` whenever the caller has no Navigator of its
+own (`Navigator.of` accepts the Navigator element's own context).
+
+**Order matters, and it explains the symptom.** `resumeFromBackground()` ran
+*first*, so the tap consumed the background flag — hiding the banner — and only
+then crashed. The claim now happens after the host context is resolved and the
+guard has passed, so a tap that cannot open the sheet leaves the handle on
+screen instead of stranding a parsed cart with nothing pointing at it. Pinned
+by test.
+
+**Why a green suite missed a crash on the app's most visible button.**
+`voice_ready_banner_test.dart` mounts the banner under `MaterialApp(home:)`,
+which builds a Navigator around its child — so in the test the banner had
+exactly the ancestor the real app denies it. The harness handed the widget the
+opposite of production and every navigation assertion passed. Its doc comment
+even asserted the correct requirement while the scaffold quietly violated it.
+
+**Rule to carry forward: a widget mounted somewhere structurally unusual must
+be tested in that structure.** `voice_banner_reopen_test.dart` builds
+`MaterialApp.router` + `GoRouter` and reproduces `app.dart`'s builder verbatim.
+Route-pushing cases for anything above the router belong there, not in the
+plain-`MaterialApp` harness.
