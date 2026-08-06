@@ -4,7 +4,8 @@
 **Feature owner:** Member A (Full Stack)
 **Scope:** `supabase/migrations/0009_cart_discount.sql`, `lib/features/cart/**`,
 `lib/features/transactions/**`, `lib/l10n/**`
-**Status:** designed, not yet implemented
+**Status:** built on `feat/cart-discount` (`8ca8e32`..`c4d33f4`); **not yet applied to the
+database** — see §10 and §12
 **Related:**
 - [[2026-07-07-sale-cart-design]] — the cart and `record_sale_cart` this extends
 - [[2026-07-17-customer-credit-khata-design]] — the khata debt must record the
@@ -245,3 +246,73 @@ Do not add these without a new decision:
   the cart — `recordSaleCart` has exactly one caller, the cart checkout
   controller, so voice and scan sales already funnel through the cart screen and
   inherit discounts for free.
+
+---
+
+## 12. Built — what the design got wrong
+
+Nine implementation tasks, each reviewed. Suite 322 → 363. Two tasks needed fix
+rounds, and both sets of findings were defects in the **design and plan**, not
+in the implementation of them. Recorded because the code no longer shows the
+wrong version.
+
+### The migration was wrong in five ways (§5, §6)
+
+Its SQL was transcribed verbatim and correctly — a reviewer confirmed it
+byte-for-byte — and was still broken, because the source it copied was broken.
+Nothing in this repo can execute Postgres, so the only thing that caught these
+was a reviewer tracing the PL/pgSQL by hand against specific carts.
+
+1. **The typmods defeated the flooring.** `v_share`, `v_left`, `v_assigned` and
+   `v_subtotal` were declared `numeric(12,2)`. **PL/pgSQL coerces to the
+   declared typmod on assignment**, so the remainder loop rounded 0.005 of
+   headroom up to 0.01 and the line exceeded its own value — violating
+   `transactions_discount_within_line`, the constraint this very migration
+   adds. The whole floor-don't-round argument in §6 was undone one loop later
+   by a variable declaration.
+2. **The over-discount guard compared against a rounded bill**, so a discount
+   larger than the true subtotal passed it.
+3. **A 100% discount on a credit sale rolled back the entire checkout.**
+   `customer_ledger.amount` carries `check (amount > 0)`; a zero-total ledger
+   insert failed and took the stock decrements with it. §2 explicitly allows a
+   discount equal to the total, so this was reachable by design.
+4. **A negative `p_discount` was silently ignored** rather than raised.
+5. **Then the fix for (3) reintroduced (3).** Guarding `if v_subtotal > 0`
+   against the *exact* remainder while inserting into a `numeric(12,2)` column
+   means 0.00499 passes the guard and stores as 0.00 — same rollback, narrower
+   door. The guard must test the value it stores.
+
+### The consequence nobody's task could see
+
+Fixing (2) moved the maximum legal discount from `subtotal` to
+`floor(subtotal × 100) / 100`. Dart's `clampDiscount` still clamped to the raw
+subtotal, so the UI would have offered discounts the database rejects — turning
+an ordinary checkout into a failure. **This lived in the gap between two tasks**
+and was invisible to both task reviewers; it was caught only by holding the
+whole plan in view.
+
+Related, from the same fix: `0.29 * 100` is `28.999999999999996` in IEEE 754, so
+a bare `.floor()` in the Dart clamp bills 0.28. `_floorPaisa` carries a `1e-9`
+epsilon, verified not to promote a genuine 0.005.
+
+### The sheet shipped two silent-money bugs (§8)
+
+1. Typing `1.2.3` — a plausible slip for `1.23` — made `double.tryParse` return
+   null, which became `0`, and **Apply then wrote that zero over an
+   already-staged discount**. No error; the sheet just closed.
+2. The field pre-filled from `'$current'`, rendering a stored 60.0 as `"60.0"`.
+
+The fix for (1) had its own trap worth recording: the obvious repair is to seed
+the field with the project's `Money.format`/`Qty.format`, which **localise
+digits and add grouping separators** — in Bengali that produces text
+`double.tryParse` cannot read back, recreating the silent-zeroing bug in one
+locale only. The seed uses a plain ASCII amount, and says so in a comment.
+
+### Still outstanding
+
+**The migration has never been executed.** Every claim about its behaviour in
+this document is a hand-trace. `supabase/README.md` §`0009` carries the probe
+checklist, including the paisa case (three ৳100 lines, ৳7 off, `sum` must be
+exactly 7.00) and the fractional-quantity credit sale. Apply the migration
+**before** installing a build that sends `p_discount` — a new build against the
+old function fails *every* sale, not only discounted ones.
