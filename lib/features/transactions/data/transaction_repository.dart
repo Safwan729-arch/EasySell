@@ -35,6 +35,7 @@ class TransactionRepository {
     required List<Map<String, dynamic>> items,
     String source = 'manual',
     String? customerId,
+    double discount = 0,
   }) async {
     try {
       final result = await _client.rpc(
@@ -44,6 +45,7 @@ class TransactionRepository {
           'p_items': items,
           'p_source': source,
           'p_customer_id': ?customerId,
+          'p_discount': discount,
         },
       );
       final rows = result as List;

@@ -13,6 +13,7 @@ import '../../transactions/data/transaction_repository.dart';
 import '../../transactions/domain/transaction.dart';
 import '../domain/cart_math.dart';
 import 'cart_controller.dart';
+import 'cart_discount_controller.dart';
 
 /// Drives the checkout action. Mirrors `TransactionController`: the cart's
 /// contents live in [CartController] (always synchronously available so the
@@ -43,6 +44,7 @@ class CartCheckoutController extends AsyncNotifier<void> {
 
     final shopId = ref.read(myShopProvider).value?.id;
     final lines = ref.read(cartControllerProvider);
+    final discount = ref.read(cartDiscountControllerProvider);
     if (shopId == null) {
       state = AsyncError(
         const AuthFailure('No shop found for this account.'),
@@ -63,6 +65,7 @@ class CartCheckoutController extends AsyncNotifier<void> {
             items: cartItemsPayload(lines),
             source: source,
             customerId: customerId,
+            discount: discount,
           );
     } finally {
       // Released in a finally so a throw from the repository cannot wedge
@@ -72,6 +75,7 @@ class CartCheckoutController extends AsyncNotifier<void> {
     return result.when(
       success: (_) {
         ref.read(cartControllerProvider.notifier).clear();
+        ref.read(cartDiscountControllerProvider.notifier).clear();
         ref.invalidate(productsStreamProvider);
         ref.read(dataRefreshProvider.notifier).bump();
         if (customerId != null) {

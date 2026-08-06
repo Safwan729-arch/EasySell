@@ -32,6 +32,7 @@ class _PendingTxRepo implements TransactionRepository {
     required List<Map<String, dynamic>> items,
     String source = 'manual',
     String? customerId,
+    double discount = 0,
   }) {
     cartCalls++;
     return completer.future;

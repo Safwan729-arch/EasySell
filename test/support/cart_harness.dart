@@ -1,8 +1,10 @@
 import 'package:ai_shopkeeper/core/config/theme.dart';
+import 'package:ai_shopkeeper/core/error/result.dart';
 import 'package:ai_shopkeeper/features/auth/data/auth_repository.dart';
 import 'package:ai_shopkeeper/features/auth/domain/shop.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/transactions/data/transaction_repository.dart';
+import 'package:ai_shopkeeper/features/transactions/domain/transaction.dart';
 import 'package:ai_shopkeeper/l10n/app_localizations.dart';
 import 'package:ai_shopkeeper/shared/providers/locale_provider.dart';
 import 'package:flutter/material.dart';
@@ -68,3 +70,51 @@ Widget cartApp(ProviderContainer container, Widget home) =>
         home: home,
       ),
     );
+
+/// Records what checkout sent. `TransactionRepository` is a concrete class, so
+/// this implements its five public methods explicitly -- there is no mock
+/// framework in this project.
+class CapturingTransactionRepository implements TransactionRepository {
+  double? sentDiscount;
+  String? sentCustomerId;
+  int calls = 0;
+
+  @override
+  Future<Result<List<Transaction>>> recordSaleCart({
+    required String shopId,
+    required List<Map<String, dynamic>> items,
+    String source = 'manual',
+    String? customerId,
+    double discount = 0,
+  }) async {
+    calls++;
+    sentDiscount = discount;
+    sentCustomerId = customerId;
+    return const Result.success(<Transaction>[]);
+  }
+
+  @override
+  Future<Result<Transaction>> recordRestock({
+    required String shopId,
+    required String productId,
+    required double quantity,
+    String source = 'manual',
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Result<List<Transaction>>> recentSales({
+    required String shopId,
+    int limit = 100,
+    DateTime? since,
+  }) async => const Result.success(<Transaction>[]);
+
+  @override
+  Future<Result<List<Transaction>>> salesForDay({
+    required String shopId,
+    required DateTime day,
+  }) async => const Result.success(<Transaction>[]);
+
+  @override
+  Future<Result<DateTime?>> earliestSaleDate({required String shopId}) async =>
+      const Result.success(null);
+}
