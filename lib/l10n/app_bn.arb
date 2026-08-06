@@ -233,6 +233,7 @@
   "saleDetail_quantity": "পরিমাণ",
   "saleDetail_priceEach": "প্রতি একক দাম",
   "saleDetail_total": "মোট",
+  "saleDetail_discount": "ছাড়",
   "saleDetail_cost": "খরচ",
   "saleDetail_profit": "লাভ",
   "saleDetail_enteredBy": "যেভাবে এন্ট্রি হয়েছে",

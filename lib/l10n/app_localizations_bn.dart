@@ -760,6 +760,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get saleDetail_total => 'মোট';
 
   @override
+  String get saleDetail_discount => 'ছাড়';
+
+  @override
   String get saleDetail_cost => 'খরচ';
 
   @override

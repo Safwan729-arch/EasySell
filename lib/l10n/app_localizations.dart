@@ -1334,6 +1334,12 @@ abstract class AppLocalizations {
   /// **'Total'**
   String get saleDetail_total;
 
+  /// No description provided for @saleDetail_discount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get saleDetail_discount;
+
   /// No description provided for @saleDetail_cost.
   ///
   /// In en, this message translates to:

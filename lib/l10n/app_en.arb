@@ -234,6 +234,7 @@
   "saleDetail_quantity": "Quantity",
   "saleDetail_priceEach": "Price each",
   "saleDetail_total": "Total",
+  "saleDetail_discount": "Discount",
   "saleDetail_cost": "Cost",
   "saleDetail_profit": "Profit",
   "saleDetail_enteredBy": "Entered by",

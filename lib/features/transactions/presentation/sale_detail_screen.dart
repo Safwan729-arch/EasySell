@@ -95,6 +95,16 @@ class SaleDetailScreen extends ConsumerWidget {
           const Divider(),
           _DetailRow(label: l10n.saleDetail_quantity, value: qtyLabel),
           _DetailRow(label: l10n.saleDetail_priceEach, value: money(t.sellingPrice)),
+          if (t.discountAmount > 0) ...[
+            _DetailRow(
+              label: l10n.common_subtotal,
+              value: money(t.sellingPrice * t.quantity),
+            ),
+            _DetailRow(
+              label: l10n.saleDetail_discount,
+              value: '−${money(t.discountAmount)}',
+            ),
+          ],
           _DetailRow(
             label: l10n.saleDetail_total,
             value: money(t.revenue),

@@ -765,6 +765,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleDetail_total => 'Total';
 
   @override
+  String get saleDetail_discount => 'Discount';
+
+  @override
   String get saleDetail_cost => 'Cost';
 
   @override
