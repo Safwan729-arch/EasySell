@@ -321,9 +321,12 @@ EVERY sale, not just discounted ones.
    );
    ```
 
-   Expect it to FAIL with exactly:
+   Expect it to FAIL with:
    `ERROR: Discount exceeds total: bill is <the line total>, discount was 999999`
-   — e.g. `bill is 850.00, discount was 999999`. Because the exception aborts
+   — e.g. `bill is 850.00000, discount was 999999`. **Five decimals is correct,
+   not a typo:** Postgres gives `numeric(10,2) × numeric(10,3)` a scale of 5 and
+   does not strip trailing zeros. Match the value, not the digit count. Because
+   the exception aborts
    the function, nothing it did survives: re-run the `select` above and the
    product's `quantity` must be unchanged, and
    `select count(*) from transactions where product_id = '<product-uuid>';`
@@ -355,8 +358,10 @@ EVERY sale, not just discounted ones.
    exceeds its own `selling_price * quantity` (no
    `transactions_discount_within_line` violation).
 
-   The maximum is the sum of the **per-line** floored subtotals
-   (`floor(112.545) + 10.00 = 122.54`), not the floor of the summed subtotal.
+   The maximum is the sum of the **per-line** subtotals each floored to whole
+   paisa (112.545 → 112.54, plus 10.00, = 122.54), not the floor of the summed
+   subtotal. ("Floored to paisa" throughout this section means
+   `floor(v * 100) / 100`, never SQL's bare `floor()`, which would give 112.)
    The two agree here; they do not on a cart of two 112.545 lines, where
    floor-of-sum would permit 225.09 but only 225.08 can actually be placed.
 
@@ -384,9 +389,15 @@ EVERY sale, not just discounted ones.
    );
    ```
 
-   Expect it to FAIL with exactly:
-   `ERROR: Discount exceeds total: bill is 122.545, discount was 122.545`
-   (and the same for 122.55). The residual half-paisa can never be discounted,
+   Expect it to FAIL with:
+   `ERROR: Discount exceeds total: bill is 122.54500, discount was 122.545`
+   (and the same for 122.55). Two things about that message are worth knowing
+   before you read it as a bug: the five decimals are Postgres's real scale for
+   `numeric(10,2) × numeric(10,3)`, and **`bill is` prints the raw subtotal, not
+   the maximum it was actually compared against** (122.54). The comparison is
+   correct; only the wording is loose. It is unreachable from the app — Dart
+   clamps to the same maximum — so it is a follow-up, not a defect to chase
+   here. The residual half-paisa can never be discounted,
    by design: `discount_amount` is `numeric(10,2)`. Stock must be unchanged
    afterwards — the exception rolls the whole call back.
 
