@@ -615,6 +615,29 @@ class AppLocalizationsBn extends AppLocalizations {
   String get cart_checkoutFailed => 'চেকআউট ব্যর্থ। আবার চেষ্টা করুন।';
 
   @override
+  String error_insufficientStock(String product) {
+    return '$product স্টকে যথেষ্ট নেই';
+  }
+
+  @override
+  String get error_cartEmpty => 'কার্ট খালি।';
+
+  @override
+  String get error_productNotFound => 'পণ্যটি আর নেই।';
+
+  @override
+  String get error_customerNotFound => 'গ্রাহকটি আর নেই।';
+
+  @override
+  String get error_discountExceedsTotal => 'ছাড় বিলের চেয়ে বেশি।';
+
+  @override
+  String get error_discountNegative => 'ছাড় ঋণাত্মক হতে পারে না।';
+
+  @override
+  String get error_quantityNotPositive => 'পরিমাণ শূন্যের বেশি হতে হবে।';
+
+  @override
   String get cart_addDiscount => 'ছাড় দিন';
 
   @override

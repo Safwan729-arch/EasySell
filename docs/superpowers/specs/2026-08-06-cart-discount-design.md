@@ -407,9 +407,10 @@ exactly 7.00) and the fractional-quantity credit sale. Apply the migration
 **before** installing a build that sends `p_discount` — a new build against the
 old function fails *every* sale, not only discounted ones.
 
-### Known follow-ups, deliberately not fixed on this branch
+### Follow-ups — all five subsequently fixed
 
-Recorded so they are decisions rather than surprises.
+These were parked when the review process ran out of fix rounds, then fixed on
+request in one pass. Kept here because the reasoning is the valuable part.
 
 1. **Sale detail shows the line's share, not the receipt's discount.** §8 says
    "the group's discount"; `SaleDetailScreen` renders a single `Transaction` and
@@ -440,3 +441,36 @@ Recorded so they are decisions rather than surprises.
    `০.১২৩`, `double.tryParse` returns null on the next edit, and the quantity
    zeroes. This is precisely the trap `discount_sheet.dart` documents avoiding,
    already present in the primary locale.
+
+**How each was closed** (suite 377 → 401):
+
+1. **Receipt discount in History.** `SaleReceipt` gained `discountTotal` and
+   `grossRevenue`, and the expanded receipt tile renders one italic
+   `Discount −৳7` row under the lines. The database stores no receipt-level
+   discount — summing the per-line shares recovers it, which works only because
+   the split is exact to the paisa. That exactness stopped being a nicety and
+   became load-bearing.
+2. **Voice quantity rounding moved down a layer.** `_round3` now runs inside
+   `addOrIncrementLine` and `updateLineQuantity`, not only in
+   `clampCartQuantity`. Putting it in the sheet's clamp was the bug: the voice
+   flow never calls that function, and "every caller is covered" was an
+   assumption rather than a fact. Domain functions are where every path meets.
+3. **The over-discount exception now names `v_max`**, the value it actually
+   compared against, instead of the raw subtotal — which could sit a fraction
+   *above* the largest placeable discount and so read as self-contradictory.
+4. **Server errors are localised.** `Failure` gained `code` and `detail`;
+   `classifyServerMessage` maps our migrations' English sentences to stable
+   codes, and `failure_text.dart` translates them. The data layer cannot import
+   `l10n`, so classification and translation had to be separated. Tests pin each
+   code against the migrations' *exact* text, so rewording a migration fails a
+   test rather than silently dropping the app back to English.
+5. **The Bengali quantity field.** `add_to_cart_sheet` wrote itself back through
+   `Qty.format`, which localises digits — producing `০.১২৩`, which
+   `double.tryParse` cannot read. Since the field re-parses on every keystroke,
+   one snap-back left text the next edit resolved to `null`, zeroing the
+   quantity in the primary locale. Now writes plain ASCII.
+
+**The pattern across (4) and (5), worth naming:** a value formatted for *display*
+and a value meant to be *read back* are different things, and `intl` silently
+converts the first into something that fails as the second. The discount sheet
+documented this trap; the older sheet had been living inside it.

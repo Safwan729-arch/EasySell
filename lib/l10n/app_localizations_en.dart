@@ -620,6 +620,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cart_checkoutFailed => 'Checkout failed. Please try again.';
 
   @override
+  String error_insufficientStock(String product) {
+    return 'Not enough $product in stock';
+  }
+
+  @override
+  String get error_cartEmpty => 'The cart is empty.';
+
+  @override
+  String get error_productNotFound => 'That product no longer exists.';
+
+  @override
+  String get error_customerNotFound => 'That customer no longer exists.';
+
+  @override
+  String get error_discountExceedsTotal =>
+      'The discount is more than the bill.';
+
+  @override
+  String get error_discountNegative => 'A discount cannot be negative.';
+
+  @override
+  String get error_quantityNotPositive => 'Quantity must be more than zero.';
+
+  @override
   String get cart_addDiscount => 'Add discount';
 
   @override

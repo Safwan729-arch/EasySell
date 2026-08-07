@@ -43,6 +43,24 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
   double get _step => stepForUnit(widget.product.unit);
   bool get _allowsDecimal => widget.product.unitType.allowsDecimal;
 
+  /// The quantity as plain ASCII, for writing back into the text field.
+  ///
+  /// Deliberately NOT `Qty.format`, which localises digits through `intl`: in
+  /// Bengali it returns `০.১২৩`, and `double.tryParse` cannot read that back.
+  /// The field is re-parsed on every keystroke, so one snap-back used to leave
+  /// text the next edit resolved to null -- silently zeroing the quantity in
+  /// the app's primary locale. `discount_sheet.dart` documents the same trap.
+  ///
+  /// Trailing zeros are trimmed so a stepped 2.0 shows as "2", matching what
+  /// `Qty.format` displayed before.
+  String _fieldText(double v) {
+    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+    return v
+        .toStringAsFixed(3)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +68,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
         .read(cartControllerProvider.notifier)
         .remainingStockFor(widget.product);
     _qty = remaining <= 0 ? 0 : _step.clamp(0, remaining).toDouble();
-    _qtyController = TextEditingController(text: Qty.format(_qty));
+    _qtyController = TextEditingController(text: _fieldText(_qty));
   }
 
   @override
@@ -62,7 +80,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
   /// Sets the quantity from a stepper button and syncs the text field to match.
   void _setQty(double v) {
     setState(() => _qty = v);
-    final text = Qty.format(v);
+    final text = _fieldText(v);
     _qtyController.value = TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
@@ -81,7 +99,7 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
     );
     setState(() => _qty = clamped);
     if (parsed != null && parsed != clamped) {
-      final text = Qty.format(clamped);
+      final text = _fieldText(clamped);
       _qtyController.value = TextEditingValue(
         text: text,
         selection: TextSelection.collapsed(offset: text.length),

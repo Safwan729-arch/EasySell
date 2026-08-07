@@ -4,7 +4,15 @@ import 'cart_line.dart';
 /// Adds [quantity] of [product] to [lines], merging into an existing line for
 /// the same product if present. The resulting quantity for that product is
 /// clamped to [Product.quantity] (current stock) so the cart can never stage
-/// more of an item than physically exists, even across repeated adds.
+/// more of an item than physically exists, even across repeated adds, and
+/// rounded to the database's `numeric(10,3)` precision (see [_round3]).
+///
+/// The rounding is here, not only in [clampCartQuantity], because not every
+/// caller goes through the add-to-cart sheet. The voice flow hands a quantity
+/// straight from the AI's JSON to this function, so a parsed `2.5004` would
+/// otherwise be staged at four decimals while Postgres stores three — making
+/// the app's subtotal disagree with the one `record_sale_cart` computes, and
+/// a near-total discount fail the whole checkout.
 List<CartLine> addOrIncrementLine(
   List<CartLine> lines,
   Product product,
@@ -12,14 +20,15 @@ List<CartLine> addOrIncrementLine(
 ) {
   final index = lines.indexWhere((l) => l.product.id == product.id);
   if (index == -1) {
-    final clamped = quantity.clamp(0, product.quantity).toDouble();
+    final clamped = _round3(quantity.clamp(0, product.quantity).toDouble());
     return clamped <= 0
         ? lines
         : [...lines, CartLine(product: product, quantity: clamped)];
   }
   final existing = lines[index];
-  final merged =
-      (existing.quantity + quantity).clamp(0, product.quantity).toDouble();
+  final merged = _round3(
+    (existing.quantity + quantity).clamp(0, product.quantity).toDouble(),
+  );
   final updated = [...lines];
   updated[index] = existing.copyWith(quantity: merged);
   return updated;
@@ -36,7 +45,10 @@ double remainingStockForLines(List<CartLine> lines, Product product) {
 }
 
 /// Sets the line for [productId] to exactly [quantity], clamped to that
-/// product's current stock. A quantity at/below zero removes the line.
+/// product's current stock and rounded to the database's `numeric(10,3)`
+/// precision (see [_round3], and the note on [addOrIncrementLine] for why the
+/// rounding cannot live only in [clampCartQuantity]). A quantity at/below zero
+/// removes the line.
 List<CartLine> updateLineQuantity(
   List<CartLine> lines,
   String productId,
@@ -45,7 +57,9 @@ List<CartLine> updateLineQuantity(
   if (quantity <= 0) return removeLine(lines, productId);
   final index = lines.indexWhere((l) => l.product.id == productId);
   if (index == -1) return lines;
-  final clamped = quantity.clamp(0, lines[index].product.quantity).toDouble();
+  final clamped = _round3(
+    quantity.clamp(0, lines[index].product.quantity).toDouble(),
+  );
   final updated = [...lines];
   updated[index] = lines[index].copyWith(quantity: clamped);
   return updated;

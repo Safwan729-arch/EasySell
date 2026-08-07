@@ -144,8 +144,13 @@ begin
       from transactions where sale_group_id = v_group;
 
     if p_discount > v_max then
-      raise exception 'Discount exceeds total: bill is %, discount was %',
-        v_subtotal, p_discount;
+      -- Report v_max, NOT v_subtotal. The raw subtotal can carry five decimals
+      -- (numeric(10,2) price x numeric(10,3) quantity) and can sit a fraction
+      -- ABOVE the largest discount that is actually placeable, so quoting it
+      -- produced messages like "bill is 225.09000, discount was 225.09" that
+      -- read as self-contradictory. v_max is the number the comparison used.
+      raise exception 'Discount exceeds total: most you can take off is %, asked for %',
+        v_max, p_discount;
     end if;
 
     -- FLOOR, never round. quantity is numeric(10,3), so a line subtotal can

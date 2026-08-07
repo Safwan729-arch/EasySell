@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/l10n/failure_text.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/segment_pills.dart';
 import '../../../shared/extensions/format.dart';
@@ -111,8 +112,12 @@ class CartScreen extends ConsumerWidget {
     ref.listen<AsyncValue<void>>(cartCheckoutControllerProvider, (_, next) {
       if (next is AsyncError) {
         AppHaptics.warning();
+        // Translated from the failure's CODE, not its message: the RPC raises
+        // English sentences ("Insufficient stock for Pepsi: have 3, need 5")
+        // and this app is Bengali-first, so forwarding them verbatim showed
+        // the wrong language at the moment a sale failed. See failure_text.dart.
         final message = switch (next.error) {
-          Failure(:final message) => message,
+          Failure f => failureText(context.l10n, f),
           _ => context.l10n.cart_checkoutFailed,
         };
         ScaffoldMessenger.of(context)

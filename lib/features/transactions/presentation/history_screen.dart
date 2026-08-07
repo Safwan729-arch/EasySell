@@ -34,6 +34,20 @@ class SaleReceipt {
   DateTime? get createdAt => lines.first.createdAt;
   double get totalRevenue => lines.fold<double>(0, (sum, t) => sum + t.revenue);
   int get lineCount => lines.length;
+
+  /// The discount the shopkeeper actually typed, recovered by summing the
+  /// per-line shares `record_sale_cart` allocated.
+  ///
+  /// This is the only place that figure exists in the app. The database stores
+  /// no receipt-level discount -- a receipt is just rows sharing a
+  /// `sale_group_id` -- and the split is exact to the paisa precisely so this
+  /// sum reproduces the original. Without it a 3-line sale with ৳7 off shows
+  /// `−৳2.33` on one line's detail and the ৳7 appears nowhere.
+  double get discountTotal =>
+      lines.fold<double>(0, (sum, t) => sum + t.discountAmount);
+
+  /// What the receipt came to before the discount.
+  double get grossRevenue => totalRevenue + discountTotal;
 }
 
 /// Groups [sales] into receipts by `saleGroupId`, preserving each receipt's
@@ -832,6 +846,41 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                // The receipt-level discount, shown once under the lines. The
+                // per-line amounts above are already net, so without this the
+                // figure the shopkeeper typed is nowhere in History and the
+                // lines look like they simply cost less than the products do.
+                if (row.receipt.discountTotal > 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                    child: Row(
+                      children: [
+                        SizedBox(width: _timeW),
+                        Expanded(
+                          child: Text(
+                            l10n.saleDetail_discount,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: _qtyW),
+                        SizedBox(
+                          width: _amtW,
+                          child: Text(
+                            '−${Money.compact(row.receipt.discountTotal, currencyCode: widget.currency)}',
+                            textAlign: TextAlign.right,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                              fontFeatures: tnum,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],

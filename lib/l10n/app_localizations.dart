@@ -1100,6 +1100,48 @@ abstract class AppLocalizations {
   /// **'Checkout failed. Please try again.'**
   String get cart_checkoutFailed;
 
+  /// No description provided for @error_insufficientStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough {product} in stock'**
+  String error_insufficientStock(String product);
+
+  /// No description provided for @error_cartEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The cart is empty.'**
+  String get error_cartEmpty;
+
+  /// No description provided for @error_productNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'That product no longer exists.'**
+  String get error_productNotFound;
+
+  /// No description provided for @error_customerNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'That customer no longer exists.'**
+  String get error_customerNotFound;
+
+  /// No description provided for @error_discountExceedsTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'The discount is more than the bill.'**
+  String get error_discountExceedsTotal;
+
+  /// No description provided for @error_discountNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'A discount cannot be negative.'**
+  String get error_discountNegative;
+
+  /// No description provided for @error_quantityNotPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity must be more than zero.'**
+  String get error_quantityNotPositive;
+
   /// No description provided for @cart_addDiscount.
   ///
   /// In en, this message translates to:

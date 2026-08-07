@@ -165,16 +165,19 @@ class TransactionRepository {
     }
   }
 
-  /// RPC exceptions raised inside the function (e.g. "Insufficient stock: have
-  /// 3, need 5", "Product not found") arrive as [PostgrestException] with a
-  /// user-meaningful message — surface it directly.
+  /// RPC exceptions raised inside the function (e.g. "Insufficient stock for
+  /// Pepsi: have 3, need 5", "Product not found") arrive as
+  /// [PostgrestException]. The message is kept as an English fallback; the
+  /// [Failure.code] is what the UI should render.
   Failure _map(Object e) {
     if (e is PostgrestException) {
-      return DatabaseFailure(
-        e.message.isNotEmpty
-            ? e.message
-            : 'Could not complete the transaction. Please try again.',
-      );
+      if (e.message.isEmpty) {
+        return const DatabaseFailure(
+          'Could not complete the transaction. Please try again.',
+        );
+      }
+      final (:code, :detail) = classifyServerMessage(e.message);
+      return DatabaseFailure(e.message, code: code, detail: detail);
     }
     if (e is SocketException) {
       return const NetworkFailure('No internet connection. Please try again.');
