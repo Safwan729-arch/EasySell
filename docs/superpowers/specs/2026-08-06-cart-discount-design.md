@@ -4,8 +4,9 @@
 **Feature owner:** Member A (Full Stack)
 **Scope:** `supabase/migrations/0009_cart_discount.sql`, `lib/features/cart/**`,
 `lib/features/transactions/**`, `lib/l10n/**`
-**Status:** built on `feat/cart-discount` (`8ca8e32`..`c4d33f4`); **not yet applied to the
-database** — see §10 and §12
+**Status:** built on `feat/cart-discount` (`8ca8e32`..`a3e795c`), all review
+findings closed, 401 tests; **migration `0009` not yet applied to the database**
+— see §10 and §12
 **Related:**
 - [[2026-07-07-sale-cart-design]] — the cart and `record_sale_cart` this extends
 - [[2026-07-17-customer-credit-khata-design]] — the khata debt must record the
