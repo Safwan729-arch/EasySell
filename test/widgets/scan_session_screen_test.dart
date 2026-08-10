@@ -136,16 +136,18 @@ void main() {
     tester,
   ) async {
     await _pump(tester);
-    // Baseline: the two-route stack (base route + pushed /scan route) each
-    // carry their own always-present, invisible `ModalBarrier` -- that is
-    // ordinary Navigator plumbing, not a per-item confirmation popup. The
-    // property this test pins is that capturing a frame does not add a
-    // THIRD one (i.e. no dialog/bottom-sheet pops up over the camera).
-    final baseline = find.byType(ModalBarrier).evaluate().length;
     await tester.tap(find.byKey(const Key('scan-shutter')));
     await tester.pump();
-    // The critical property: no modal, no spinner blocking the camera.
-    expect(find.byType(ModalBarrier), findsNWidgets(baseline));
+    // The critical property: no per-item confirmation modal, no spinner
+    // blocking the camera. Checked directly against `AlertDialog` /
+    // `BottomSheet` rather than `ModalBarrier`: both `showDialog` and
+    // `showModalBottomSheet` default to a non-null `barrierColor`, so their
+    // scrim is Flutter's `AnimatedModalBarrier` (a sibling of
+    // `ModalBarrier`, not a subtype) and `find.byType(ModalBarrier)` cannot
+    // see them -- confirmed by mutation-testing this assertion with a real
+    // `showDialog` in the shutter handler (see the task-5 report).
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(BottomSheet), findsNothing);
     expect(find.byKey(const Key('scan-shutter')), findsOneWidget);
   });
 
