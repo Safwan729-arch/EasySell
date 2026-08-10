@@ -10,7 +10,20 @@
 // voice function). MEMBER B owns prompt tuning.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-interface Candidate { id: string; name: string; brand?: string; variant?: string }
+// `id` is the legacy shape (product uuid). `i` is the current one: a list index,
+// because the catalog is re-sent in the prompt on every scan and a uuid costs
+// ~20 tokens per candidate to carry no meaning. BOTH are accepted so this
+// function can be deployed while an older app is still installed -- see the
+// deploy-order note in supabase/README.md.
+interface Candidate {
+  id?: string;
+  i?: number;
+  name: string;
+  brand?: string;
+  variant?: string;
+  unit?: string;
+  recent?: number;
+}
 
 // Google Gemini config. Only GEMINI_API_KEY must be set. Model is pinned to
 // gemini-3.6-flash but overridable via a secret so a future slug rename never
@@ -143,7 +156,9 @@ async function recognize(imageB64: string, candidates: Candidate[]) {
 // Never trust the model's output shape. Drop invented ids, clamp confidences,
 // derive status from surviving matches, and coerce read_* fields to string|null.
 function normalize(raw: Record<string, unknown>, candidates: Candidate[]) {
-  const ids = new Set(candidates.map((c) => c.id));
+  const ids = new Set(
+    candidates.map((c) => c.id ?? String(c.i)).filter((k) => k !== "undefined"),
+  );
   const matches = Array.isArray(raw.matches) ? raw.matches : [];
   const clean = matches
     .filter((m: Record<string, unknown>) => ids.has(m?.product_id as string))

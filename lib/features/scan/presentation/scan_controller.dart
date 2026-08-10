@@ -59,17 +59,18 @@ class ScanController {
 
     final products =
         _ref.read(productsStreamProvider).value ?? const <Product>[];
+    final payload = buildCandidatePayload(products);
     final result = await _ref
         .read(visionScanRepositoryProvider)
-        .recognize(imageBytes: bytes, candidates: buildCandidates(products));
+        .recognize(imageBytes: bytes, candidates: payload.candidates);
 
     return result.when(
       success: (recognition) {
         final decision = decideScanAction(recognition);
         final byId = {for (final p in products) p.id: p};
-        final resolved = [
+        final resolved = <Product>[
           for (final m in decision.matches)
-            if (byId[m.productId] != null) byId[m.productId]!,
+            if (byId[payload.resolve(m.productId)] case final Product p) p,
         ];
         return ScanOutcome(
           action: decision.action,
