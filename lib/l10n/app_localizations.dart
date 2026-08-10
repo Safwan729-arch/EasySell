@@ -1292,6 +1292,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Add 1 item} other{Add {count} items}}'**
   String scan_addItems(int count);
 
+  /// Add button with an empty tray -- deliberately carries no count, since a disabled button announcing zero reads as an error rather than as 'nothing staged yet'
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get scan_addEmpty;
+
   /// No description provided for @scan_nothingYet.
   ///
   /// In en, this message translates to:

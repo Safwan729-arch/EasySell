@@ -172,6 +172,28 @@ void main() {
     expect(find.byKey(const Key('scan-shutter')), findsOneWidget);
   });
 
+  testWidgets('an empty tray gives the Add button no count to announce', (
+    tester,
+  ) async {
+    await _pump(tester);
+    // "Add 0 items" on a disabled button reads as an error rather than as
+    // "nothing staged yet", which is the ordinary state you land on when the
+    // screen opens. Pinned by digit so it fails for either locale's numerals.
+    final label = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byKey(const Key('scan-add-all')),
+            matching: find.byType(Text),
+          ),
+        )
+        .data!;
+    expect(
+      RegExp(r'[0-9০-৯]').hasMatch(label),
+      isFalse,
+      reason: 'empty-tray Add label must carry no number, got "$label"',
+    );
+  });
+
   testWidgets('three shutter taps of one product show a single x3 chip', (
     tester,
   ) async {

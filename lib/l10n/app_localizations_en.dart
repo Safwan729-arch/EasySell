@@ -753,6 +753,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get scan_addEmpty => 'Add';
+
+  @override
   String get scan_nothingYet => 'Scan something to begin';
 
   @override

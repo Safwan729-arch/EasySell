@@ -229,6 +229,8 @@
   "@scan_recognizing": { "placeholders": { "count": { "type": "int" } } },
   "scan_addItems": "{count, plural, =1{Add 1 item} other{Add {count} items}}",
   "@scan_addItems": { "placeholders": { "count": { "type": "int" } } },
+  "scan_addEmpty": "Add",
+  "@scan_addEmpty": { "description": "Add button with an empty tray -- deliberately carries no count, since a disabled button announcing zero reads as an error rather than as 'nothing staged yet'" },
   "scan_nothingYet": "Scan something to begin",
   "scan_tapToPick": "Tap to pick",
   "scan_notIdentified": "Not identified",

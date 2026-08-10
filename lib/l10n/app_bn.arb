@@ -226,6 +226,7 @@
   "scan_searchProducts": "পণ্য খুঁজুন",
   "scan_recognizing": "{count}টি শনাক্ত করা হচ্ছে…",
   "scan_addItems": "{count, plural, =1{১টি যোগ করুন} other{{count}টি যোগ করুন}}",
+  "scan_addEmpty": "যোগ করুন",
   "scan_nothingYet": "শুরু করতে স্ক্যান করুন",
   "scan_tapToPick": "বেছে নিতে চাপ দিন",
   "scan_notIdentified": "শনাক্ত করা যায়নি",

@@ -246,6 +246,16 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
                   child: Text(
                     pending > 0
                         ? l10n.scan_recognizing(pending)
+                        // An empty tray gets no count. The disabled button used
+                        // to read "Add 0 items", which scans as an error rather
+                        // than as "nothing staged yet" -- the state it actually
+                        // describes is the ordinary one you land on.
+                        // An empty tray gets no count. The disabled button used
+                        // to read "Add 0 items", which scans as an error rather
+                        // than as "nothing staged yet" -- the state it actually
+                        // describes is the ordinary one you land on.
+                        : addable == 0
+                        ? l10n.scan_addEmpty
                         : l10n.scan_addItems(addable),
                   ),
                 ),

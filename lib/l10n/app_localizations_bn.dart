@@ -747,6 +747,9 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get scan_addEmpty => 'যোগ করুন';
+
+  @override
   String get scan_nothingYet => 'শুরু করতে স্ক্যান করুন';
 
   @override
