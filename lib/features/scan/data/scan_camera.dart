@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'real_scan_camera.dart';
+
 /// Thrown when the user refuses camera access. Distinct from a generic failure
 /// because the recovery is different: no amount of retrying helps, the user has
 /// to change a system setting.
@@ -66,7 +68,5 @@ class FakeScanCamera implements ScanCamera {
   }
 }
 
-/// Overridden in tests with a [FakeScanCamera]; Task 4 supplies the real one.
-final scanCameraProvider = Provider<ScanCamera>(
-  (ref) => throw UnimplementedError('scanCameraProvider must be overridden'),
-);
+/// Overridden with a [FakeScanCamera] in tests.
+final scanCameraProvider = Provider<ScanCamera>((ref) => RealScanCamera());
