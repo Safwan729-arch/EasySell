@@ -338,3 +338,43 @@ UUID-keyed candidates (`id`, not `i`). The `buildCandidates` shim in
 shapes from one call site and has no reason to exist once voice migrates to
 index-keyed candidates too — the final task in this feature, if it runs,
 removes it. Until then it is not dead code.
+
+*(Superseded: the voice task did run. `parse-sale` and its caller now send
+index-keyed candidates too, indices are translated back to product ids at the
+parse boundary via `VoiceParseResult.resolveIds`, and the `buildCandidates`
+shim is gone.)*
+
+## 13. Carried defects — known and deliberately not fixed
+
+Two items survived the final whole-branch review's fix wave. Both were
+adjudicated as bounded, and both are recorded here because a future session
+will otherwise rediscover them from scratch.
+
+**1. A superseded `initialize()` can still stomp the screen's `setState`.**
+`RealScanCamera.initialize()` carries a generation counter, so a concurrent
+call that gets superseded disposes its own `CameraController` instead of
+leaking bound hardware. But `ScanSessionScreen._start()` has no generation
+tracking of its own, so whichever `await` resolves *last* wins the `setState`
+regardless of which call the camera layer considers current.
+
+Trigger: the app backgrounds mid-`initialize()` (firing `inactive` →
+`dispose()`) and resumes before the first call settles (firing `resumed` → a
+second `_start()`). That is the same sequence the camera-level fix exists for,
+so this gap is reachable, not theoretical. If the two calls disagree — the
+stale one throwing after the fresh one succeeded — the screen can show a
+permission error while a working camera is bound underneath, or the reverse.
+
+Carried because: no crash, no data loss, nowhere near the money path, confined
+to camera setup, and one tap of the retry button recovers it. Fixing it means
+adding generation tracking to the screen as well. **If a shopkeeper reports a
+camera error that a retry immediately clears, this is the first suspect.**
+
+**2. One test for the overlapping-shutter fix is not load-bearing.**
+`scan_session_controller_test.dart`'s "a capture whose camera call throws
+neither crashes nor leaves a chip behind" passes with the fix fully reverted —
+`ScanSessionController.capture()` awaits the camera *before* mutating state, so
+it never could have left a phantom chip. The assertion is true and worth
+keeping; it just proves an invariant that already held. The two widget tests in
+`scan_session_screen_test.dart` are what actually close that finding, both
+confirmed by revert-and-rerun. Do not treat the controller test as coverage for
+the in-flight guard.
