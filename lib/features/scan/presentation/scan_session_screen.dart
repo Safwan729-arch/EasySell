@@ -326,14 +326,78 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 24),
-            child: FloatingActionButton.large(
-              key: const Key('scan-shutter'),
-              onPressed: _capturing ? null : _shutter,
-              child: const Icon(Icons.camera_alt),
-            ),
+            child: _ShutterButton(onPressed: _capturing ? null : _shutter),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The shutter, drawn as the ring-and-disc every camera app uses.
+///
+/// This was a `FloatingActionButton.large` and it looked wrong for two reasons
+/// that compound. Material's large FAB is a 96dp *rounded square* filled with
+/// the brand colour, and its documented meaning is the screen's primary
+/// compose action -- create, add, write. On a viewfinder that reads as a giant
+/// "add" button: it claims the eye, competes with the thing the shopkeeper is
+/// actually pointing the phone at, and says nothing about taking a picture
+/// beyond the small icon sitting inside all that fill.
+///
+/// The ring-and-disc needs no icon because it is the one control every phone
+/// owner already knows, and being monochrome it sits on top of the preview
+/// instead of fighting it. 72dp outer keeps the touch target well above the
+/// 48dp minimum while occupying roughly half the visual weight of the FAB.
+///
+/// While a capture is in flight the disc shrinks and dims -- the same feedback
+/// a physical shutter gives, and the visible half of the in-flight guard that
+/// stops an overlapping tap from being silently swallowed.
+class _ShutterButton extends StatelessWidget {
+  const _ShutterButton({required this.onPressed});
+
+  /// Null while a capture is in flight, which both disables the tap and
+  /// switches the button to its fired appearance.
+  final VoidCallback? onPressed;
+
+  static const double _outer = 72;
+  static const double _inner = 58;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: context.l10n.inventory_scanProduct,
+      child: InkResponse(
+        key: const Key('scan-shutter'),
+        onTap: onPressed,
+        radius: _outer / 2,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: _outer,
+          height: _outer,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: enabled ? Colors.white : Colors.white38,
+              width: 3,
+            ),
+          ),
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              curve: Curves.easeOut,
+              width: enabled ? _inner : _inner - 12,
+              height: enabled ? _inner : _inner - 12,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: enabled ? Colors.white : Colors.white38,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
