@@ -53,6 +53,24 @@ class _ScriptedRepo implements VisionScanRepository {
   }
 }
 
+/// A repository that always THROWS rather than returning `Result.failure` --
+/// the case `VisionScanRepository.recognize` promises never to hit (it
+/// catches internally) but nothing in the type system enforces. Regression
+/// coverage for the "one bad chip never kills the session" rule applying to
+/// a rejected future exactly as much as to a `Result.failure`.
+class _ThrowingRepo implements VisionScanRepository {
+  int calls = 0;
+
+  @override
+  Future<Result<RecognitionResult>> recognize({
+    required Uint8List imageBytes,
+    required List<Map<String, dynamic>> candidates,
+  }) async {
+    calls++;
+    throw StateError('boom');
+  }
+}
+
 Result<RecognitionResult> _match(int index, {double confidence = 0.95}) =>
     Result.success(
       RecognitionResult(
@@ -62,7 +80,7 @@ Result<RecognitionResult> _match(int index, {double confidence = 0.95}) =>
       ),
     );
 
-ProviderContainer _container(_ScriptedRepo repo, FakeScanCamera cam) {
+ProviderContainer _container(VisionScanRepository repo, FakeScanCamera cam) {
   final c = ProviderContainer(
     overrides: [
       visionScanRepositoryProvider.overrideWithValue(repo),
@@ -80,6 +98,22 @@ ProviderContainer _container(_ScriptedRepo repo, FakeScanCamera cam) {
     ],
   );
   addTearDown(c.dispose);
+  return c;
+}
+
+/// Spins up a fully-wired container around [repo], keeping
+/// `productsStreamProvider` and `myShopProvider` settled exactly like
+/// [setUp] does for the main suite. Used by tests that need a repository
+/// other than [_ScriptedRepo].
+Future<ProviderContainer> _readyContainer(
+  VisionScanRepository repo,
+  FakeScanCamera cam,
+) async {
+  final c = _container(repo, cam);
+  final sub = c.listen(productsStreamProvider, (_, _) {});
+  addTearDown(sub.close);
+  await c.read(productsStreamProvider.future);
+  await c.read(myShopProvider.future);
   return c;
 }
 
@@ -269,4 +303,109 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(ctl().pendingCount, 1);
   });
+
+  test('a repository that THROWS (not Result.failure) still frees its slot and '
+      'the session keeps working', () async {
+    final throwing = _ThrowingRepo();
+    final throwCam = FakeScanCamera();
+    await throwCam.initialize();
+    final tc = await _readyContainer(throwing, throwCam);
+    final tCtl = tc.read(scanSessionProvider.notifier);
+
+    await tCtl.capture();
+    await tCtl.capture();
+    await tCtl.capture();
+    await Future<void>.delayed(Duration.zero);
+
+    final tItems = tc.read(scanSessionProvider);
+    expect(
+      tItems.every((i) => i.status == ScanItemStatus.failed),
+      isTrue,
+      reason:
+          'a throw must be treated exactly like a Result.failure, not '
+          'strand the chip at recognizing forever',
+    );
+    expect(
+      tItems.every((i) => i.frame != null),
+      isTrue,
+      reason: 'the frame must survive so retry needs no re-shoot',
+    );
+
+    // The real assertion: the in-flight slot from each throw must have
+    // been freed, not leaked. A 4th capture has to dispatch immediately.
+    await tCtl.capture();
+    expect(
+      throwing.calls,
+      4,
+      reason: 'a later capture still dispatches -- no slot was leaked',
+    );
+  });
+
+  test(
+    'choose with a stale id does not inflate an unrelated resolved chip',
+    () async {
+      await ctl().capture();
+      repo.pending[0].complete(
+        Result.success(
+          const RecognitionResult(
+            status: RecognitionStatus.multiple,
+            matches: [
+              ProductMatch(productId: '0', confidence: 0.6),
+              ProductMatch(productId: '1', confidence: 0.55),
+            ],
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      ctl().choose(items().single.id, _rice);
+      expect(items().single.quantity, 0.5);
+
+      // The chip this id once named is long gone; `_resolve`'s twin search
+      // excludes `it.id != id`, so before the fix a nonexistent id could
+      // never match itself and always fell into the merge branch.
+      ctl().choose('chip-does-not-exist', _rice);
+
+      expect(items().length, 1, reason: 'no phantom chip created');
+      expect(
+        items().single.quantity,
+        0.5,
+        reason: 'a stale id must not silently inflate an unrelated chip',
+      );
+    },
+  );
+
+  test(
+    'a second retry while the first is still in flight does not double-dispatch, '
+    'and the queue is not left stalled',
+    () async {
+      await ctl().capture();
+      repo.pending[0].complete(const Result.failure(NetworkFailure('offline')));
+      await Future<void>.delayed(Duration.zero);
+      final failedId = items().single.id;
+      expect(items().single.status, ScanItemStatus.failed);
+
+      await ctl().retry(failedId);
+      expect(repo.calls, 2, reason: 'first retry dispatches');
+      expect(items().single.status, ScanItemStatus.recognizing);
+
+      await ctl().retry(failedId);
+      expect(
+        repo.calls,
+        2,
+        reason:
+            'the chip is mid-retry (not failed), so a second tap must not '
+            'queue a duplicate, paid recognition call',
+      );
+
+      // Also proves _pump() was not skipped anywhere on the way here: the
+      // in-flight slot accounting is still sane, so a fresh capture goes
+      // straight out rather than sitting stuck behind a stalled queue.
+      await ctl().capture();
+      expect(
+        repo.calls,
+        3,
+        reason: 'the queue keeps moving; nothing was left stalled',
+      );
+    },
+  );
 }

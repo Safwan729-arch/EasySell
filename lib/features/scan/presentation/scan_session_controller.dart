@@ -48,7 +48,14 @@ class ScanSessionController extends Notifier<List<ScanItem>> {
   }
 
   /// Re-sends a failed chip's held frame -- no re-shoot required.
+  ///
+  /// Guarded on the chip's own status (not just "do we still have a frame"):
+  /// the frame stays cached for a chip that is already mid-retry too, and
+  /// without this check a second tap while the first retry is still in
+  /// flight would queue a duplicate, paid recognition call for the same chip.
   Future<void> retry(String itemId) async {
+    final it = state.where((i) => i.id == itemId).firstOrNull;
+    if (it == null || it.status != ScanItemStatus.failed) return;
     if (!_frames.containsKey(itemId)) return;
     _patch(itemId, (it) => it.copyWith(status: ScanItemStatus.recognizing));
     _queue.add(itemId);
@@ -65,63 +72,82 @@ class ScanSessionController extends Notifier<List<ScanItem>> {
     }
   }
 
+  /// Runs one recognition and settles [id]'s chip from the result.
+  ///
+  /// The whole body after the frame lookup runs inside a `try`/`finally`:
+  /// `_active--` and `_pump()` must run no matter how this exits, including a
+  /// *thrown* exception from the repository or from reading a provider --
+  /// `VisionScanRepository.recognize` catches internally today and returns a
+  /// `Result.failure`, but nothing in the type system enforces that contract,
+  /// and a throw here must not leak an in-flight slot forever (it would
+  /// silently cap the session below [maxScanInFlight] for good) nor strand
+  /// the chip at `recognizing` with no `failed` status and no retry
+  /// affordance. The spec's "one bad chip never kills the session" rule
+  /// applies to a thrown exception exactly as much as to a `Result.failure`.
   Future<void> _recognize(String id) async {
-    final bytes = _frames[id];
-    if (bytes == null) {
-      _active--;
-      return;
-    }
-    final products =
-        ref.read(productsStreamProvider).value ?? const <Product>[];
-    final payload = buildCandidatePayload(products);
-    final result = await ref
-        .read(visionScanRepositoryProvider)
-        .recognize(imageBytes: bytes, candidates: payload.candidates);
-    _active--;
+    try {
+      final bytes = _frames[id];
+      if (bytes == null) return;
+      final products =
+          ref.read(productsStreamProvider).value ?? const <Product>[];
+      final payload = buildCandidatePayload(products);
+      final result = await ref
+          .read(visionScanRepositoryProvider)
+          .recognize(imageBytes: bytes, candidates: payload.candidates);
 
-    // The chip may have been removed while the call was in flight.
-    if (state.any((it) => it.id == id)) {
-      result.when(
-        success: (recognition) {
-          final byId = {for (final p in products) p.id: p};
-          final decision = decideScanAction(recognition);
-          final matched = <Product>[
-            for (final m in decision.matches)
-              if (byId[payload.resolve(m.productId)] case final Product p) p,
-          ];
-          final label = _readLabel(
-            recognition.readBrand,
-            recognition.readName,
-            recognition.readSize,
-          );
-          if (decision.action == ScanAction.autoSell && matched.isNotEmpty) {
-            _resolve(id, matched.first, label);
-          } else if (matched.length > 1) {
-            _patch(
-              id,
-              (it) => it.copyWith(
-                status: ScanItemStatus.ambiguous,
-                choices: matched,
-                readLabel: label,
-              ),
+      // The chip may have been removed while the call was in flight.
+      if (state.any((it) => it.id == id)) {
+        result.when(
+          success: (recognition) {
+            final byId = {for (final p in products) p.id: p};
+            final decision = decideScanAction(recognition);
+            final matched = <Product>[
+              for (final m in decision.matches)
+                if (byId[payload.resolve(m.productId)] case final Product p) p,
+            ];
+            final label = _readLabel(
+              recognition.readBrand,
+              recognition.readName,
+              recognition.readSize,
             );
-          } else if (matched.length == 1) {
-            _resolve(id, matched.first, label);
-          } else {
-            _patch(
-              id,
-              (it) => it.copyWith(
-                status: ScanItemStatus.unmatched,
-                readLabel: label,
-              ),
-            );
-          }
-        },
-        failure: (_) =>
-            _patch(id, (it) => it.copyWith(status: ScanItemStatus.failed)),
-      );
+            if (decision.action == ScanAction.autoSell && matched.isNotEmpty) {
+              _resolve(id, matched.first, label);
+            } else if (matched.length > 1) {
+              _patch(
+                id,
+                (it) => it.copyWith(
+                  status: ScanItemStatus.ambiguous,
+                  choices: matched,
+                  readLabel: label,
+                ),
+              );
+            } else if (matched.length == 1) {
+              _resolve(id, matched.first, label);
+            } else {
+              _patch(
+                id,
+                (it) => it.copyWith(
+                  status: ScanItemStatus.unmatched,
+                  readLabel: label,
+                ),
+              );
+            }
+          },
+          failure: (_) =>
+              _patch(id, (it) => it.copyWith(status: ScanItemStatus.failed)),
+        );
+      }
+    } catch (_) {
+      // A thrown exception is treated exactly like a Result.failure: mark
+      // only this chip failed and keep its frame (untouched here) so retry
+      // needs no re-shoot.
+      if (state.any((it) => it.id == id)) {
+        _patch(id, (it) => it.copyWith(status: ScanItemStatus.failed));
+      }
+    } finally {
+      _active--;
+      _pump();
     }
-    _pump();
   }
 
   /// Settles [id] onto [product], folding into an existing chip for the same
@@ -164,9 +190,16 @@ class ScanSessionController extends Notifier<List<ScanItem>> {
 
   /// Settles an ambiguous or unmatched chip onto a product the shopkeeper
   /// picked. Merges by the same rule as a recognition.
+  ///
+  /// Returns early when the chip is gone: `_resolve`'s twin search excludes
+  /// `it.id != id`, so a stale id -- one whose chip was removed after the
+  /// picker sheet opened but before the shopkeeper tapped a result -- could
+  /// never match itself and would always fall into the merge branch,
+  /// silently inflating an unrelated resolved chip's quantity.
   void choose(String itemId, Product product) {
     final it = state.where((i) => i.id == itemId).firstOrNull;
-    _resolve(itemId, product, it?.readLabel);
+    if (it == null) return;
+    _resolve(itemId, product, it.readLabel);
   }
 
   void setQuantity(String itemId, double quantity) {
