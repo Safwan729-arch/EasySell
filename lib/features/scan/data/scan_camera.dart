@@ -14,6 +14,18 @@ class CameraPermissionDenied implements Exception {
   String toString() => 'CameraPermissionDenied';
 }
 
+/// Thrown when the device has no camera hardware at all. Distinct from
+/// [CameraPermissionDenied]: `availableCameras()` enumerates hardware without
+/// requiring the runtime CAMERA permission, so an empty list means "nothing to
+/// bind to", not "access refused". Telling the user to go change a permission
+/// setting would be wrong advice on a device -- an emulator, most often --
+/// that simply has no camera.
+class CameraUnavailable implements Exception {
+  const CameraUnavailable();
+  @override
+  String toString() => 'CameraUnavailable';
+}
+
 /// The scan session's view of a camera.
 ///
 /// Deliberately narrow, and deliberately includes [buildPreview] even though
@@ -23,7 +35,8 @@ class CameraPermissionDenied implements Exception {
 /// and the whole tray testable -- none of which a real camera permits inside
 /// `flutter test`.
 abstract interface class ScanCamera {
-  /// Throws [CameraPermissionDenied] if the user refuses access.
+  /// Throws [CameraPermissionDenied] if the user refuses access, or
+  /// [CameraUnavailable] if the device has no camera hardware.
   Future<void> initialize();
 
   Widget buildPreview(BuildContext context);

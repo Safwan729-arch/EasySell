@@ -18,22 +18,40 @@ class RealScanCamera implements ScanCamera {
 
   @override
   Future<void> initialize() async {
+    // scanCameraProvider is a plain (non-autoDispose) Provider, so one
+    // RealScanCamera outlives every app-lifecycle pause/resume and
+    // initialize() can land again without a preceding dispose(). Retiring
+    // whatever controller is already here first (a no-op the first time)
+    // stops that path from silently abandoning a controller that still
+    // holds a live device-orientation subscription and bound platform
+    // camera resources -- the frozen/black preview after backgrounding.
+    await _disposeQuietly(_controller);
+    _controller = null;
+
+    final cameras = await availableCameras();
+    if (cameras.isEmpty) throw const CameraUnavailable();
+    final back = cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
+    final controller = CameraController(
+      back,
+      ResolutionPreset.medium,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
     try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) throw const CameraPermissionDenied();
-      final back = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-      final controller = CameraController(
-        back,
-        ResolutionPreset.medium,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-      );
       await controller.initialize();
-      _controller = controller;
     } on CameraException catch (e) {
+      // A failure here can land after the plugin has already bound the
+      // camera to the process lifecycle (ProcessCameraProvider.bindToLifecycle
+      // in android_camera_camerax.dart, called from initializeCamera before
+      // this can throw), so the controller may be holding live hardware and
+      // an active stream subscription. Dispose it before mapping/rethrowing
+      // so nothing is ever abandoned. A pure permission refusal throws
+      // earlier, in createCameraWithSettings, before anything is bound --
+      // disposing here is a no-op for that case, not a workaround for it.
+      await _disposeQuietly(controller);
       // The plugin reports a refusal as an access-denied code rather than a
       // typed error; anything else is a real device fault worth rethrowing.
       if (e.code == 'CameraAccessDenied' ||
@@ -42,6 +60,21 @@ class RealScanCamera implements ScanCamera {
         throw const CameraPermissionDenied();
       }
       rethrow;
+    }
+    _controller = controller;
+  }
+
+  /// Best-effort disposal used during cleanup paths where we are already
+  /// mid-error-handling or replacing a controller nobody asked to keep: a
+  /// dispose() that itself throws must never mask the reason we were
+  /// disposing in the first place, and must never block bringing up the
+  /// controller that follows it.
+  static Future<void> _disposeQuietly(CameraController? controller) async {
+    if (controller == null) return;
+    try {
+      await controller.dispose();
+    } catch (_) {
+      // Swallowed deliberately -- see doc comment above.
     }
   }
 
