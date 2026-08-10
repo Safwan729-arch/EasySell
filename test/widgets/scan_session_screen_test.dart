@@ -8,6 +8,7 @@ import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controll
 import 'package:ai_shopkeeper/features/scan/data/scan_camera.dart';
 import 'package:ai_shopkeeper/features/scan/data/vision_scan_repository.dart';
 import 'package:ai_shopkeeper/features/scan/domain/recognition_result.dart';
+import 'package:ai_shopkeeper/features/scan/presentation/scan_session_controller.dart';
 import 'package:ai_shopkeeper/features/scan/presentation/scan_session_screen.dart';
 import 'package:ai_shopkeeper/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +53,26 @@ class _InstantRepo implements VisionScanRepository {
 class _UnavailableCamera implements ScanCamera {
   @override
   Future<void> initialize() async => throw const CameraUnavailable();
+
+  @override
+  Widget buildPreview(BuildContext context) =>
+      const ColoredBox(color: Color(0xFF202020));
+
+  @override
+  Future<Uint8List> capture() async =>
+      throw StateError('capture() before initialize()');
+
+  @override
+  Future<void> dispose() async {}
+}
+
+/// Always throws a generic, untyped `CameraException` on `initialize()` --
+/// neither a permission refusal nor "no hardware". Regression coverage for
+/// the case that used to fall through both `on` clauses in `_start()` and
+/// leave the screen on an indeterminate spinner forever.
+class _FaultyCamera implements ScanCamera {
+  @override
+  Future<void> initialize() async => throw Exception('boom');
 
   @override
   Widget buildPreview(BuildContext context) =>
@@ -183,16 +204,111 @@ void main() {
     await _pump(tester, camera: FakeScanCamera(permissionGranted: false));
     await tester.pumpAndSettle();
     expect(find.textContaining('Camera access'), findsOneWidget);
-    expect(find.text('Open settings'), findsOneWidget);
+    // Deliberately "Try again", not "Open settings": the button is a plain
+    // retry with no permission_handler/app_settings dependency wired up, and
+    // the label must not promise a system-settings deep link it cannot do.
+    expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('a device with no camera hardware explains itself, with no "Open '
-      'settings" button -- there is no permission to grant', (tester) async {
+  testWidgets('a device with no camera hardware explains itself, with no '
+      '"Try again" button -- there is no permission to grant, retrying just '
+      'fails the same way', (tester) async {
     await _pump(tester, camera: _UnavailableCamera());
     await tester.pumpAndSettle();
     expect(find.textContaining('no camera'), findsOneWidget);
-    expect(find.text('Open settings'), findsNothing);
+    expect(find.text('Try again'), findsNothing);
   });
+
+  testWidgets(
+    'a generic camera fault shows an error with retry instead of an infinite '
+    'spinner',
+    (tester) async {
+      await _pump(tester, camera: _FaultyCamera());
+      await tester.pumpAndSettle();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Scan failed. Try again.'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a second shutter tap while the first capture is still in flight is '
+    'ignored, not dispatched as a second call',
+    (tester) async {
+      // FakeScanCamera.capture() is otherwise near-instant, too fast for a
+      // widget test to ever observe an overlap -- gate it open so the first
+      // capture is still pending when the second tap lands, the way a real
+      // ~300ms capture would be for two taps 50ms apart.
+      final cam = FakeScanCamera()..captureGate = Completer<void>();
+      await _pump(tester, camera: cam);
+      await tester.tap(find.byKey(const Key('scan-shutter')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('scan-shutter')));
+      await tester.pump();
+      cam.captureGate!.complete();
+      await tester.pumpAndSettle();
+      expect(
+        cam.captureCount,
+        1,
+        reason: 'the FAB must guard itself while a capture is in flight',
+      );
+    },
+  );
+
+  testWidgets(
+    'a capture whose camera call throws surfaces feedback instead of an '
+    'uncaught error, and the shutter stays usable after',
+    (tester) async {
+      final cam = FakeScanCamera()..failNextCapture = true;
+      await _pump(tester, camera: cam);
+      await tester.tap(find.byKey(const Key('scan-shutter')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scan failed. Try again.'), findsOneWidget);
+      expect(find.byKey(const Key('scan-shutter')), findsOneWidget);
+
+      // The fault was transient; the shutter must still work afterward.
+      await tester.tap(find.byKey(const Key('scan-shutter')));
+      await tester.pumpAndSettle();
+      expect(find.text('Pepsi'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'tapping the scrim during the leave-confirm dialog does not discard the '
+    'tray or leave the screen',
+    (tester) async {
+      final c = await _pump(tester);
+      await tester.tap(find.byKey(const Key('scan-shutter')));
+      await tester.pumpAndSettle();
+      expect(c.read(scanSessionProvider).length, 1);
+
+      await tester.pageBack();
+      await tester.pump();
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      // barrierDismissible is now false -- a tap on the scrim must not
+      // dismiss it and must not be treated as Discard.
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pump();
+
+      expect(
+        find.byType(AlertDialog),
+        findsOneWidget,
+        reason: 'a scrim tap must not dismiss the dialog',
+      );
+      expect(
+        c.read(scanSessionProvider).length,
+        1,
+        reason: 'the tray must survive an accidental scrim tap',
+      );
+      expect(
+        find.byKey(const Key('scan-shutter')),
+        findsOneWidget,
+        reason: 'still on the scan screen, not popped',
+      );
+    },
+  );
 
   testWidgets(
     'an out-of-stock product resolves to a visible flagged chip instead of '

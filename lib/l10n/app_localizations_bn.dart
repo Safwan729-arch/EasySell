@@ -737,7 +737,13 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String scan_addItems(int count) {
-    return '$countটি যোগ করুন';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি যোগ করুন',
+      one: '১টি যোগ করুন',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -757,10 +763,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get scan_cameraDenied =>
-      'স্ক্যান করতে ক্যামেরার অনুমতি দরকার। সেটিংসে গিয়ে চালু করুন।';
+      'স্ক্যান করতে ক্যামেরার অনুমতি দরকার। সেটিংসে গিয়ে অনুমতি দিন, তারপর আবার চেষ্টা করুন।';
 
   @override
-  String get scan_openSettings => 'সেটিংস খুলুন';
+  String get scan_openSettings => 'আবার চেষ্টা করুন';
 
   @override
   String get scan_cameraUnavailable =>
@@ -779,7 +785,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String scan_discardBody(int count) {
-    return '$countটি শনাক্ত করা যায়নি, সেগুলো বাদ পড়বে।';
+    return '$countটি পণ্য যোগ করার মতো প্রস্তুত নয় (শনাক্ত হয়নি বা স্টকে নেই), সেগুলো বাদ পড়বে।';
   }
 
   @override

@@ -36,6 +36,21 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
   /// grant, so that button is simply not shown for this state.
   bool _unavailable = false;
 
+  /// Any camera fault that is neither a permission refusal nor "no hardware"
+  /// -- a generic `CameraException`, `availableCameras()` throwing, a
+  /// `MissingPluginException` on an unconfigured platform. Without a state
+  /// for this, `_start()` left it uncaught and the screen sat on an
+  /// indeterminate spinner forever with no message and no way to retry.
+  bool _error = false;
+
+  /// True from the moment a shutter tap starts a capture until it settles
+  /// (success or failure). Guards against a second tap landing while the
+  /// first capture is still in flight: the real `camera` plugin throws
+  /// `CameraException('Previous capture has not returned yet.')` on an
+  /// overlapping call, and without this the FAB stays tappable through that
+  /// window.
+  bool _capturing = false;
+
   /// Captured once in [initState] rather than read from `ref` again in
   /// [dispose]/[didChangeAppLifecycleState]: those can run while this
   /// element's own `ref` is no longer safe to read (e.g. the whole tree
@@ -59,12 +74,19 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
           _ready = true;
           _denied = false;
           _unavailable = false;
+          _error = false;
         });
       }
     } on CameraPermissionDenied {
       if (mounted) setState(() => _denied = true);
     } on CameraUnavailable {
       if (mounted) setState(() => _unavailable = true);
+    } catch (_) {
+      // Anything else -- a generic CameraException, availableCameras()
+      // throwing, a MissingPluginException -- must not leave _ready false
+      // forever with no message and no retry, the way an uncaught throw
+      // here used to. Mirrors the deleted scan_screen.dart's error state.
+      if (mounted) setState(() => _error = true);
     }
   }
 
@@ -91,8 +113,25 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
   }
 
   Future<void> _shutter() async {
+    if (_capturing) return;
+    setState(() => _capturing = true);
     AppHaptics.tap();
-    await ref.read(scanSessionProvider.notifier).capture();
+    try {
+      await ref.read(scanSessionProvider.notifier).capture();
+    } catch (_) {
+      // The real plugin throws routinely (an overlapping capture, a
+      // transient hardware fault); left unguarded that became an uncaught
+      // zone error -- a tap that produced nothing but still felt confirmed
+      // by the haptic above. Surface it instead of swallowing it silently.
+      AppHaptics.warning();
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(context.l10n.scan_failed)));
+      }
+    } finally {
+      if (mounted) setState(() => _capturing = false);
+    }
   }
 
   Future<void> _pick(ScanItem item) async {
@@ -139,13 +178,18 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
   }
 
   Future<bool> _confirmLeave() async {
-    final staged = ref.read(scanSessionProvider).length;
-    if (staged == 0) return true;
+    final items = ref.read(scanSessionProvider);
+    if (items.isEmpty) return true;
+    // Only addable chips are what "Add" actually stages -- match _addAll's
+    // count so this dialog does not overstate how much is at stake (e.g. "3
+    // scanned items" when only 2 would ever reach the cart).
+    final addable = items.where((i) => i.isAddable).length;
     final choice = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: Text(ctx.l10n.scan_leaveTitle),
-        content: Text(ctx.l10n.scan_leaveBody(staged)),
+        content: Text(ctx.l10n.scan_leaveBody(addable)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -158,7 +202,12 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
         ],
       ),
     );
-    if (choice == true) {
+    // barrierDismissible is false, but a dialog route can still resolve null
+    // through other exits (e.g. the system back gesture popping the dialog's
+    // own route). Treat that the same as "changed my mind": stay here with
+    // the tray intact, rather than defaulting to Discard.
+    if (choice == null) return false;
+    if (choice) {
       ref.read(scanSessionProvider.notifier).addAllToCart();
     } else {
       ref.read(scanSessionProvider.notifier).clear();
@@ -220,6 +269,13 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
               const SizedBox(height: 12),
               Text(l10n.scan_cameraDenied, textAlign: TextAlign.center),
               const SizedBox(height: 12),
+              // Deliberately relabelled, not wired to system settings: doing
+              // that needs a permission_handler/app_settings dependency this
+              // app does not carry. This button is a plain retry -- after a
+              // first denial that happens to re-prompt, but after "Don't ask
+              // again" it does nothing observable, so the label must not
+              // promise more than a retry. A recorded downgrade from spec §7
+              // ("a button into system settings"), not an oversight.
               FilledButton(
                 onPressed: _start,
                 child: Text(l10n.scan_openSettings),
@@ -244,6 +300,23 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
         ),
       );
     }
+    if (_error) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48),
+              const SizedBox(height: 12),
+              Text(l10n.scan_failed, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _start, child: Text(l10n.common_retry)),
+            ],
+          ),
+        ),
+      );
+    }
     if (!_ready) return const Center(child: CircularProgressIndicator());
     return Stack(
       fit: StackFit.expand,
@@ -255,7 +328,7 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
             padding: const EdgeInsets.only(bottom: 24),
             child: FloatingActionButton.large(
               key: const Key('scan-shutter'),
-              onPressed: _shutter,
+              onPressed: _capturing ? null : _shutter,
               child: const Icon(Icons.camera_alt),
             ),
           ),

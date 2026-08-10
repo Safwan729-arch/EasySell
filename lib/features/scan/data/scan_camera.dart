@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -57,6 +58,20 @@ class FakeScanCamera implements ScanCamera {
   int captureCount = 0;
   bool disposed = false;
 
+  /// When true, the next [capture] throws instead of returning bytes, then
+  /// resets itself back to false -- for exercising "the camera throws
+  /// mid-capture" paths (a rapid double tap hitting the real plugin's
+  /// "Previous capture has not returned yet.", or any other transient
+  /// hardware fault) without needing a bespoke fake per test.
+  bool failNextCapture = false;
+
+  /// When set, [capture] awaits this before resolving, instead of returning
+  /// on the next microtask like it normally does. Real captures take ~300ms;
+  /// this fake is otherwise instant, which is too fast for a widget test to
+  /// ever observe a second tap landing while the first is still in flight.
+  /// Gate it to make that window test-controllable.
+  Completer<void>? captureGate;
+
   @override
   Future<void> initialize() async {
     if (!permissionGranted) throw const CameraPermissionDenied();
@@ -70,6 +85,11 @@ class FakeScanCamera implements ScanCamera {
   @override
   Future<Uint8List> capture() async {
     if (!_ready) throw StateError('capture() before initialize()');
+    if (failNextCapture) {
+      failNextCapture = false;
+      throw StateError('capture failed');
+    }
+    if (captureGate != null) await captureGate!.future;
     captureCount++;
     return Uint8List.fromList([captureCount, 0, 0, 0]);
   }

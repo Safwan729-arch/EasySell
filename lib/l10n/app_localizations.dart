@@ -1289,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @scan_addItems.
   ///
   /// In en, this message translates to:
-  /// **'Add {count} items'**
+  /// **'{count, plural, =1{Add 1 item} other{Add {count} items}}'**
   String scan_addItems(int count);
 
   /// No description provided for @scan_nothingYet.
@@ -1325,13 +1325,13 @@ abstract class AppLocalizations {
   /// No description provided for @scan_cameraDenied.
   ///
   /// In en, this message translates to:
-  /// **'Camera access is needed to scan. Enable it in Settings.'**
+  /// **'Camera access is needed to scan. Open Settings and allow it, then try again.'**
   String get scan_cameraDenied;
 
   /// No description provided for @scan_openSettings.
   ///
   /// In en, this message translates to:
-  /// **'Open settings'**
+  /// **'Try again'**
   String get scan_openSettings;
 
   /// No description provided for @scan_cameraUnavailable.
@@ -1361,7 +1361,7 @@ abstract class AppLocalizations {
   /// No description provided for @scan_discardBody.
   ///
   /// In en, this message translates to:
-  /// **'{count} could not be identified and will be discarded.'**
+  /// **'{count} items are not ready to add (unresolved or out of stock) and will be discarded.'**
   String scan_discardBody(int count);
 
   /// No description provided for @common_discard.

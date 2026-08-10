@@ -16,8 +16,34 @@ import 'scan_camera.dart';
 class RealScanCamera implements ScanCamera {
   CameraController? _controller;
 
+  /// Bumped at the start of every [initialize] call and every [dispose]
+  /// call. Each [initialize] call captures the value at its own start; if
+  /// that no longer matches [_generation] by the time the call finishes
+  /// awaiting hardware, a *later* call (or an explicit [dispose]) has
+  /// started since, and this call has been superseded.
+  ///
+  /// Why this exists: [initialize] was already made safe against
+  /// *sequential* re-entry (dispose-then-recreate), but the app-lifecycle
+  /// handler in `scan_session_screen.dart` can call it *concurrently* --
+  /// `initState` starts an `initialize()`, the runtime permission prompt
+  /// takes focus and fires `inactive` (calling `dispose()`, a no-op because
+  /// `_controller` is still null -- the first call hasn't published yet),
+  /// the user grants permission, `resumed` fires and starts a *second*
+  /// `initialize()` while the first is still awaiting its own
+  /// `controller.initialize()`. Both eventually resolve, and without this
+  /// guard whichever finishes last wins by overwriting `_controller`,
+  /// leaking the other -- still bound to live CameraX hardware, still
+  /// holding an open orientation-stream subscription -- for the app's
+  /// lifetime, because `scanCameraProvider` is a plain (non-autoDispose)
+  /// `Provider` that never disposes this object on its own. The generation
+  /// counter makes whichever call is superseded dispose its OWN controller
+  /// instead of publishing it, regardless of completion order.
+  int _generation = 0;
+
   @override
   Future<void> initialize() async {
+    final myGeneration = ++_generation;
+
     // scanCameraProvider is a plain (non-autoDispose) Provider, so one
     // RealScanCamera outlives every app-lifecycle pause/resume and
     // initialize() can land again without a preceding dispose(). Retiring
@@ -29,6 +55,7 @@ class RealScanCamera implements ScanCamera {
     _controller = null;
 
     final cameras = await availableCameras();
+    if (myGeneration != _generation) return; // superseded; nothing bound yet
     if (cameras.isEmpty) throw const CameraUnavailable();
     final back = cameras.firstWhere(
       (c) => c.lensDirection == CameraLensDirection.back,
@@ -60,6 +87,19 @@ class RealScanCamera implements ScanCamera {
         throw const CameraPermissionDenied();
       }
       rethrow;
+    }
+
+    if (myGeneration != _generation) {
+      // Superseded while awaiting controller.initialize(): a later
+      // initialize() (or a dispose() while this one was in flight) has
+      // already claimed -- or cleared -- the field. This controller is
+      // bound to live hardware that nobody would otherwise ever dispose;
+      // retire it instead of publishing over the newer, authoritative
+      // outcome. Note this call still returns normally (it did succeed,
+      // from its own point of view) rather than throwing -- there is no
+      // real failure to report to whoever awaited this specific call.
+      await _disposeQuietly(controller);
+      return;
     }
     _controller = controller;
   }
@@ -99,6 +139,10 @@ class RealScanCamera implements ScanCamera {
 
   @override
   Future<void> dispose() async {
+    // Bump first: any initialize() currently in flight must discover, once
+    // its own await resolves, that it has been superseded and dispose its
+    // own controller rather than publish it here.
+    _generation++;
     final c = _controller;
     _controller = null;
     await c?.dispose();

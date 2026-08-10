@@ -743,7 +743,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String scan_addItems(int count) {
-    return 'Add $count items';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Add $count items',
+      one: 'Add 1 item',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -763,10 +769,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scan_cameraDenied =>
-      'Camera access is needed to scan. Enable it in Settings.';
+      'Camera access is needed to scan. Open Settings and allow it, then try again.';
 
   @override
-  String get scan_openSettings => 'Open settings';
+  String get scan_openSettings => 'Try again';
 
   @override
   String get scan_cameraUnavailable =>
@@ -785,7 +791,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String scan_discardBody(int count) {
-    return '$count could not be identified and will be discarded.';
+    return '$count items are not ready to add (unresolved or out of stock) and will be discarded.';
   }
 
   @override

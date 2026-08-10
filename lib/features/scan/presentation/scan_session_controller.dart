@@ -97,6 +97,12 @@ class ScanSessionController extends Notifier<List<ScanItem>> {
     try {
       final bytes = _frames[id];
       if (bytes == null) return;
+      // productsStreamProvider is autoDispose. This screen has no unconditional
+      // watch of it -- what keeps it alive while scanning is TopSellersStrip's
+      // unconditional `ref.watch(productsStreamProvider)` in the same tree.
+      // Deleting that strip, or making its watch conditional (e.g. only when
+      // shortcuts exist), would let the provider dispose between captures and
+      // silently starve recognition of a catalog to match against.
       final products =
           ref.read(productsStreamProvider).value ?? const <Product>[];
       final payload = buildCandidatePayload(products);
@@ -121,7 +127,17 @@ class ScanSessionController extends Notifier<List<ScanItem>> {
             );
             if (decision.action == ScanAction.autoSell && matched.isNotEmpty) {
               _resolve(id, matched.first, label);
-            } else if (matched.length > 1) {
+            } else if (decision.action == ScanAction.chooseFromMatches &&
+                matched.isNotEmpty) {
+              // `chooseFromMatches` means "too unsure, ask" (confidence in
+              // [ambiguous, strong) per decideScanAction) -- that holds
+              // regardless of how many candidates survived resolution to a
+              // real product. A single sub-threshold match must still land
+              // as `ambiguous`, not silently resolve as if it were a
+              // confident auto-sell: the confidence threshold for
+              // auto-resolving is the lever spec §8 names for walking back a
+              // bad auto-sell rate, and this branch is what would otherwise
+              // move it from 0.80 to 0.50 without anyone deciding that.
               _patch(
                 id,
                 (it) => it.copyWith(
@@ -130,8 +146,6 @@ class ScanSessionController extends Notifier<List<ScanItem>> {
                   readLabel: label,
                 ),
               );
-            } else if (matched.length == 1) {
-              _resolve(id, matched.first, label);
             } else {
               _patch(
                 id,

@@ -97,7 +97,10 @@ void main() {
 
   testWidgets('a shop with no sales history shows no strip', (tester) async {
     await _pump(tester, const []);
-    expect(find.byType(SizedBox), findsWidgets);
+    // find.byType(SizedBox) passes either way -- the populated branch also
+    // returns a top-level SizedBox (its `height: 48` wrapper). Assert on the
+    // one thing that actually distinguishes "hidden" from "shown": no chips.
+    expect(find.byType(ActionChip), findsNothing);
     expect(find.text('Pepsi'), findsNothing);
   });
 }

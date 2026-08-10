@@ -374,6 +374,40 @@ void main() {
     },
   );
 
+  test('a capture whose camera call throws neither crashes nor leaves a chip '
+      'behind, and the next capture still works', () async {
+    cam.failNextCapture = true;
+    await expectLater(ctl().capture(), throwsA(anything));
+    expect(
+      items(),
+      isEmpty,
+      reason: 'nothing was added before the throw -- no phantom chip',
+    );
+
+    // The fault was transient (FakeScanCamera.failNextCapture resets
+    // itself); a following capture must behave completely normally.
+    await ctl().capture();
+    expect(items().single.status, ScanItemStatus.recognizing);
+  });
+
+  test('a sub-threshold single match asks instead of silently auto-resolving '
+      '(the auto-resolve confidence lever from spec §8 must not move on its '
+      'own)', () async {
+    await ctl().capture();
+    repo.pending[0].complete(
+      Result.success(
+        const RecognitionResult(
+          status: RecognitionStatus.match,
+          matches: [ProductMatch(productId: '0', confidence: 0.6)],
+        ),
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(items().single.status, ScanItemStatus.ambiguous);
+    expect(items().single.choices.length, 1);
+    expect(items().single.isAddable, isFalse);
+  });
+
   test(
     'a second retry while the first is still in flight does not double-dispatch, '
     'and the queue is not left stalled',
