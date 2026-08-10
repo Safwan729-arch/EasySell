@@ -83,7 +83,7 @@ const _parsed = VoiceParseResult(
       heard: 'pepsi',
       quantity: 2,
       quantityAssumed: false,
-      matches: [VoiceMatch(productId: 'p1', confidence: 0.95)],
+      matches: [VoiceMatch(productId: '0', confidence: 0.95)],
     ),
   ],
 );

@@ -15,7 +15,11 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { resolveItemQuantity } from "./quantity_words.ts";
 
 interface Candidate {
-  id: string;
+  id?: string;
+  /** List-index form (Task 8): a small integer instead of a 36-char uuid,
+   *  cutting per-candidate tokens the same way the scan flow's does. Either
+   *  `id` or `i` is present, never neither. */
+  i?: number;
   name: string;
   brand?: string;
   variant?: string;
@@ -256,7 +260,9 @@ async function parseSale(input: ParseInput, candidates: Candidate[]) {
 // and pass quantity through only when it is a real positive number (the app
 // defaults a missing quantity to 1 and flags it, rather than us inventing one).
 function normalize(raw: Record<string, unknown>, candidates: Candidate[], transcript: string) {
-  const ids = new Set(candidates.map((c) => c.id));
+  const ids = new Set(
+    candidates.map((c) => c.id ?? String(c.i)).filter((k) => k !== "undefined"),
+  );
   const rawItems = Array.isArray(raw.items) ? raw.items : [];
   // Fall back to the raw transcript so the review sheet can always show what was said.
   const heardText = (typeof raw.heard_text === "string" && raw.heard_text) || transcript;

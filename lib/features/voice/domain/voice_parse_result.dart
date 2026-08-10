@@ -82,6 +82,16 @@ class VoiceItem {
       matches: matches,
     );
   }
+
+  /// Returns a copy with [matches] replaced, everything else unchanged. Used
+  /// by [VoiceParseResult.resolveIds] to swap indices for real product ids.
+  VoiceItem copyWithMatches(List<VoiceMatch> matches) => VoiceItem(
+    heard: heard,
+    quantity: quantity,
+    quantityAssumed: quantityAssumed,
+    unitHeard: unitHeard,
+    matches: matches,
+  );
 }
 
 /// Normalized result returned by the `parse-sale` Edge Function.
@@ -107,4 +117,20 @@ class VoiceParseResult {
       ],
     );
   }
+
+  /// Translates every match's identifier through [resolve], dropping any the
+  /// resolver rejects. Called immediately after parsing so nothing downstream
+  /// -- the review sheet, `chosenProductId`, the cart -- ever sees an index.
+  VoiceParseResult resolveIds(String? Function(String) resolve) =>
+      VoiceParseResult(
+        heardText: heardText,
+        items: [
+          for (final it in items)
+            it.copyWithMatches([
+              for (final m in it.matches)
+                if (resolve(m.productId) case final String id)
+                  VoiceMatch(productId: id, confidence: m.confidence),
+            ]),
+        ],
+      );
 }

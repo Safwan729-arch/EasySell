@@ -345,7 +345,7 @@ void main() {
             heard: 'pepsi',
             quantity: 2,
             quantityAssumed: false,
-            matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+            matches: const [VoiceMatch(productId: '0', confidence: 0.93)],
           ),
         ],
       );
@@ -355,6 +355,13 @@ void main() {
         repo: repo,
         products: [_product('p1')],
       );
+      // Both feeds must have actually landed for resolveIds to have anything
+      // to resolve against -- a StreamProvider only resolves while something
+      // listens, and `_candidatePayload()` deliberately reads `.value` rather
+      // than waiting.
+      final sub = c.listen(productsStreamProvider, (_, _) {});
+      addTearDown(sub.close);
+      await c.read(productsStreamProvider.future);
 
       await c.read(voiceControllerProvider.notifier).startListening();
       await c.read(voiceControllerProvider.notifier).stopAndParse();
@@ -418,8 +425,8 @@ void main() {
             quantity: 1,
             quantityAssumed: true,
             matches: const [
-              VoiceMatch(productId: 'p1', confidence: 0.55),
-              VoiceMatch(productId: 'p2', confidence: 0.52),
+              VoiceMatch(productId: '0', confidence: 0.55),
+              VoiceMatch(productId: '1', confidence: 0.52),
             ],
           ),
         ],
@@ -569,7 +576,7 @@ void main() {
               heard: 'pepsi',
               quantity: 2,
               quantityAssumed: false,
-              matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+              matches: const [VoiceMatch(productId: '0', confidence: 0.93)],
             ),
           ],
         );
@@ -706,7 +713,7 @@ void main() {
             heard: 'pepsi',
             quantity: 2,
             quantityAssumed: false,
-            matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+            matches: const [VoiceMatch(productId: '0', confidence: 0.93)],
           ),
         ],
       );
@@ -860,7 +867,7 @@ void main() {
                   quantity: 2,
                   quantityAssumed: false,
                   matches: const [
-                    VoiceMatch(productId: 'p1', confidence: 0.93),
+                    VoiceMatch(productId: '0', confidence: 0.93),
                   ],
                 ),
               ],
@@ -976,10 +983,12 @@ void main() {
       await notifier.startListening();
       await notifier.stopAndParse();
 
-      final byId = {for (final m in repo.lastCandidates!) m['id'] as String: m};
-      expect(byId['p1']!['recent'], 42);
+      final byI = {
+        for (final m in repo.lastCandidates!) (m['i'] as int).toString(): m,
+      };
+      expect(byI['0']!['recent'], 42);
       // A product with no recent sales carries no hint at all.
-      expect(byId['p2']!.containsKey('recent'), isFalse);
+      expect(byI['1']!.containsKey('recent'), isFalse);
     });
 
     test(

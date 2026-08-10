@@ -92,6 +92,13 @@ Future<ProviderContainer> _reviewingContainer({
       productsStreamProvider.overrideWith((ref) => Stream.value(products)),
     ],
   );
+  // Both feeds must have actually landed for resolveIds to have anything to
+  // resolve against -- a StreamProvider only resolves while something
+  // listens, and `_candidatePayload()` deliberately reads `.value` rather
+  // than waiting (see `voice_controller.dart`).
+  final sub = container.listen(productsStreamProvider, (_, _) {});
+  addTearDown(sub.close);
+  await container.read(productsStreamProvider.future);
   final notifier = container.read(voiceControllerProvider.notifier);
   await notifier.startListening();
   await notifier.stopAndParse();
@@ -130,15 +137,15 @@ void main() {
           heard: 'pepsi',
           quantity: 2,
           quantityAssumed: false,
-          matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+          matches: const [VoiceMatch(productId: '0', confidence: 0.93)],
         ),
         VoiceItem(
           heard: 'cola',
           quantity: 1,
           quantityAssumed: false,
           matches: const [
-            VoiceMatch(productId: 'p2', confidence: 0.6),
-            VoiceMatch(productId: 'p3', confidence: 0.55),
+            VoiceMatch(productId: '1', confidence: 0.6),
+            VoiceMatch(productId: '2', confidence: 0.55),
           ],
         ),
       ],
@@ -171,8 +178,8 @@ void main() {
           quantity: 1,
           quantityAssumed: true,
           matches: const [
-            VoiceMatch(productId: 'p1', confidence: 0.6),
-            VoiceMatch(productId: 'p2', confidence: 0.55),
+            VoiceMatch(productId: '0', confidence: 0.6),
+            VoiceMatch(productId: '1', confidence: 0.55),
           ],
         ),
       ],
@@ -212,8 +219,8 @@ void main() {
             quantity: 1,
             quantityAssumed: true,
             matches: const [
-              VoiceMatch(productId: 'p1', confidence: 0.6),
-              VoiceMatch(productId: 'p2', confidence: 0.55),
+              VoiceMatch(productId: '0', confidence: 0.6),
+              VoiceMatch(productId: '1', confidence: 0.55),
             ],
           ),
         ],
@@ -294,7 +301,7 @@ void main() {
           heard: 'pepsi',
           quantity: 2,
           quantityAssumed: false,
-          matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+          matches: const [VoiceMatch(productId: '0', confidence: 0.93)],
         ),
         VoiceItem(
           heard: 'something weird',
@@ -331,13 +338,13 @@ void main() {
           heard: 'pepsi',
           quantity: 1,
           quantityAssumed: true,
-          matches: const [VoiceMatch(productId: 'p1', confidence: 0.95)],
+          matches: const [VoiceMatch(productId: '0', confidence: 0.95)],
         ),
         VoiceItem(
           heard: 'cola',
           quantity: 3,
           quantityAssumed: false,
-          matches: const [VoiceMatch(productId: 'p2', confidence: 0.95)],
+          matches: const [VoiceMatch(productId: '1', confidence: 0.95)],
         ),
       ],
     );
@@ -365,7 +372,7 @@ void main() {
           heard: 'pepsi',
           quantity: 2,
           quantityAssumed: false,
-          matches: const [VoiceMatch(productId: 'p1', confidence: 0.93)],
+          matches: const [VoiceMatch(productId: '0', confidence: 0.93)],
         ),
       ],
     );

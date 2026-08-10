@@ -62,21 +62,3 @@ CandidatePayload buildCandidatePayload(
   }
   return CandidatePayload(candidates: candidates, productIds: productIds);
 }
-
-// Kept until Task 8 migrates the voice flow off uuid candidates.
-List<Map<String, dynamic>> buildCandidates(
-  List<Product> products, {
-  bool includeUnit = false,
-  Map<String, double>? recentUnits,
-}) => [
-  for (final p in products)
-    {
-      'id': p.id,
-      'name': p.name,
-      if (p.brand != null && p.brand!.isNotEmpty) 'brand': p.brand,
-      if (p.variant != null && p.variant!.isNotEmpty) 'variant': p.variant,
-      if (includeUnit) 'unit': p.unit.name,
-      if ((recentUnits?[p.id] ?? 0).round() > 0)
-        'recent': recentUnits![p.id]!.round(),
-    },
-];

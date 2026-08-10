@@ -343,17 +343,18 @@ class VoiceController extends Notifier<VoiceSaleState> {
       background: state.background,
     );
 
+    final payload = _candidatePayload();
     final result = await ref
         .read(voiceSaleRepositoryProvider)
         .parse(
           audioBytes: recording.bytes,
           audioMime: recording.mime,
-          candidates: _candidates(),
+          candidates: payload.candidates,
         );
     if (_session != session) return;
     // The audio is still in hand either way, so a failure here can always be
     // retried without re-recording.
-    _applyResult(result, canRetryAudio: true);
+    _applyResult(_resolveResult(result, payload), canRetryAudio: true);
   }
 
   /// Re-runs parsing on a shopkeeper-edited [transcript] (the text path of
@@ -371,24 +372,42 @@ class VoiceController extends Notifier<VoiceSaleState> {
       background: state.background,
     );
 
+    final payload = _candidatePayload();
     final result = await ref
         .read(voiceSaleRepositoryProvider)
-        .parseTranscript(transcript: text, candidates: _candidates());
+        .parseTranscript(transcript: text, candidates: payload.candidates);
     if (_session != session) return;
 
     // The shopkeeper typed this sale; offering "retry the recording" here would
     // throw their correction away, so the audio path stays closed.
-    _applyResult(result, canRetryAudio: false, fallbackHeardText: text);
+    _applyResult(
+      _resolveResult(result, payload),
+      canRetryAudio: false,
+      fallbackHeardText: text,
+    );
   }
 
   /// The shop's products as matching candidates, enriched with recent sales
   /// volume when that lookup has landed. `.value ?? const {}` throughout: this
   /// runs on the latency-critical path, so missing data degrades the hint and
   /// never delays the upload.
-  List<Map<String, dynamic>> _candidates() => buildCandidates(
+  CandidatePayload _candidatePayload() => buildCandidatePayload(
     ref.read(productsStreamProvider).value ?? const [],
     includeUnit: true,
     recentUnits: ref.read(recentUnitsSoldProvider).value,
+  );
+
+  /// Translates a parse result's match identifiers (list indices) back to
+  /// real product ids via [payload], immediately after the response lands and
+  /// before it can reach `state`. Everything downstream -- the review sheet,
+  /// `chosenProductId`, `choose()` -- only ever sees a real id. A failure
+  /// passes through unchanged; there is nothing to resolve.
+  Result<VoiceParseResult> _resolveResult(
+    Result<VoiceParseResult> result,
+    CandidatePayload payload,
+  ) => result.when(
+    success: (v) => Result.success(v.resolveIds(payload.resolve)),
+    failure: (f) => Result.failure(f),
   );
 
   /// Lands a parse result in `reviewing` or `error`, uniformly for the audio and
