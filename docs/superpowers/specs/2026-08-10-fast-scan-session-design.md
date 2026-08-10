@@ -284,3 +284,57 @@ Additive and branch-isolated. Reverting the branch restores `image_picker` and
 the serial loop. The Edge Function change is backward-compatible by
 construction (§6.1), so a rolled-back app keeps working against a deployed
 function.
+
+## 12. Outcomes
+
+The design as specified shipped: live viewfinder, background recognition
+capped at 3-in-flight, merge-on-resolve, the top-sellers strip, the review
+tray as the sole confirmation point, and the prompt token trim from §6.
+
+**§3.5's capture resolution — still unverified.** `ResolutionPreset.medium`
+(640×480) shipped exactly as designed and is still the one number in this
+feature chosen without evidence, not backed by a measurement. The old flow
+shot at `maxWidth: 768`, and small print on packaging is precisely where 640
+could read worse. This stays marked **UNVERIFIED** until the user runs probe
+step 5 in `supabase/README.md` on the physical S22 and reports back. If it
+regresses, the fix is a one-line change to `.high` in
+`lib/features/scan/data/real_scan_camera.dart` — already flagged at the point
+of use.
+
+**A second camera failure mode was added.** The real camera wrapper now
+distinguishes `CameraUnavailable` (the device reports no cameras at all) from
+`CameraPermissionDenied` (a camera exists but permission was refused). The
+scan screen shows different copy for each, and — deliberately — the
+no-camera case has no "Open settings" button, because there is no permission
+to grant; sending the shopkeeper into Settings to fix a problem Settings
+cannot fix would be worse than no button at all.
+
+**Review caught four defects in the plan's own code before merge:**
+1. A thrown recognition future permanently leaked its queue slot, which over
+   a session was enough to wedge the 3-in-flight cap and kill the session —
+   fixed by freeing the slot in a `finally`.
+2. `choose()` keyed by a stale chip id silently inflated an unrelated chip's
+   quantity instead of failing — fixed by guarding `choose`/`retry` against
+   ids that no longer resolve to a live chip.
+3. The camera controller leaked on re-initialize and again on a post-
+   `bindToLifecycle` failure — fixed by disposing the previous controller in
+   both paths.
+4. The widget test guarding the core safety property of this whole
+   redesign — *the shutter must never pop a modal over the live camera* — was
+   **blind**. It asserted `find.byType(ModalBarrier)` finds nothing, but
+   `showDialog`/`showModalBottomSheet` render `AnimatedModalBarrier`, a
+   sibling type of `ModalBarrier`, not a subtype — so the assertion passed
+   whether or not a modal was actually showing. Two plausible-looking
+   assertions in a row failed to catch this; it surfaced only because the fix
+   was mutation-checked (the test was confirmed to fail against a
+   deliberately reintroduced bug) rather than trusted on read. Record this as
+   a standing lesson: an untested assertion about widget presence/absence in
+   Flutter should be verified against the actual runtime type tree, not the
+   type it's presumed to render as.
+
+**The voice path is untouched.** `parse-sale` and its caller still send
+UUID-keyed candidates (`id`, not `i`). The `buildCandidates` shim in
+`lib/features/scan/domain/scan_candidates.dart` exists solely to produce both
+shapes from one call site and has no reason to exist once voice migrates to
+index-keyed candidates too — the final task in this feature, if it runs,
+removes it. Until then it is not dead code.

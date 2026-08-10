@@ -405,3 +405,36 @@ EVERY sale, not just discounted ones.
    remainder as small as 0.00499 previously passed the `> 0` guard but
    rounded to 0.00 on insert, tripping `customer_ledger`'s
    `check (amount > 0)` and rolling back the whole checkout.)
+
+## Fast scan session — deploy order and probes
+
+**Deploy the Edge Function BEFORE installing an app build from
+`feat/fast-scan`.** This is the reverse of migration `0009`, and the failure is
+quiet rather than loud: a new app sends candidates keyed by list index (`i`),
+an old function looks for `id`, every match is filtered out, and the app
+reports "no match" for everything with no error anywhere. `recognize-product`
+accepts BOTH shapes, so deploying it early is always safe.
+
+1. Deploy `recognize-product` (`index.ts` only — no other files).
+2. Probe it still answers the OLD shape, so an installed app keeps working:
+   send `{"image_base64": "<jpeg>", "candidates": [{"id":"<real-uuid>","name":"Pepsi"}]}`
+   and confirm a `product_id` equal to that uuid comes back.
+3. Probe the NEW shape: same image, `candidates: [{"i":0,"name":"Pepsi"}]`.
+   Expect `product_id: "0"`.
+4. Install the app build and scan a real product. Confirm it resolves to the
+   right item — this is what proves the index round-trip.
+5. **Check label legibility — do not skip this one.** Capture now runs at
+   `ResolutionPreset.medium` (640x480) rather than the old 768px, and that
+   number was picked without evidence (§3.5 of the design doc). Scan something
+   with small print — a nutrition label, an ingredients list, fine-print
+   variant text. If recognition is worse than it used to be, it will be worse
+   on every scan of small print from now on, silently, with nothing in the UI
+   to flag it — the only fix is changing `ResolutionPreset.medium` to `.high`
+   in `lib/features/scan/data/real_scan_camera.dart`. This is the step easiest
+   to skip because nothing looks broken without it.
+6. Scan five items back-to-back without pausing. Confirm the shutter never
+   blocks and all five chips resolve.
+7. Background the app mid-session and return. The preview must come back live,
+   not frozen, and the tray must still hold its chips.
+8. Deny the camera permission once. Confirm the explanation screen appears
+   instead of a black rectangle.
