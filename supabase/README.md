@@ -415,14 +415,36 @@ an old function looks for `id`, every match is filtered out, and the app
 reports "no match" for everything with no error anywhere. `recognize-product`
 accepts BOTH shapes, so deploying it early is always safe.
 
-1. Deploy `recognize-product` (`index.ts` only — no other files).
-2. Probe it still answers the OLD shape, so an installed app keeps working:
-   send `{"image_base64": "<jpeg>", "candidates": [{"id":"<real-uuid>","name":"Pepsi"}]}`
-   and confirm a `product_id` equal to that uuid comes back.
-3. Probe the NEW shape: same image, `candidates: [{"i":0,"name":"Pepsi"}]`.
-   Expect `product_id: "0"`.
-4. Install the app build and scan a real product. Confirm it resolves to the
-   right item — this is what proves the index round-trip.
+1. Deploy `recognize-product` (`index.ts` only — no other files). See
+   [`supabase/functions/recognize-product/README.md`](functions/recognize-product/README.md#one-time-setup)
+   for the exact deploy command.
+2. Probe it still answers the OLD shape, so an installed app keeps working.
+   This reuses the smoke-test pattern already documented in
+   [`supabase/functions/recognize-product/README.md`](functions/recognize-product/README.md#smoke-test-direct-probe) —
+   PowerShell, run from the repo root, with the URL and anon key read out of
+   `dart_defines.json` rather than pasted into the script:
+   ```powershell
+   $defines = Get-Content .\dart_defines.json | ConvertFrom-Json
+   $img = [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\a\real\product\photo.jpg"))
+   $body = @{
+     image_base64 = $img
+     candidates = @(@{ id = "<a-real-product-uuid-from-your-shop>"; name = "Pepsi" })
+   } | ConvertTo-Json -Depth 5
+   Invoke-RestMethod -Method Post `
+     -Uri "$($defines.SUPABASE_URL)/functions/v1/recognize-product" `
+     -Headers @{ Authorization = "Bearer $($defines.SUPABASE_ANON_KEY)"; "Content-Type" = "application/json" } `
+     -Body $body
+   ```
+   The photo must be a real JPEG of a product that exists in your shop, and
+   `candidates[0].id` must be that product's actual uuid (copy it from the
+   Table Editor → `products`). Expect the response's `matches[0].product_id`
+   to equal that same uuid.
+3. Probe the NEW shape: same command, but change the candidate to
+   `@{ i = 0; name = "Pepsi" }` (no `id` key at all) and resend. Expect
+   `matches[0].product_id` to equal `"0"`.
+4. Install the app build (see [`RUN.md`](../RUN.md)) and scan a real product.
+   Confirm it resolves to the right item — this is what proves the index
+   round-trip.
 5. **Check label legibility — do not skip this one.** Capture now runs at
    `ResolutionPreset.medium` (640x480) rather than the old 768px, and that
    number was picked without evidence (§3.5 of the design doc). Scan something
