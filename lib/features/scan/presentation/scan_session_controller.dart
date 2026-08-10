@@ -47,6 +47,15 @@ class ScanSessionController extends Notifier<List<ScanItem>> {
     _pump();
   }
 
+  /// Stages [product] directly -- no camera, no recognition, no network. Merges
+  /// by the same rule as a resolved scan, so tapping a shortcut twice gives one
+  /// chip at x2.
+  void addShortcut(Product product) {
+    final id = 'chip-${_seq++}';
+    state = [...state, ScanItem(id: id, status: ScanItemStatus.recognizing)];
+    _resolve(id, product, null);
+  }
+
   /// Re-sends a failed chip's held frame -- no re-shoot required.
   ///
   /// Guarded on the chip's own status (not just "do we still have a frame"):
