@@ -731,6 +731,61 @@ class AppLocalizationsBn extends AppLocalizations {
   String get scan_searchProducts => 'পণ্য খুঁজুন';
 
   @override
+  String scan_recognizing(int count) {
+    return '$countটি শনাক্ত করা হচ্ছে…';
+  }
+
+  @override
+  String scan_addItems(int count) {
+    return '$countটি যোগ করুন';
+  }
+
+  @override
+  String get scan_nothingYet => 'শুরু করতে স্ক্যান করুন';
+
+  @override
+  String get scan_tapToPick => 'বেছে নিতে চাপ দিন';
+
+  @override
+  String get scan_notIdentified => 'শনাক্ত করা যায়নি';
+
+  @override
+  String get scan_topSellers => 'সেরা বিক্রি';
+
+  @override
+  String get scan_outOfStock => 'স্টক নেই';
+
+  @override
+  String get scan_cameraDenied =>
+      'স্ক্যান করতে ক্যামেরার অনুমতি দরকার। সেটিংসে গিয়ে চালু করুন।';
+
+  @override
+  String get scan_openSettings => 'সেটিংস খুলুন';
+
+  @override
+  String get scan_cameraUnavailable =>
+      'এই ডিভাইসে স্ক্যান করার মতো কোনো ক্যামেরা নেই।';
+
+  @override
+  String get scan_leaveTitle => 'যোগ না করেই চলে যাবেন?';
+
+  @override
+  String scan_leaveBody(int count) {
+    return '$countটি স্ক্যান করা পণ্য এখনও কার্টে যোগ করা হয়নি।';
+  }
+
+  @override
+  String get scan_discardTitle => 'বাকিগুলো যোগ করবেন?';
+
+  @override
+  String scan_discardBody(int count) {
+    return '$countটি শনাক্ত করা যায়নি, সেগুলো বাদ পড়বে।';
+  }
+
+  @override
+  String get common_discard => 'বাতিল করুন';
+
+  @override
   String get history_title => 'বিক্রির হিসাব';
 
   @override

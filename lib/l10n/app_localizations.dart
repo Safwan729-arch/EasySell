@@ -1280,6 +1280,96 @@ abstract class AppLocalizations {
   /// **'Search products'**
   String get scan_searchProducts;
 
+  /// No description provided for @scan_recognizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognizing {count}…'**
+  String scan_recognizing(int count);
+
+  /// No description provided for @scan_addItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count} items'**
+  String scan_addItems(int count);
+
+  /// No description provided for @scan_nothingYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan something to begin'**
+  String get scan_nothingYet;
+
+  /// No description provided for @scan_tapToPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to pick'**
+  String get scan_tapToPick;
+
+  /// No description provided for @scan_notIdentified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not identified'**
+  String get scan_notIdentified;
+
+  /// No description provided for @scan_topSellers.
+  ///
+  /// In en, this message translates to:
+  /// **'Top sellers'**
+  String get scan_topSellers;
+
+  /// No description provided for @scan_outOfStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of stock'**
+  String get scan_outOfStock;
+
+  /// No description provided for @scan_cameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is needed to scan. Enable it in Settings.'**
+  String get scan_cameraDenied;
+
+  /// No description provided for @scan_openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get scan_openSettings;
+
+  /// No description provided for @scan_cameraUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no camera to scan with.'**
+  String get scan_cameraUnavailable;
+
+  /// No description provided for @scan_leaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave without adding?'**
+  String get scan_leaveTitle;
+
+  /// No description provided for @scan_leaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scanned items have not been added to the cart.'**
+  String scan_leaveBody(int count);
+
+  /// No description provided for @scan_discardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the rest?'**
+  String get scan_discardTitle;
+
+  /// No description provided for @scan_discardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} could not be identified and will be discarded.'**
+  String scan_discardBody(int count);
+
+  /// No description provided for @common_discard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get common_discard;
+
   /// No description provided for @history_title.
   ///
   /// In en, this message translates to:

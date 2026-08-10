@@ -1,0 +1,212 @@
+import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:ai_shopkeeper/core/error/result.dart';
+import 'package:ai_shopkeeper/features/cart/presentation/cart_controller.dart';
+import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
+import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controller.dart';
+import 'package:ai_shopkeeper/features/scan/data/scan_camera.dart';
+import 'package:ai_shopkeeper/features/scan/data/vision_scan_repository.dart';
+import 'package:ai_shopkeeper/features/scan/domain/recognition_result.dart';
+import 'package:ai_shopkeeper/features/scan/presentation/scan_session_screen.dart';
+import 'package:ai_shopkeeper/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+const _pepsi = Product(
+  id: 'p-pepsi',
+  shopId: 's1',
+  name: 'Pepsi',
+  sellingPrice: 50,
+  quantity: 10,
+  unit: ProductUnit.pcs,
+);
+
+const _outOfStock = Product(
+  id: 'p-oos',
+  shopId: 's1',
+  name: 'Sold Out Soda',
+  sellingPrice: 40,
+  quantity: 0,
+  unit: ProductUnit.pcs,
+);
+
+class _InstantRepo implements VisionScanRepository {
+  @override
+  Future<Result<RecognitionResult>> recognize({
+    required Uint8List imageBytes,
+    required List<Map<String, dynamic>> candidates,
+  }) async => Result.success(
+    const RecognitionResult(
+      status: RecognitionStatus.match,
+      matches: [ProductMatch(productId: '0', confidence: 0.95)],
+    ),
+  );
+}
+
+/// Always throws [CameraUnavailable] on `initialize()` -- the
+/// no-camera-hardware case, distinct from a refused permission.
+class _UnavailableCamera implements ScanCamera {
+  @override
+  Future<void> initialize() async => throw const CameraUnavailable();
+
+  @override
+  Widget buildPreview(BuildContext context) =>
+      const ColoredBox(color: Color(0xFF202020));
+
+  @override
+  Future<Uint8List> capture() async =>
+      throw StateError('capture() before initialize()');
+
+  @override
+  Future<void> dispose() async {}
+}
+
+/// `ScanSessionScreen` calls `context.pop()` (go_router) from both the leave
+/// confirmation and after "Add", so a bare `MaterialApp` throws the moment
+/// either fires. Pushed from a base route so there is something to pop back
+/// to, matching the pattern `cart_checkout_snackbar_test.dart` already uses
+/// for the same reason.
+Future<ProviderContainer> _pump(
+  WidgetTester tester, {
+  ScanCamera? camera,
+  List<Product> catalog = const [_pepsi],
+}) async {
+  final c = ProviderContainer(
+    overrides: [
+      visionScanRepositoryProvider.overrideWithValue(_InstantRepo()),
+      scanCameraProvider.overrideWithValue(camera ?? FakeScanCamera()),
+      productsStreamProvider.overrideWith((ref) => Stream.value(catalog)),
+    ],
+  );
+  addTearDown(c.dispose);
+  final sub = c.listen(productsStreamProvider, (_, _) {});
+  addTearDown(sub.close);
+  await c.read(productsStreamProvider.future);
+
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, _) => Scaffold(
+          body: TextButton(
+            onPressed: () => context.push('/scan'),
+            child: const Text('to scan'),
+          ),
+        ),
+      ),
+      GoRoute(path: '/scan', builder: (_, _) => const ScanSessionScreen()),
+    ],
+  );
+  addTearDown(router.dispose);
+
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    ),
+  );
+  await tester.tap(find.text('to scan'));
+  await tester.pump();
+  // `FakeScanCamera.initialize()` (and `_UnavailableCamera.initialize()`) is
+  // async, so `_start()`'s await needs a couple of pumps to land -- one for
+  // the initialize() microtask, one for the setState rebuild -- before the
+  // viewfinder settles into ready/denied/unavailable. Deliberately bounded
+  // pump()s rather than pumpAndSettle(): the `!_ready` branch renders an
+  // indeterminate `CircularProgressIndicator`, whose animation never
+  // settles, so pumpAndSettle() here would hang exactly like the bug this
+  // fix is for.
+  await tester.pump();
+  await tester.pump();
+  return c;
+}
+
+void main() {
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+
+  testWidgets('the shutter stays usable while a chip is still recognizing', (
+    tester,
+  ) async {
+    await _pump(tester);
+    // Baseline: the two-route stack (base route + pushed /scan route) each
+    // carry their own always-present, invisible `ModalBarrier` -- that is
+    // ordinary Navigator plumbing, not a per-item confirmation popup. The
+    // property this test pins is that capturing a frame does not add a
+    // THIRD one (i.e. no dialog/bottom-sheet pops up over the camera).
+    final baseline = find.byType(ModalBarrier).evaluate().length;
+    await tester.tap(find.byKey(const Key('scan-shutter')));
+    await tester.pump();
+    // The critical property: no modal, no spinner blocking the camera.
+    expect(find.byType(ModalBarrier), findsNWidgets(baseline));
+    expect(find.byKey(const Key('scan-shutter')), findsOneWidget);
+  });
+
+  testWidgets('three shutter taps of one product show a single x3 chip', (
+    tester,
+  ) async {
+    await _pump(tester);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byKey(const Key('scan-shutter')));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Pepsi'), findsOneWidget);
+    expect(find.textContaining('3'), findsWidgets);
+  });
+
+  testWidgets('Add stages the tray into the cart and empties it', (
+    tester,
+  ) async {
+    final c = await _pump(tester);
+    await tester.tap(find.byKey(const Key('scan-shutter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('scan-add-all')));
+    await tester.pumpAndSettle();
+
+    expect(c.read(cartControllerProvider).length, 1);
+    expect(c.read(cartControllerProvider).single.product.id, 'p-pepsi');
+  });
+
+  testWidgets('a denied camera explains itself instead of showing black', (
+    tester,
+  ) async {
+    await _pump(tester, camera: FakeScanCamera(permissionGranted: false));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Camera access'), findsOneWidget);
+    expect(find.text('Open settings'), findsOneWidget);
+  });
+
+  testWidgets('a device with no camera hardware explains itself, with no "Open '
+      'settings" button -- there is no permission to grant', (tester) async {
+    await _pump(tester, camera: _UnavailableCamera());
+    await tester.pumpAndSettle();
+    expect(find.textContaining('no camera'), findsOneWidget);
+    expect(find.text('Open settings'), findsNothing);
+  });
+
+  testWidgets(
+    'an out-of-stock product resolves to a visible flagged chip instead of '
+    'silently vanishing',
+    (tester) async {
+      await _pump(tester, catalog: const [_outOfStock]);
+      await tester.tap(find.byKey(const Key('scan-shutter')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sold Out Soda'), findsOneWidget);
+      expect(find.text('Out of stock'), findsOneWidget);
+      // Flagged, not addable: the bar stays disabled with nothing to add.
+      final button = tester.widget<FilledButton>(
+        find.byKey(const Key('scan-add-all')),
+      );
+      expect(button.onPressed, isNull);
+    },
+  );
+}

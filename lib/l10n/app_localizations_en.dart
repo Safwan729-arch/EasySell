@@ -737,6 +737,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scan_searchProducts => 'Search products';
 
   @override
+  String scan_recognizing(int count) {
+    return 'Recognizing $count…';
+  }
+
+  @override
+  String scan_addItems(int count) {
+    return 'Add $count items';
+  }
+
+  @override
+  String get scan_nothingYet => 'Scan something to begin';
+
+  @override
+  String get scan_tapToPick => 'Tap to pick';
+
+  @override
+  String get scan_notIdentified => 'Not identified';
+
+  @override
+  String get scan_topSellers => 'Top sellers';
+
+  @override
+  String get scan_outOfStock => 'Out of stock';
+
+  @override
+  String get scan_cameraDenied =>
+      'Camera access is needed to scan. Enable it in Settings.';
+
+  @override
+  String get scan_openSettings => 'Open settings';
+
+  @override
+  String get scan_cameraUnavailable =>
+      'This device has no camera to scan with.';
+
+  @override
+  String get scan_leaveTitle => 'Leave without adding?';
+
+  @override
+  String scan_leaveBody(int count) {
+    return '$count scanned items have not been added to the cart.';
+  }
+
+  @override
+  String get scan_discardTitle => 'Add the rest?';
+
+  @override
+  String scan_discardBody(int count) {
+    return '$count could not be identified and will be discarded.';
+  }
+
+  @override
+  String get common_discard => 'Discard';
+
+  @override
   String get history_title => 'Sales history';
 
   @override

@@ -20,7 +20,7 @@ import '../../features/inventory/presentation/product_detail_screen.dart';
 import '../../features/inventory/presentation/product_form_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/onboarding/presentation/welcome_screen.dart';
-import '../../features/scan/presentation/scan_screen.dart';
+import '../../features/scan/presentation/scan_session_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/shell/presentation/main_shell.dart';
 import '../../features/transactions/domain/transaction.dart';
@@ -207,7 +207,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/scan',
-        builder: (context, state) => const ScanScreen(),
+        builder: (context, state) => const ScanSessionScreen(),
       ),
       GoRoute(
         path: '/inventory/:id',
