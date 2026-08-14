@@ -6,6 +6,19 @@
 `lib/features/cart/`). No backend/Edge Function changes.
 **Branch:** `feat/scan-quantity-sheet` (off `main`; independent of the Gemini scan migration).
 
+> [!warning] Superseded on 2026-08-10 by [[2026-08-10-fast-scan-session-design]]
+> The scan flow no longer opens this sheet per item. Scanning became a session
+> with one review tray for the whole basket, because pausing on a modal after
+> every item cost ~40 taps and ~75s for a ten-item customer.
+>
+> **The reasoning below is still live, though — it is the argument this sheet
+> existed to make.** The tray weakened exactly the guard this spec added, which
+> is why the replacement records that cost explicitly in its §8 rather than
+> quietly dropping it. Read them together, in that order.
+>
+> The sheet itself is not gone: `showAddToCartSheet` still serves manual adds
+> from Inventory. Only the *scan* path stopped opening it.
+
 ---
 
 ## 1. Goal

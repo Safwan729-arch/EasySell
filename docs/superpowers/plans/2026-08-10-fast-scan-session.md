@@ -8,7 +8,12 @@
 
 **Tech Stack:** Flutter, Riverpod 3 (`Notifier`), `camera` package (new), Supabase Edge Functions (Deno/TypeScript), `flutter gen-l10n`.
 
-**Spec:** [2026-08-10-fast-scan-session-design.md](../specs/2026-08-10-fast-scan-session-design.md)
+**Spec:** [[2026-08-10-fast-scan-session-design]] — the *why*, plus §12 outcomes
+and §13 carried defects written after this plan was executed.
+
+**Related:** [[2026-07-27-scan-quantity-confirmation-design]] (superseded),
+[[2026-07-04-vision-product-scan-design]],
+[[2026-07-27-scan-gemini-migration-design]], [[2026-07-07-sale-cart-design]]
 
 ## Global Constraints
 

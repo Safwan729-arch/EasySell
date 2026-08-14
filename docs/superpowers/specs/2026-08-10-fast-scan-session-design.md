@@ -2,7 +2,25 @@
 
 **Date:** 2026-08-10
 **Branch:** `feat/fast-scan` (stacked on `feat/cart-discount`, as that was stacked on `feat/voice-wait-ux`)
-**Status:** Approved design, pending spec review
+**Status:** Built, 443 tests, final whole-branch review closed — see §12 outcomes
+and §13 carried defects. Unmerged and unpushed by request.
+**Plan:** [[2026-08-10-fast-scan-session]]
+**Related:**
+- [[2026-07-27-scan-quantity-confirmation-design]] — **superseded by this.** That
+  sheet was the per-item confirmation; §4 and §8 here replace it with one tray
+  and record what that costs
+- [[2026-07-04-vision-product-scan-design]] — the original camera → closed-set
+  match this rebuilds, and where barcodes were first ruled out (§2 D)
+- [[2026-07-27-scan-gemini-migration-design]] — the `recognize-product` function
+  whose prompt §6 trims, and which must deploy *before* the app (§6.1)
+- [[2026-07-27-qol-scan-voice-batch1-design]] — the "what I read" label the tray
+  chips inherit
+- [[2026-07-07-sale-cart-design]] — the cart and `record_sale_cart` the tray
+  stages into; nothing here commits a sale
+- [[2026-08-06-cart-discount-design]] — migration `0009`, still unapplied, which
+  gates any build from this stacked branch (§5)
+- [[2026-07-27-voice-brain-gemini-migration-design]] — `parse-sale`, which the
+  final task moved onto index-keyed candidates too
 
 Make scanning a multi-item basket fast. Today the scan flow is strictly serial —
 camera → wait → sheet → camera — and a ten-item customer costs roughly **40 taps

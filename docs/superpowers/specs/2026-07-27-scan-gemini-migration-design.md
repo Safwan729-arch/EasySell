@@ -3,6 +3,12 @@
 **Date:** 2026-07-27
 **Feature owner:** Member A (Full Stack)
 **Scope:** `supabase/functions/recognize-product` Edge Function only. No Flutter/app changes.
+**Later work on this function:** [[2026-08-10-fast-scan-session-design]] §6 trims
+the prompt — the candidate list is keyed by index instead of product UUID, ~40%
+fewer tokens per scan, because the catalog built here is re-sent on *every* call
+and a UUID is ~20 tokens the model only echoes back. The function accepts both
+shapes, so it can deploy ahead of the app; §6.1 explains why that order matters
+and why the reverse fails silently.
 
 ---
 

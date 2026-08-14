@@ -2,6 +2,12 @@
 
 **Date:** 2026-07-04
 **Feature owner:** Member A (Flutter + Supabase), with Member B seam (vision prompt) and Member C seam (camera)
+**Rebuilt on 2026-08-10 by [[2026-08-10-fast-scan-session-design]]** — the serial
+capture→wait→sheet loop became a session with a live viewfinder and background
+recognition. The closed-set matching designed here is unchanged and still the
+core of it; what changed is the flow around it. That work also took over the
+Member C camera seam (`image_picker` → the `camera` package) with the user's
+consent, and revisited but did not overturn the barcode decision in §10.
 **Status:** Approved for planning
 **Branch:** `feat/vision-product-scan` · **Rollback tag:** `checkpoint-pre-vision-scan`
 
