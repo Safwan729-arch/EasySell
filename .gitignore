@@ -56,3 +56,6 @@ app.*.map.json
 # Local git worktrees (subagent-driven-development scratch workspaces)
 .worktrees/
 .superpowers/
+
+# Supabase CLI scratch files
+supabase/.temp/
