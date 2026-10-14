@@ -2335,6 +2335,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Product saved, but its expiry date wasn\'t. Add it from the product page.'**
   String get expiry_savedWithoutDate;
+
+  /// No description provided for @expiry_deliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliveries'**
+  String get expiry_deliveries;
+
+  /// No description provided for @expiry_addDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expiry date'**
+  String get expiry_addDate;
+
+  /// No description provided for @expiry_rowDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {added} · Expires {expiry}'**
+  String expiry_rowDates(String added, String expiry);
+
+  /// No description provided for @expiry_rowLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'About {qty} {unit} left'**
+  String expiry_rowLeft(String qty, String unit);
+
+  /// No description provided for @expiry_statusGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get expiry_statusGood;
+
+  /// No description provided for @expiry_statusSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiring soon'**
+  String get expiry_statusSoon;
+
+  /// No description provided for @expiry_statusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get expiry_statusExpired;
+
+  /// No description provided for @expiry_removeFromStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from stock'**
+  String get expiry_removeFromStock;
+
+  /// No description provided for @expiry_noneLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'None left'**
+  String get expiry_noneLeft;
+
+  /// No description provided for @expiry_closedHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get expiry_closedHistory;
+
+  /// No description provided for @expiry_closedSoldOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold out'**
+  String get expiry_closedSoldOut;
+
+  /// No description provided for @expiry_closedRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed (expired)'**
+  String get expiry_closedRemoved;
+
+  /// No description provided for @expiry_closedNoneLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked none left'**
+  String get expiry_closedNoneLeft;
+
+  /// No description provided for @expiry_closedNotExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked not expired'**
+  String get expiry_closedNotExpired;
+
+  /// No description provided for @expiry_formAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expiry date'**
+  String get expiry_formAddTitle;
+
+  /// No description provided for @expiry_formEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit delivery'**
+  String get expiry_formEditTitle;
+
+  /// No description provided for @expiry_formAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get expiry_formAmount;
+
+  /// No description provided for @expiry_formReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Date added'**
+  String get expiry_formReceived;
+
+  /// No description provided for @expiry_amountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above 0'**
+  String get expiry_amountInvalid;
+
+  /// No description provided for @expiry_dateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an expiry date'**
+  String get expiry_dateRequired;
+
+  /// No description provided for @expiry_removeConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {qty} {unit} of {name}?'**
+  String expiry_removeConfirmTitle(String qty, String unit, String name);
+
+  /// No description provided for @expiry_removeConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock goes down and the loss is recorded. Your sales figures don\'t change.'**
+  String get expiry_removeConfirmBody;
+
+  /// No description provided for @expiry_removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired stock removed'**
+  String get expiry_removed;
 }
 
 class _AppLocalizationsDelegate

@@ -1340,4 +1340,80 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get expiry_savedWithoutDate =>
       'Product saved, but its expiry date wasn\'t. Add it from the product page.';
+
+  @override
+  String get expiry_deliveries => 'Deliveries';
+
+  @override
+  String get expiry_addDate => 'Add expiry date';
+
+  @override
+  String expiry_rowDates(String added, String expiry) {
+    return 'Added $added · Expires $expiry';
+  }
+
+  @override
+  String expiry_rowLeft(String qty, String unit) {
+    return 'About $qty $unit left';
+  }
+
+  @override
+  String get expiry_statusGood => 'Good';
+
+  @override
+  String get expiry_statusSoon => 'Expiring soon';
+
+  @override
+  String get expiry_statusExpired => 'Expired';
+
+  @override
+  String get expiry_removeFromStock => 'Remove from stock';
+
+  @override
+  String get expiry_noneLeft => 'None left';
+
+  @override
+  String get expiry_closedHistory => 'Closed';
+
+  @override
+  String get expiry_closedSoldOut => 'Sold out';
+
+  @override
+  String get expiry_closedRemoved => 'Removed (expired)';
+
+  @override
+  String get expiry_closedNoneLeft => 'Marked none left';
+
+  @override
+  String get expiry_closedNotExpired => 'Marked not expired';
+
+  @override
+  String get expiry_formAddTitle => 'Add expiry date';
+
+  @override
+  String get expiry_formEditTitle => 'Edit delivery';
+
+  @override
+  String get expiry_formAmount => 'Amount';
+
+  @override
+  String get expiry_formReceived => 'Date added';
+
+  @override
+  String get expiry_amountInvalid => 'Enter an amount above 0';
+
+  @override
+  String get expiry_dateRequired => 'Choose an expiry date';
+
+  @override
+  String expiry_removeConfirmTitle(String qty, String unit, String name) {
+    return 'Remove $qty $unit of $name?';
+  }
+
+  @override
+  String get expiry_removeConfirmBody =>
+      'Stock goes down and the loss is recorded. Your sales figures don\'t change.';
+
+  @override
+  String get expiry_removed => 'Expired stock removed';
 }

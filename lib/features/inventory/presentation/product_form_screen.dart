@@ -160,8 +160,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final n = double.tryParse(s);
     if (n == null) return l10n.form_enterNumber;
     if (n < 0) return l10n.form_cannotBeNegative;
-    if (!allowDecimal && n != n.roundToDouble())
+    if (!allowDecimal && n != n.roundToDouble()) {
       return l10n.form_wholeNumberOnly;
+    }
     return null;
   }
 

@@ -10,6 +10,8 @@ import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../cart/presentation/add_to_cart_sheet.dart';
+import '../../expiry/presentation/deliveries_section.dart';
+import '../../expiry/presentation/expiry_providers.dart';
 import '../../transactions/presentation/transaction_confirmation_sheet.dart';
 import '../domain/product.dart';
 import 'category_controller.dart';
@@ -161,7 +163,9 @@ class _DetailView extends ConsumerWidget {
     if (added == true && context.mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(context.l10n.common_addedToCart)));
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.common_addedToCart)),
+        );
     }
   }
 
@@ -193,6 +197,9 @@ class _DetailView extends ConsumerWidget {
         }
       }
     }
+
+    // Low stock judges GOOD stock: 5 expired + 1 good is low (spec §5).
+    final isLow = product.isLowStockAt(ref.watch(goodStockProvider(product)));
 
     return Scaffold(
       appBar: AppBar(
@@ -251,7 +258,7 @@ class _DetailView extends ConsumerWidget {
           // The gap lives inside the conditional so it collapses with the card
           // when stock is healthy, instead of doubling the space above the
           // first stat row. Without it the card's border touches that row.
-          if (product.isLowStock) ...[
+          if (isLow) ...[
             Card(
               color: Theme.of(context).colorScheme.errorContainer,
               child: ListTile(
@@ -288,8 +295,11 @@ class _DetailView extends ConsumerWidget {
           _statTile(
             context,
             l10n.inventory_statReorderThreshold,
-            product.reorderThreshold <= 0 ? l10n.common_off : product.reorderLabel,
+            product.reorderThreshold <= 0
+                ? l10n.common_off
+                : product.reorderLabel,
           ),
+          DeliveriesSection(product: product),
         ],
       ),
     );

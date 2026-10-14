@@ -1334,4 +1334,80 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get expiry_savedWithoutDate =>
       'পণ্য সংরক্ষিত হয়েছে, কিন্তু মেয়াদের তারিখ হয়নি। পণ্যের পাতা থেকে যোগ করুন।';
+
+  @override
+  String get expiry_deliveries => 'ডেলিভারি';
+
+  @override
+  String get expiry_addDate => 'মেয়াদের তারিখ যোগ করুন';
+
+  @override
+  String expiry_rowDates(String added, String expiry) {
+    return 'যোগ $added · মেয়াদ $expiry';
+  }
+
+  @override
+  String expiry_rowLeft(String qty, String unit) {
+    return 'আনুমানিক $qty $unit বাকি';
+  }
+
+  @override
+  String get expiry_statusGood => 'ভালো';
+
+  @override
+  String get expiry_statusSoon => 'মেয়াদ শেষ হচ্ছে';
+
+  @override
+  String get expiry_statusExpired => 'মেয়াদোত্তীর্ণ';
+
+  @override
+  String get expiry_removeFromStock => 'স্টক থেকে বাদ দিন';
+
+  @override
+  String get expiry_noneLeft => 'আর নেই';
+
+  @override
+  String get expiry_closedHistory => 'বন্ধ';
+
+  @override
+  String get expiry_closedSoldOut => 'বিক্রি শেষ';
+
+  @override
+  String get expiry_closedRemoved => 'বাদ দেওয়া হয়েছে (মেয়াদোত্তীর্ণ)';
+
+  @override
+  String get expiry_closedNoneLeft => 'আর নেই হিসেবে চিহ্নিত';
+
+  @override
+  String get expiry_closedNotExpired => 'মেয়াদ শেষ নয় হিসেবে চিহ্নিত';
+
+  @override
+  String get expiry_formAddTitle => 'মেয়াদের তারিখ যোগ করুন';
+
+  @override
+  String get expiry_formEditTitle => 'ডেলিভারি সম্পাদনা';
+
+  @override
+  String get expiry_formAmount => 'পরিমাণ';
+
+  @override
+  String get expiry_formReceived => 'যোগের তারিখ';
+
+  @override
+  String get expiry_amountInvalid => '০-এর বেশি পরিমাণ লিখুন';
+
+  @override
+  String get expiry_dateRequired => 'মেয়াদের তারিখ বেছে নিন';
+
+  @override
+  String expiry_removeConfirmTitle(String qty, String unit, String name) {
+    return '$name-এর $qty $unit বাদ দেবেন?';
+  }
+
+  @override
+  String get expiry_removeConfirmBody =>
+      'স্টক কমবে এবং ক্ষতি লেখা থাকবে। বিক্রির হিসাব বদলাবে না।';
+
+  @override
+  String get expiry_removed => 'মেয়াদোত্তীর্ণ স্টক বাদ দেওয়া হয়েছে';
 }
