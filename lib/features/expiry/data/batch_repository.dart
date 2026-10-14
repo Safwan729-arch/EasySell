@@ -22,17 +22,19 @@ class BatchRepository {
   final SupabaseClient _client;
   static const _table = 'product_batches';
 
-  Stream<List<ProductBatch>> watchOpenBatches(String shopId) {
-    return _client
+  /// The shop's OPEN deliveries, filtered on the server. A one-shot read
+  /// wrapped as a stream rather than `.stream()`: no table is in the realtime
+  /// publication anyway, and `.stream()` allows a single filter, so it pulled
+  /// every CLOSED delivery too. Daily bread and milk close ~1,000 a year --
+  /// past PostgREST's default row cap, which then returns an arbitrary subset
+  /// and open deliveries silently drop out of alerts and reminders.
+  Stream<List<ProductBatch>> watchOpenBatches(String shopId) async* {
+    final rows = await _client
         .from(_table)
-        .stream(primaryKey: ['id'])
+        .select()
         .eq('shop_id', shopId)
-        .map(
-          (rows) => rows
-              .where((r) => r['closed_at'] == null)
-              .map(ProductBatch.fromJson)
-              .toList(),
-        );
+        .isFilter('closed_at', null);
+    yield _parse(rows);
   }
 
   Future<Result<List<ProductBatch>>> fetchOpenBatches(String shopId) async {
