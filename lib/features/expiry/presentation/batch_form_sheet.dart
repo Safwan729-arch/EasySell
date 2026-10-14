@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../shared/extensions/format.dart';
 import '../../inventory/domain/product.dart';
 import '../domain/expiry_dates.dart';
 import '../domain/expiry_estimate.dart';
@@ -85,9 +86,21 @@ class _BatchFormSheetState extends ConsumerState<_BatchFormSheet> {
     if (picked != null) setState(() => _received = dateOnly(picked));
   }
 
+  /// What the product page shows as left of the delivery being edited.
+  double _editLeft() {
+    final e = ref.watch(productExpiryProvider)[widget.product.id];
+    for (final b in e?.batches ?? const <BatchEstimate>[]) {
+      if (b.batch.id == widget.batch!.id) return b.left;
+    }
+    return widget.batch!.quantity;
+  }
+
   Future<void> _save() async {
     final l10n = context.l10n;
-    final qty = double.tryParse(_amount.text.trim()) ?? 0;
+    // An edit keeps the delivery's amount; only the date can change.
+    final qty = _isEdit
+        ? widget.batch!.quantity
+        : double.tryParse(_amount.text.trim()) ?? 0;
     final wholeOnly = !widget.product.unitType.allowsDecimal;
     if (qty <= 0 || (wholeOnly && qty != qty.roundToDouble())) {
       setState(() => _error = l10n.expiry_amountInvalid);
@@ -161,29 +174,39 @@ class _BatchFormSheetState extends ConsumerState<_BatchFormSheet> {
           const SizedBox(height: 4),
           Text(widget.product.name, style: theme.textTheme.titleMedium),
           const SizedBox(height: 16),
-          TextField(
-            controller: _amount,
-            enabled: !isLoading,
-            keyboardType: TextInputType.numberWithOptions(
-              decimal: widget.product.unitType.allowsDecimal,
-            ),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(
-                widget.product.unitType.allowsDecimal
-                    ? RegExp(r'[0-9.]')
-                    : RegExp(r'[0-9]'),
+          // Editing shows the amount but cannot change it: stock moves only
+          // through sales, Restock and Remove from stock (2026-10-15 --
+          // lowering a delivery to 29 left stock at 30 and puzzled the user).
+          if (_isEdit)
+            InputDecorator(
+              decoration: InputDecoration(labelText: l10n.expiry_formAmount),
+              child: Text(
+                l10n.cart_batchOptionLeft(
+                  Qty.format(_editLeft()),
+                  widget.product.unitLabel,
+                ),
+                style: theme.textTheme.bodyLarge,
               ),
-            ],
-            decoration: InputDecoration(
-              labelText: l10n.expiry_formAmount,
-              suffixText: widget.product.unitLabel,
-              // Editing a delivery's amount only fixes its record; thrown-away
-              // units go through Remove from stock (2026-10-15: lowering a
-              // delivery to 29 left stock at 30 and puzzled the user).
-              helperText: _isEdit ? l10n.expiry_editAmountHelper : null,
-              helperMaxLines: 2,
+            )
+          else
+            TextField(
+              controller: _amount,
+              enabled: !isLoading,
+              keyboardType: TextInputType.numberWithOptions(
+                decimal: widget.product.unitType.allowsDecimal,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                  widget.product.unitType.allowsDecimal
+                      ? RegExp(r'[0-9.]')
+                      : RegExp(r'[0-9]'),
+                ),
+              ],
+              decoration: InputDecoration(
+                labelText: l10n.expiry_formAmount,
+                suffixText: widget.product.unitLabel,
+              ),
             ),
-          ),
           const SizedBox(height: 16),
           ExpiryDateField(
             value: _expiry,

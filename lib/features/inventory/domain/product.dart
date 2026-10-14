@@ -145,4 +145,10 @@ abstract class Product with _$Product {
     'expiry_warn_days': expiryWarnDays,
     'image_urls': imageUrls,
   };
+
+  /// [toRow] for editing an existing product: never the stock. Stock moves
+  /// only through sales, Restock and Remove from stock (the edit form has no
+  /// stock box), and writing the form's copy back would undo any sale made
+  /// while the form was open.
+  Map<String, dynamic> toUpdateRow() => toRow()..remove('quantity');
 }

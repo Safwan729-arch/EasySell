@@ -605,3 +605,34 @@ would remove the units twice. The phone now mints `p_removal_id` (restock's
   already lowered stock and the cap.
 
 0014 drops 0013's three-argument signature. That is the overload trap again.
+
+## 16. Stock moves only through sales, Restock and Remove (2026-10-15, migration `0015_remove_undated_stock.sql`)
+
+**The user's call.** With Remove on every batch, a stock box in the product
+edit form is pointless and harmful: a typed number bypasses the batches, and a
+lowered stock comes off the OLDEST delivery (§15). So:
+- **Edit product** has no stock box. **Add product** still takes the first
+  stock.
+  - `Product.toUpdateRow()` drops `quantity`, so an edit never writes stock.
+    Writing the form's copy back would also undo any sale made while the form
+    was open.
+  - The unit picker moved onto the Reorder box.
+- **Edit delivery** shows the amount as text ("29 pcs left", the product page's
+  number) and can change only the date.
+
+**The gap this opened, and the fix.** Products without dates (soap) have no
+delivery, so they had no Remove. A broken bar could never come off stock.
+- The Deliveries section now shows a **"No expiry date · N pcs left"** row
+  whenever some stock sits in no delivery (all of a soap's), with ⋮ → Remove
+  from stock → How many?
+- `remove_undated_stock` lowers stock (capped at stock; the app caps at the
+  undated amount, which only it can estimate) and records an `adjustment` with
+  no batch. The estimate takes a stock drop from undated stock first, so no
+  delivery changes.
+- It is retry-safe through a phone-minted removal id: the same `_removal`
+  helper as §15, keyed on what is removed plus the local day.
+
+**Accepted gap.** With the amount locked, a date put on too many units (30
+dated when only 20 have that date) can no longer be corrected in place.
+Removing the batch would wrongly lower stock. This is rare, and it is noted
+here rather than built.

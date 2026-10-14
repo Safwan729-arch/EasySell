@@ -2480,12 +2480,6 @@ abstract class AppLocalizations {
   /// **'How many?'**
   String get expiry_removeAmountLabel;
 
-  /// No description provided for @expiry_editAmountHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Fixes this batch\'s record only. Stock doesn\'t change.'**
-  String get expiry_editAmountHelper;
-
   /// No description provided for @expiry_cartOnlyGood.
   ///
   /// In en, this message translates to:

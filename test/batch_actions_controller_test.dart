@@ -62,6 +62,18 @@ class _Repo implements BatchRepository {
   final removalIds = <String?>[];
 
   @override
+  Future<Result<void>> removeUndatedStock({
+    required String shopId,
+    required String productId,
+    required double quantity,
+    required String removalId,
+  }) async {
+    removalIds.add(removalId);
+    log.add('remove-undated $shopId $productId qty=$quantity');
+    return _r;
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -220,6 +232,21 @@ void main() {
     expect(repo.removalIds[0], isNotNull);
     expect(repo.removalIds[1], repo.removalIds[0]);
     expect(repo.removalIds[2], isNot(repo.removalIds[0]));
+  });
+
+  test('stock with no date can be removed, retry-safe', () async {
+    // Soap has no deliveries: without this, a broken bar could never come off
+    // stock once the product form lost its stock box.
+    final repo = _Repo(fail: true);
+    final c = await _container(repo);
+    final actions = c.read(batchActionsControllerProvider.notifier);
+    await actions.removeUndated('soap', quantity: 2);
+    await actions.removeUndated('soap', quantity: 2);
+    expect(repo.log, [
+      'remove-undated s1 soap qty=2.0',
+      'remove-undated s1 soap qty=2.0',
+    ]);
+    expect(repo.removalIds[1], repo.removalIds[0]);
   });
 
   test('after a removal succeeds the same amount again is new', () async {

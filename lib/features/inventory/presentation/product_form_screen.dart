@@ -122,7 +122,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       // Brand/variant only apply to pieces; cleared otherwise.
       brand: isPiece ? _emptyToNull(_brand.text) : null,
       variant: isPiece ? _emptyToNull(_variant.text) : null,
-      quantity: double.parse(_quantity.text.trim()),
+      // Only a new product takes stock here; an edit never changes it (see
+      // Product.toUpdateRow).
+      quantity: widget.isNew
+          ? double.parse(_quantity.text.trim())
+          : base.quantity,
       buyingPrice: double.parse(_buyingPrice.text.trim()),
       sellingPrice: double.parse(_sellingPrice.text.trim()),
       reorderThreshold: double.parse(
@@ -303,44 +307,67 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 ),
 
                 // Stock + reorder, both in the active unit. -----------------
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _StockField(
-                        controller: _quantity,
-                        unitType: unitType,
-                        unit: unit,
-                        onUnitChanged: (u) => hasDeliveries
-                            ? _unitChangeBlocked()
-                            : ref
-                                  .read(productFormUnitProvider.notifier)
-                                  .selectUnit(u),
-                        validator: (v) => _quantityField(
-                          v,
-                          allowDecimal: unitType.allowsDecimal,
+                // Editing has no stock box: stock moves through sales, Restock
+                // and Remove from stock only, so a typed number cannot bypass
+                // them and the batches. The unit picker moves to Reorder.
+                if (!widget.isNew)
+                  _field(
+                    _reorder,
+                    l10n.inventory_formReorderAt,
+                    keyboardType: _numberKeyboard(unitType.allowsDecimal),
+                    inputFormatters: _numberFormatters(unitType.allowsDecimal),
+                    suffixIcon: _UnitSuffix(
+                      unitType: unitType,
+                      unit: unit,
+                      onChanged: (u) => hasDeliveries
+                          ? _unitChangeBlocked()
+                          : ref
+                                .read(productFormUnitProvider.notifier)
+                                .selectUnit(u),
+                    ),
+                    textInputAction: TextInputAction.next,
+                    validator: (v) =>
+                        _quantityField(v, allowDecimal: unitType.allowsDecimal),
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _StockField(
+                          controller: _quantity,
+                          unitType: unitType,
+                          unit: unit,
+                          onUnitChanged: (u) => hasDeliveries
+                              ? _unitChangeBlocked()
+                              : ref
+                                    .read(productFormUnitProvider.notifier)
+                                    .selectUnit(u),
+                          validator: (v) => _quantityField(
+                            v,
+                            allowDecimal: unitType.allowsDecimal,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _field(
-                        _reorder,
-                        l10n.inventory_formReorderAt,
-                        keyboardType: _numberKeyboard(unitType.allowsDecimal),
-                        inputFormatters: _numberFormatters(
-                          unitType.allowsDecimal,
-                        ),
-                        suffixText: unit.label,
-                        textInputAction: TextInputAction.next,
-                        validator: (v) => _quantityField(
-                          v,
-                          allowDecimal: unitType.allowsDecimal,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _field(
+                          _reorder,
+                          l10n.inventory_formReorderAt,
+                          keyboardType: _numberKeyboard(unitType.allowsDecimal),
+                          inputFormatters: _numberFormatters(
+                            unitType.allowsDecimal,
+                          ),
+                          suffixText: unit.label,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) => _quantityField(
+                            v,
+                            allowDecimal: unitType.allowsDecimal,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
                 if (widget.isNew && quantityTyped > 0)
                   ExpiryDateField(
@@ -449,6 +476,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? suffixText,
+    Widget? suffixIcon,
     String? helperText,
     String? Function(String?)? validator,
     TextInputAction? textInputAction,
@@ -470,6 +498,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         decoration: InputDecoration(
           labelText: label,
           suffixText: suffixText,
+          suffixIcon: suffixIcon,
           helperText: helperText,
         ),
         validator: validator,

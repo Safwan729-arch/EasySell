@@ -128,7 +128,40 @@ class BatchActionsController extends AsyncNotifier<void> {
     String batchId, {
     required double quantity,
     required double left,
-  }) async {
+  }) {
+    final close = quantity >= left - 1e-9;
+    return _removal(
+      {'batch': batchId, 'quantity': quantity, 'close': close},
+      (shopId, id) => _repo.removeStock(
+        shopId: shopId,
+        batchId: batchId,
+        quantity: quantity,
+        close: close,
+        removalId: id,
+      ),
+    );
+  }
+
+  /// Throws away [quantity] of the stock that has no date -- all of a
+  /// product without deliveries. The product form has no stock box, so this
+  /// is how a broken bar of soap comes off stock.
+  Future<bool> removeUndated(String productId, {required double quantity}) =>
+      _removal(
+        {'undated': productId, 'quantity': quantity},
+        (shopId, id) => _repo.removeUndatedStock(
+          shopId: shopId,
+          productId: productId,
+          quantity: quantity,
+          removalId: id,
+        ),
+      );
+
+  /// Runs a stock removal with a phone-minted id that an identical retry
+  /// re-sends, so a lost reply never removes twice.
+  Future<bool> _removal(
+    Map<String, Object?> what,
+    Future<Result<void>> Function(String shopId, String removalId) call,
+  ) async {
     final shopId = ref.read(myShopProvider).value?.id;
     if (shopId == null) {
       state = AsyncError(
@@ -137,11 +170,8 @@ class BatchActionsController extends AsyncNotifier<void> {
       );
       return false;
     }
-    final close = quantity >= left - 1e-9;
     final request = jsonEncode({
-      'batch': batchId,
-      'quantity': quantity,
-      'close': close,
+      ...what,
       // A retry is the same day; the same removal days later is a new one.
       'day': ymd(ref.read(todayProvider)),
     });
@@ -149,16 +179,8 @@ class BatchActionsController extends AsyncNotifier<void> {
       _pendingRemovalId = const Uuid().v4();
       _pendingRemovalRequest = request;
     }
-    final ok = await _run(
-      stockChanged: true,
-      () => _repo.removeStock(
-        shopId: shopId,
-        batchId: batchId,
-        quantity: quantity,
-        close: close,
-        removalId: _pendingRemovalId,
-      ),
-    );
+    final id = _pendingRemovalId!;
+    final ok = await _run(stockChanged: true, () => call(shopId, id));
     // Recorded, or refused by the server (so certainly not recorded): the
     // next removal is a new one.
     if (ok || state.error is DatabaseFailure) {

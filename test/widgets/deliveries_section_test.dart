@@ -26,6 +26,18 @@ class _Repo implements BatchRepository {
   _Repo({this.failRemove = false});
   final bool failRemove;
   final removed = <String>[];
+  final undated = <String>[];
+
+  @override
+  Future<Result<void>> removeUndatedStock({
+    required String shopId,
+    required String productId,
+    required double quantity,
+    required String removalId,
+  }) async {
+    undated.add('$productId $quantity');
+    return const Result.success(null);
+  }
 
   @override
   Future<Result<List<ProductBatch>>> fetchClosedBatches(
@@ -154,6 +166,49 @@ void main() {
   ) async {
     await _pump(tester, _Repo(), stock: 18);
     expect(find.text('Add expiry date'), findsOneWidget);
+  });
+
+  testWidgets('stock with no date has its own row and can be removed', (
+    tester,
+  ) async {
+    // The product form has no stock box any more, so undated stock (all of a
+    // soap's) needs its own way off the shelf.
+    final repo = _Repo();
+    await _pump(tester, repo, stock: 18);
+    await ProviderScope.containerOf(
+      tester.element(find.byType(DeliveriesSection)),
+    ).read(myShopProvider.future);
+
+    expect(find.text('No expiry date'), findsOneWidget);
+    expect(find.text('3 pcs left'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('undated-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove from stock').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      ),
+      '2',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Remove'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repo.undated, ['pepsi 2.0']);
+  });
+
+  testWidgets('no "No expiry date" row when every unit has a date', (
+    tester,
+  ) async {
+    await _pump(tester, _Repo());
+    expect(find.text('No expiry date'), findsNothing);
   });
 
   testWidgets('the remove dialog keeps its two buttons side by side', (

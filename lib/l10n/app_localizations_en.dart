@@ -1423,10 +1423,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expiry_removeAmountLabel => 'How many?';
 
   @override
-  String get expiry_editAmountHelper =>
-      'Fixes this batch\'s record only. Stock doesn\'t change.';
-
-  @override
   String expiry_cartOnlyGood(String good, String name, String expired) {
     return 'Only $good good $name left ($expired expired)';
   }

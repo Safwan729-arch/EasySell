@@ -38,6 +38,13 @@ class DeliveriesSection extends ConsumerWidget {
         children: [
           Text(l10n.expiry_deliveries, style: theme.textTheme.titleMedium),
           for (final e in open) _DeliveryRow(product: product, estimate: e),
+          // Stock in no delivery (all of a soap's). The product form has no
+          // stock box, so this row is how such stock comes off the shelf.
+          if (undatedStock(product.quantity, expiry) > 0)
+            _UndatedRow(
+              product: product,
+              left: undatedStock(product.quantity, expiry),
+            ),
           // Only while some stock has no date. Once every unit sits in a
           // delivery the link read as "you still have to add a date"; new
           // stock gets its date from Restock.
@@ -336,6 +343,76 @@ class _RemoveAmountDialogState extends State<_RemoveAmountDialog> {
               : null,
         ),
       ],
+    );
+  }
+}
+
+/// The stock that sits in no delivery, with the way to remove it.
+class _UndatedRow extends ConsumerWidget {
+  const _UndatedRow({required this.product, required this.left});
+
+  final Product product;
+  final double left;
+
+  Future<void> _remove(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final qty = await showDialog<double>(
+      context: context,
+      builder: (_) => _RemoveAmountDialog(product: product, left: left),
+    );
+    if (qty == null) return;
+    final ok = await ref
+        .read(batchActionsControllerProvider.notifier)
+        .removeUndated(product.id, quantity: qty);
+    if (ok) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.expiry_removed)));
+    } else {
+      showBatchActionFailure(messenger, l10n, ref);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final busy = ref.watch(batchActionsControllerProvider).isLoading;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.cart_batchNoDate, style: theme.textTheme.bodyMedium),
+                Text(
+                  l10n.cart_batchOptionLeft(
+                    Qty.format(left),
+                    product.unitLabel,
+                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          PopupMenuButton<String>(
+            key: const ValueKey('undated-menu'),
+            enabled: !busy,
+            onSelected: (_) => _remove(context, ref),
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'remove',
+                child: Text(l10n.expiry_removeFromStock),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

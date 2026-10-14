@@ -441,7 +441,6 @@
   "expiry_removeAmountTitle": "{name} স্টক থেকে বাদ দেবেন?",
   "@expiry_removeAmountTitle": { "placeholders": { "name": { "type": "String" } } },
   "expiry_removeAmountLabel": "কতগুলো?",
-  "expiry_editAmountHelper": "শুধু এই ব্যাচের হিসাব ঠিক করে। স্টক বদলায় না।",
   "expiry_cartOnlyGood": "ভালো {name} মাত্র {good} বাকি ({expired} মেয়াদোত্তীর্ণ)",
   "@expiry_cartOnlyGood": { "placeholders": { "good": { "type": "String" }, "name": { "type": "String" }, "expired": { "type": "String" } } },
   "expiry_cartOnlyExpired": "শুধু মেয়াদোত্তীর্ণ {name} বাকি ({expired})",

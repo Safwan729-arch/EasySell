@@ -208,6 +208,32 @@ class BatchRepository {
     }
   }
 
+  /// `remove_undated_stock` (0015): lowers stock by [quantity] that sits in no
+  /// delivery (all of a product without dates), recording the loss. The
+  /// estimate takes a stock drop from undated stock first, so no delivery
+  /// changes. [removalId] makes a lost reply's retry a no-op.
+  Future<Result<void>> removeUndatedStock({
+    required String shopId,
+    required String productId,
+    required double quantity,
+    required String removalId,
+  }) async {
+    try {
+      await _client.rpc(
+        'remove_undated_stock',
+        params: {
+          'p_shop_id': shopId,
+          'p_product_id': productId,
+          'p_quantity': quantity,
+          'p_removal_id': removalId,
+        },
+      );
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(_map(e));
+    }
+  }
+
   /// Local date of the product's latest restock, or null if never restocked.
   /// The default "date added" for stock already on the shelf (spec §4.3).
   Future<Result<DateTime?>> latestRestockDate(String productId) async {

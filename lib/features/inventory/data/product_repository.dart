@@ -54,7 +54,7 @@ class ProductRepository {
     try {
       final row = await _client
           .from(_table)
-          .update(product.toRow())
+          .update(product.toUpdateRow())
           .eq('id', product.id)
           .select()
           .single();
