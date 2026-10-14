@@ -55,6 +55,20 @@ class _Repo implements BatchRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _LoggingReconciler implements ExpiryReconciler {
+  _LoggingReconciler(this.log);
+  final List<String> log;
+
+  @override
+  Future<ReconcileOutcome> run() async {
+    log.add('reconcile');
+    return const ReconcileOutcome.ok({});
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 final _locked = ProductBatch(
   id: 'b1',
   shopId: 's1',
@@ -65,7 +79,10 @@ final _locked = ProductBatch(
   expiredQty: 5,
 );
 
-Future<ProviderContainer> _container(_Repo repo) async {
+Future<ProviderContainer> _container(
+  _Repo repo, {
+  ExpiryReconciler? reconciler,
+}) async {
   final c = ProviderContainer(
     overrides: [
       myShopProvider.overrideWith(
@@ -73,7 +90,9 @@ Future<ProviderContainer> _container(_Repo repo) async {
             const Shop(id: 's1', ownerId: 'o1', name: 'Shop', currency: 'BDT'),
       ),
       batchRepositoryProvider.overrideWithValue(repo),
-      expiryReconcilerProvider.overrideWithValue(NoopReconciler()),
+      expiryReconcilerProvider.overrideWithValue(
+        reconciler ?? NoopReconciler(),
+      ),
       nowProvider.overrideWithValue(() => DateTime(2026, 10, 14, 9)),
     ],
   );
@@ -143,6 +162,16 @@ void main() {
       expect(repo.log, ['remove s1 b1']);
     },
   );
+
+  test('remove expired stores pending expired counts first', () async {
+    // A delivery shown as expired by its date may not be locked yet (just
+    // added with a past date, just after midnight); the server refuses to
+    // remove an unlocked one ("Delivery is not expired").
+    final repo = _Repo();
+    final c = await _container(repo, reconciler: _LoggingReconciler(repo.log));
+    await c.read(batchActionsControllerProvider.notifier).removeExpired(['b1']);
+    expect(repo.log.take(2), ['reconcile', 'remove s1 b1']);
+  });
 
   test('a failure is reported and surfaced as an error state', () async {
     final c = await _container(_Repo(fail: true));

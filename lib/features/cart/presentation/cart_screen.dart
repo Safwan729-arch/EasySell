@@ -12,6 +12,7 @@ import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../customers/presentation/customer_picker_sheet.dart';
 import '../../expiry/domain/cart_expiry.dart';
+import '../../expiry/presentation/batch_action_feedback.dart';
 import '../../expiry/presentation/batch_actions_controller.dart';
 import '../../expiry/presentation/expiry_providers.dart';
 import '../../inventory/domain/product.dart';
@@ -417,6 +418,11 @@ class _LineNotice extends ConsumerWidget {
             isCheckingOut ||
             ref.watch(batchActionsControllerProvider).isLoading;
         final actions = ref.read(batchActionsControllerProvider.notifier);
+        // A failed tap must say why, not silently do nothing.
+        Future<void> act(Future<bool> Function() action) async {
+          final messenger = ScaffoldMessenger.of(context);
+          if (!await action()) showBatchActionFailure(messenger, l10n, ref);
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -443,13 +449,14 @@ class _LineNotice extends ConsumerWidget {
                   ),
                   onPressed: busy
                       ? null
-                      : () => actions.removeExpired(expiredBatchIds),
+                      : () => act(() => actions.removeExpired(expiredBatchIds)),
                   child: Text(l10n.expiry_cartRemoveExpired),
                 ),
                 TextButton(
                   onPressed: busy
                       ? null
-                      : () => actions.markNotExpired(expiredBatchIds),
+                      : () =>
+                            act(() => actions.markNotExpired(expiredBatchIds)),
                   child: Text(l10n.expiry_cartNotExpired),
                 ),
               ],

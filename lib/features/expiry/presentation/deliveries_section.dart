@@ -8,6 +8,7 @@ import '../../inventory/domain/product.dart';
 import '../domain/expiry_estimate.dart';
 import '../domain/product_batch.dart';
 import 'batch_actions_controller.dart';
+import 'batch_action_feedback.dart';
 import 'batch_form_sheet.dart';
 import 'expiry_date_field.dart';
 import 'expiry_providers.dart';
@@ -126,6 +127,8 @@ class _DeliveryRow extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.expiry_removed)));
+    } else {
+      showBatchActionFailure(messenger, l10n, ref);
     }
   }
 
@@ -182,14 +185,16 @@ class _DeliveryRow extends ConsumerWidget {
               ),
               PopupMenuButton<String>(
                 enabled: !busy,
-                onSelected: (v) {
+                onSelected: (v) async {
                   if (v == 'edit') {
                     showBatchFormSheet(context, product: product, batch: b);
-                  } else {
-                    ref
-                        .read(batchActionsControllerProvider.notifier)
-                        .markNoneLeft(b.id);
+                    return;
                   }
+                  final messenger = ScaffoldMessenger.of(context);
+                  final ok = await ref
+                      .read(batchActionsControllerProvider.notifier)
+                      .markNoneLeft(b.id);
+                  if (!ok) showBatchActionFailure(messenger, l10n, ref);
                 },
                 itemBuilder: (_) => [
                   PopupMenuItem(value: 'edit', child: Text(l10n.common_edit)),

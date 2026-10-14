@@ -97,6 +97,12 @@ class BatchActionsController extends AsyncNotifier<void> {
       return Future.value(false);
     }
     return _run(stockChanged: true, () async {
+      // A delivery shown as expired by its date may not be locked yet (just
+      // added with a past date, just after midnight, or a reconcile that
+      // failed); the server refuses to remove an unlocked one. Store the
+      // pending locks first. A failed reconcile is not fatal here -- the
+      // removal then reports the server's answer.
+      await ref.read(expiryReconcilerProvider).run();
       for (final id in batchIds) {
         final r = await _repo.removeExpiredStock(shopId: shopId, batchId: id);
         if (r.isFailure) return r;
