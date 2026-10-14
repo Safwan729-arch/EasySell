@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/supabase_config.dart';
+import 'features/expiry/presentation/expiry_prefs.dart';
 import 'shared/providers/locale_provider.dart';
 import 'shared/providers/onboarding_provider.dart';
 import 'shared/providers/theme_mode_provider.dart';
@@ -34,6 +35,7 @@ Future<void> main() async {
   final themeMode = await loadThemeMode();
   await initializeDateFormatting();
   final locale = await loadLocale();
+  final expiryPrefs = await loadExpiryPrefs();
 
   runApp(
     ProviderScope(
@@ -41,6 +43,7 @@ Future<void> main() async {
         initialOnboardingSeenProvider.overrideWithValue(seenOnboarding),
         initialThemeModeProvider.overrideWithValue(themeMode),
         initialLocaleProvider.overrideWithValue(locale),
+        initialExpiryPrefsProvider.overrideWithValue(expiryPrefs),
       ],
       child: const App(),
     ),

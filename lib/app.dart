@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/config/theme.dart';
 import 'core/router/app_router.dart';
 import 'core/widgets/offline_banner.dart';
+import 'features/expiry/presentation/expiry_providers.dart';
 import 'features/voice/presentation/voice_controller.dart';
 import 'features/voice/presentation/voice_ready_banner.dart';
 import 'l10n/app_localizations.dart';
@@ -22,6 +23,9 @@ class App extends ConsumerWidget {
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    // Locks expired counts / closes sold-out deliveries on shop load, date
+    // change and app resume (expiry spec §4.2).
+    ref.listen(expiryAutoReconcileProvider, (_, _) {});
 
     return MaterialApp.router(
       title: 'AI Shopkeeper',
@@ -49,7 +53,9 @@ class App extends ConsumerWidget {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
-            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            statusBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
             statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
             systemNavigationBarColor: Colors.transparent,
             systemNavigationBarIconBrightness: isDark
