@@ -22,12 +22,21 @@ import 'today_provider.dart';
 /// a shared phone never shows the previous account's stock.
 final reminderSyncProvider = Provider<void>((ref) {
   final service = ref.watch(reminderServiceProvider);
-  final shop = ref.watch(myShopProvider).value;
+  final shopAsync = ref.watch(myShopProvider);
   final prefs = ref.watch(expiryPrefsProvider);
   final locale = ref.watch(localeProvider);
   ref.watch(todayProvider);
 
-  if (shop == null || !prefs.remindersOn) {
+  if (!prefs.remindersOn) {
+    unawaited(service.cancelAll());
+    return;
+  }
+  // The shop is fetched from the server: loading, or failed with no signal,
+  // is NOT signed out. Keep what is scheduled -- cancelling here would
+  // silence the reminders on exactly the days there is no internet (spec §1).
+  if (!shopAsync.hasValue) return;
+  final shop = shopAsync.value;
+  if (shop == null) {
     unawaited(service.cancelAll());
     return;
   }

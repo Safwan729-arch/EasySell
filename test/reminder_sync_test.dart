@@ -112,6 +112,34 @@ void main() {
     expect(first.body, 'মেয়াদোত্তীর্ণ: ৫ Pepsi');
   });
 
+  test('opening the app offline keeps what is already scheduled', () async {
+    // The shop is fetched from the server, so offline it is an error, not
+    // "signed out". Cancelling here would silence the reminders on exactly
+    // the days the shopkeeper has no signal (spec §1).
+    final service = _FakeService();
+    final c = ProviderContainer(
+      // No automatic retry: keep the shop in its error state.
+      retry: (_, _) => null,
+      overrides: [
+        reminderServiceProvider.overrideWithValue(service),
+        myShopProvider.overrideWith((ref) async => throw Exception('offline')),
+        productsStreamProvider.overrideWith((ref) => Stream.value([_pepsi])),
+        batchesStreamProvider.overrideWith((ref) => Stream.value(_batches)),
+        nowProvider.overrideWithValue(() => DateTime(2026, 10, 21, 8)),
+      ],
+    );
+    addTearDown(c.dispose);
+    final sub = c.listen(reminderSyncProvider, (_, _) {});
+    addTearDown(sub.close);
+    for (var i = 0; i < 5; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    expect(c.read(myShopProvider).hasError, isTrue);
+    expect(service.cancels, 0);
+    expect(service.replaced, isEmpty);
+  });
+
   test('signed out or switched off cancels everything', () async {
     expect((await _sync(shop: null)).cancels, greaterThan(0));
     expect(
