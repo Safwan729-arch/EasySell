@@ -245,7 +245,12 @@ class _CartLineCard extends ConsumerWidget {
     // once a batch is chosen, what that batch has left.
     final expiry = ref.watch(productExpiryProvider)[product.id];
     final options = sellOptions(expiry);
-    final showBatch = needsBatchChoice(options) || line.batchId != null;
+    // Shown whenever there is a dated batch to name: a choice to make (several
+    // places to sell from), one made, or the only batch there is.
+    final showBatch =
+        needsBatchChoice(options) ||
+        line.batchId != null ||
+        onlyOption(options)?.batchId != null;
     final double maxQty =
         chosenLeft(line, expiry) ?? ref.watch(goodStockProvider(product));
     final notice = ref.watch(cartLineNoticesProvider)[product.id];
@@ -416,6 +421,8 @@ class _LineNotice extends ConsumerWidget {
       fontWeight: FontWeight.w600,
     );
     switch (notice) {
+      case BatchUnchosenNotice():
+        return Text(l10n.cart_batchChooseNotice, style: style);
       case BatchShortNotice(:final left):
         return Text(
           left > 0
@@ -486,8 +493,9 @@ class _LineNotice extends ConsumerWidget {
   }
 }
 
-/// Which batch (delivery) the line sells from. Shown only when the product
-/// has more than one place to sell from, so other lines look as before.
+/// Which batch (delivery) the line sells from. With several batches the
+/// seller must choose (checkout waits); with one, it is shown and needs no
+/// tap; a product without dates shows nothing.
 class _BatchRow extends ConsumerWidget {
   const _BatchRow({
     required this.line,
@@ -499,12 +507,10 @@ class _BatchRow extends ConsumerWidget {
   final List<SellOption> options;
   final bool enabled;
 
-  static const _auto = 'auto';
-
-  String _choiceText(BuildContext context) {
+  String _choiceText(BuildContext context, String? choice) {
     final l10n = context.l10n;
-    final choice = line.batchId;
-    if (choice == null) return l10n.cart_batchAuto;
+    if (choice == null) return l10n.cart_batchChoose;
+    if (choice == mixBatches) return l10n.cart_batchMix;
     if (choice == noDateBatch) return l10n.cart_batchNoDate;
     for (final o in options) {
       if (o.batchId == choice) {
@@ -518,31 +524,45 @@ class _BatchRow extends ConsumerWidget {
     final choice = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      builder: (_) =>
-          _BatchSheet(line: line, options: options, autoValue: _auto),
+      builder: (_) => _BatchSheet(line: line, options: options),
     );
     if (choice == null) return;
     AppHaptics.tap();
-    ref
-        .read(cartControllerProvider.notifier)
-        .setBatch(line.product.id, choice == _auto ? null : choice);
+    ref.read(cartControllerProvider.notifier).setBatch(line.product.id, choice);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    // One place to sell from: say which, nothing to choose.
+    if (!needsBatchChoice(options) && line.batchId == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Text(
+          context.l10n.cart_batchLabel(
+            _choiceText(context, onlyOption(options)!.batchId),
+          ),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+    final unchosen = line.batchId == null;
     return TextButton(
       onPressed: enabled ? () => _pick(context, ref) : null,
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: unchosen ? theme.colorScheme.error : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Flexible(
             child: Text(
-              context.l10n.cart_batchLabel(_choiceText(context)),
+              context.l10n.cart_batchLabel(_choiceText(context, line.batchId)),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -554,15 +574,10 @@ class _BatchRow extends ConsumerWidget {
 }
 
 class _BatchSheet extends StatelessWidget {
-  const _BatchSheet({
-    required this.line,
-    required this.options,
-    required this.autoValue,
-  });
+  const _BatchSheet({required this.line, required this.options});
 
   final CartLine line;
   final List<SellOption> options;
-  final String autoValue;
 
   @override
   Widget build(BuildContext context) {
@@ -577,7 +592,7 @@ class _BatchSheet extends StatelessWidget {
       String? subtitle,
       Widget? trailing,
     }) {
-      final selected = (line.batchId ?? autoValue) == value;
+      final selected = line.batchId == value;
       return ListTile(
         key: ValueKey('batch-option-$value'),
         leading: Icon(
@@ -607,7 +622,6 @@ class _BatchSheet extends StatelessWidget {
             child: ListView(
               shrinkWrap: true,
               children: [
-                tile(value: autoValue, title: l10n.cart_batchAuto),
                 for (final o in options)
                   tile(
                     value: o.batchId ?? noDateBatch,
@@ -630,6 +644,11 @@ class _BatchSheet extends StatelessWidget {
                           )
                         : null,
                   ),
+                // Only when no one batch holds the line: the seller still
+                // chooses it, but it may take from several.
+                if (offersMix(options, line.quantity) ||
+                    line.batchId == mixBatches)
+                  tile(value: mixBatches, title: l10n.cart_batchMix),
               ],
             ),
           ),

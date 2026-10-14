@@ -36,6 +36,12 @@ final class BatchShortNotice extends CartLineNotice {
   final double left;
 }
 
+/// The product has several batches and the seller has not said which one
+/// this line sells from.
+final class BatchUnchosenNotice extends CartLineNotice {
+  const BatchUnchosenNotice();
+}
+
 /// One notice per product whose line cannot go through. [liveProducts] is the
 /// live product list keyed by id -- a cart line holds a snapshot of the
 /// product from when it was added, so its own `quantity` may be stale.
@@ -54,6 +60,10 @@ Map<String, CartLineNotice> cartLineNotices({
         expired: e.expired,
         expiredBatchIds: [for (final b in e.expiredWithStock) b.batch.id],
       );
+      continue;
+    }
+    if (isUnchosen(l, e)) {
+      out[id] = const BatchUnchosenNotice();
       continue;
     }
     final left = chosenLeft(l, e);

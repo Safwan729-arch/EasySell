@@ -48,6 +48,7 @@ void main() {
       ServerErrorCodes.quantityNotPositive,
       ServerErrorCodes.expiredStockInCart,
       ServerErrorCodes.batchShortInCart,
+      ServerErrorCodes.batchNotChosen,
       ServerErrorCodes.batchNotAvailable,
     ];
     for (final code in codes) {

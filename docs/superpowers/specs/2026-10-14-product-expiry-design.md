@@ -636,3 +636,25 @@ delivery, so they had no Remove. A broken bar could never come off stock.
 dated when only 20 have that date) can no longer be corrected in place.
 Removing the batch would wrongly lower stock. This is rare, and it is noted
 here rather than built.
+
+## 17. The seller must choose the batch (2026-10-15, no migration)
+
+**The user reversed §13's default.** A pre-set "Soonest expiry first" let a
+line through without anyone saying which batch the units came from. Now:
+- **Several places to sell from** (two or more unexpired batches with stock,
+  or a batch plus undated stock): the line shows **"Batch: Choose ▾"** in red,
+  with "Choose which batch this comes from". Checkout waits.
+  `resolveSaleItems` returns these lines as `unchosen`, and the controller
+  refuses them with `batchNotChosen`. That covers voice and scan lines too,
+  because they land unchosen.
+- **One dated batch:** the line just says "Batch: Expires 24 Oct", needs no
+  tap, and is sent with that batch's id.
+- **No dates:** nothing changes.
+
+**Why "Several batches, soonest expiry first" survives, but only sometimes.**
+The cart holds one line per product, so a line can name one batch. Selling 20
+when the batches hold 10 and 16 would otherwise be impossible. The split
+option (`mixBatches`) appears in the list **only when no single batch holds
+the line** (`offersMix`). It is still an explicit tap, so the choice stays
+mandatory. The rejected alternative was one cart line per (product, batch),
+which reworks the cart's merging, steppers and notices for a rare case.

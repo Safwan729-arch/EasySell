@@ -1466,7 +1466,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cart_batchAuto => 'Soonest expiry first';
+  String get cart_batchMix => 'Several batches, soonest expiry first';
+
+  @override
+  String get cart_batchChoose => 'Choose';
+
+  @override
+  String get cart_batchChooseNotice => 'Choose which batch this comes from';
+
+  @override
+  String get error_batchNotChosen =>
+      'Choose a batch for each marked item in the cart.';
 
   @override
   String get cart_batchNoDate => 'No expiry date';

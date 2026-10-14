@@ -1460,7 +1460,16 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get cart_batchAuto => 'আগে যার মেয়াদ শেষ';
+  String get cart_batchMix => 'একাধিক ব্যাচ, আগে যার মেয়াদ শেষ';
+
+  @override
+  String get cart_batchChoose => 'বাছুন';
+
+  @override
+  String get cart_batchChooseNotice => 'কোন ব্যাচ থেকে দিচ্ছেন বাছুন';
+
+  @override
+  String get error_batchNotChosen => 'কার্টে চিহ্নিত পণ্যের ব্যাচ বাছুন।';
 
   @override
   String get cart_batchNoDate => 'মেয়াদের তারিখ নেই';

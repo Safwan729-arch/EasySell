@@ -51,6 +51,10 @@ abstract final class ServerErrorCodes {
   /// Set by the app: a line's chosen delivery has fewer units than the line.
   static const batchShortInCart = 'batchShortInCart';
 
+  /// Set by the app: a line's product has several batches and the seller has
+  /// not picked one.
+  static const batchNotChosen = 'batchNotChosen';
+
   /// `record_sale_cart` refused a delivery (closed, expired, another
   /// product's, or fewer units than the line).
   static const batchNotAvailable = 'batchNotAvailable';

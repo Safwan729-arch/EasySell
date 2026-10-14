@@ -149,6 +149,16 @@ class CartCheckoutController extends AsyncNotifier<void> {
         // Split from the gate's FRESH estimate: the screen's copy can be a
         // sale or a restock behind.
         final split = resolveSaleItems(lines, byProduct);
+        if (split.unchosen.isNotEmpty) {
+          state = AsyncError(
+            const DatabaseFailure(
+              'Choose a batch for each marked item.',
+              code: ServerErrorCodes.batchNotChosen,
+            ),
+            StackTrace.current,
+          );
+          return false;
+        }
         if (split.short.isNotEmpty) {
           state = AsyncError(
             const DatabaseFailure(

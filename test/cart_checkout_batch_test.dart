@@ -3,6 +3,7 @@ import 'package:ai_shopkeeper/core/error/result.dart';
 import 'package:ai_shopkeeper/features/cart/domain/cart_line.dart';
 import 'package:ai_shopkeeper/features/cart/presentation/cart_checkout_controller.dart';
 import 'package:ai_shopkeeper/features/cart/presentation/cart_controller.dart';
+import 'package:ai_shopkeeper/features/expiry/domain/batch_pick.dart';
 import 'package:ai_shopkeeper/features/expiry/domain/expiry_estimate.dart';
 import 'package:ai_shopkeeper/features/expiry/domain/product_batch.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/expiry_gate.dart';
@@ -81,6 +82,23 @@ class _LosingRepo extends CapturingTransactionRepository {
 }
 
 void main() {
+  test('a line with several batches and no choice is not sent', () async {
+    final repo = CapturingTransactionRepository();
+    final c = await cartContainer(
+      repo: repo,
+      gate: _ScriptedGate([GatePass(_both)]),
+    );
+    c.read(cartControllerProvider.notifier).addOrIncrement(_brush, 1);
+
+    expect(
+      await c.read(cartCheckoutControllerProvider.notifier).checkout(),
+      isFalse,
+    );
+    expect(repo.calls, 0);
+    final error = c.read(cartCheckoutControllerProvider).error;
+    expect((error as Failure).code, ServerErrorCodes.batchNotChosen);
+  });
+
   test('checkout sends the delivery the line sells from', () async {
     final repo = CapturingTransactionRepository();
     final c = await cartContainer(
@@ -134,7 +152,9 @@ void main() {
         repo: repo,
         gate: _ScriptedGate([GatePass(_both), GatePass(after)]),
       );
-      c.read(cartControllerProvider.notifier).addOrIncrement(_brush, 10);
+      final cart = c.read(cartControllerProvider.notifier);
+      cart.addOrIncrement(_brush, 12);
+      cart.setBatch('brush', mixBatches);
       final checkout = c.read(cartCheckoutControllerProvider.notifier);
 
       expect(await checkout.checkout(), isFalse);
@@ -153,6 +173,7 @@ void main() {
     );
     final cart = c.read(cartControllerProvider.notifier);
     cart.addOrIncrement(_brush, 1);
+    cart.setBatch('brush', 'soon');
     final checkout = c.read(cartCheckoutControllerProvider.notifier);
 
     expect(await checkout.checkout(), isFalse);

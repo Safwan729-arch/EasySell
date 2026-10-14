@@ -59,14 +59,17 @@ final _byProduct = {
   ),
 };
 
-Widget _harness(List<CartLine> lines) => ProviderScope(
+Widget _harness(
+  List<CartLine> lines, {
+  Map<String, ProductExpiry>? byProduct,
+}) => ProviderScope(
   overrides: [
     cartControllerProvider.overrideWith(() => _SeededCart(lines)),
     myShopProvider.overrideWith(
       (ref) =>
           const Shop(id: 's', ownerId: 'o', name: 'Test Shop', currency: 'BDT'),
     ),
-    productExpiryProvider.overrideWith((ref) => _byProduct),
+    productExpiryProvider.overrideWith((ref) => byProduct ?? _byProduct),
   ],
   child: MaterialApp(
     theme: AppTheme.light,
@@ -91,18 +94,23 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
-  testWidgets('a line can be switched to the fresher batch', (tester) async {
+  testWidgets('with several batches the seller must choose one', (
+    tester,
+  ) async {
     usePhoneSize(tester);
     await tester.pumpWidget(
       _harness([const CartLine(product: _brush, quantity: 1)]),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Batch: Soonest expiry first'), findsOneWidget);
-    await tester.tap(find.text('Batch: Soonest expiry first'));
+    expect(find.text('Batch: Choose'), findsOneWidget);
+    expect(find.text('Choose which batch this comes from'), findsOneWidget);
+    await tester.tap(find.text('Batch: Choose'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sell from which batch?'), findsOneWidget);
+    // One batch holds the line, so there is no "several batches" shortcut.
+    expect(find.text('Several batches, soonest expiry first'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('batch-option-fresh')));
     await tester.pumpAndSettle();
 
@@ -111,6 +119,45 @@ void main() {
     );
     expect(container.read(cartControllerProvider).single.batchId, 'fresh');
     expect(find.textContaining('Batch: Expires'), findsOneWidget);
+    expect(find.text('Choose which batch this comes from'), findsNothing);
+  });
+
+  testWidgets('with one batch the line shows it without asking', (
+    tester,
+  ) async {
+    usePhoneSize(tester);
+    await tester.pumpWidget(
+      _harness(
+        [const CartLine(product: _brush, quantity: 1)],
+        byProduct: {
+          'brush': estimateProductExpiry(
+            productId: 'brush',
+            stock: 16,
+            openBatches: [_batch('fresh', 16, 21)],
+            today: DateTime(2026, 10, 15),
+            shopWarnDays: 7,
+          ),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Batch: Expires'), findsOneWidget);
+    expect(find.text('Batch: Choose'), findsNothing);
+    expect(find.text('Choose which batch this comes from'), findsNothing);
+  });
+
+  testWidgets('"several batches" is offered when no one batch is enough', (
+    tester,
+  ) async {
+    usePhoneSize(tester);
+    await tester.pumpWidget(
+      _harness([const CartLine(product: _brush, quantity: 20)]),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Batch: Choose'));
+    await tester.pumpAndSettle();
+    expect(find.text('Several batches, soonest expiry first'), findsOneWidget);
   });
 
   testWidgets('a product with one place to sell from shows no picker', (

@@ -24,6 +24,7 @@ String failureText(AppLocalizations l10n, Failure failure) =>
       ServerErrorCodes.quantityNotPositive => l10n.error_quantityNotPositive,
       ServerErrorCodes.expiredStockInCart => l10n.error_expiredStockInCart,
       ServerErrorCodes.batchShortInCart => l10n.error_batchShortInCart,
+      ServerErrorCodes.batchNotChosen => l10n.error_batchNotChosen,
       ServerErrorCodes.batchNotAvailable => l10n.error_batchNotAvailable,
       _ => failure.message,
     };

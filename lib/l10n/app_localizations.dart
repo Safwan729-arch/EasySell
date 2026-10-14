@@ -2540,11 +2540,29 @@ abstract class AppLocalizations {
   /// **'Batch: {choice}'**
   String cart_batchLabel(String choice);
 
-  /// No description provided for @cart_batchAuto.
+  /// No description provided for @cart_batchMix.
   ///
   /// In en, this message translates to:
-  /// **'Soonest expiry first'**
-  String get cart_batchAuto;
+  /// **'Several batches, soonest expiry first'**
+  String get cart_batchMix;
+
+  /// No description provided for @cart_batchChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get cart_batchChoose;
+
+  /// No description provided for @cart_batchChooseNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which batch this comes from'**
+  String get cart_batchChooseNotice;
+
+  /// No description provided for @error_batchNotChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a batch for each marked item in the cart.'**
+  String get error_batchNotChosen;
 
   /// No description provided for @cart_batchNoDate.
   ///

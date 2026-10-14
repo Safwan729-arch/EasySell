@@ -150,8 +150,26 @@ void main() {
       expect(r.short, isEmpty);
     });
 
-    test('left alone, soonest expiry sells first and spills over', () {
-      final r = resolveSaleItems([line(12)], byProduct);
+    test('with several batches, a line nobody chose for is held back', () {
+      // The seller must say which batch (user's call, 2026-10-15).
+      final r = resolveSaleItems([line(1)], byProduct);
+      expect(r.unchosen, ['brush']);
+      expect(r.items, isEmpty);
+    });
+
+    test('with one batch, the line sells from it without a choice', () {
+      final one = {
+        'brush': _estimate(16, [_fresh]),
+      };
+      final r = resolveSaleItems([line(2)], one);
+      expect(r.unchosen, isEmpty);
+      expect(r.items, [
+        {'product_id': 'brush', 'quantity': 2.0, 'batch_id': 'fresh'},
+      ]);
+    });
+
+    test('"several batches" sells soonest expiry first and spills over', () {
+      final r = resolveSaleItems([line(12, mixBatches)], byProduct);
       expect(r.items, [
         {'product_id': 'brush', 'quantity': 10.0, 'batch_id': 'soon'},
         {'product_id': 'brush', 'quantity': 2.0, 'batch_id': 'fresh'},
@@ -197,5 +215,22 @@ void main() {
     );
     expect(notices['brush'], isA<BatchShortNotice>());
     expect((notices['brush'] as BatchShortNotice).left, 10);
+  });
+
+  test('the cart asks for a batch when there are several', () {
+    final notices = cartLineNotices(
+      lines: [const CartLine(product: _brush, quantity: 1)],
+      liveProducts: {'brush': _brush.copyWith(quantity: 26)},
+      byProduct: {
+        'brush': _estimate(26, [_soon, _fresh]),
+      },
+    );
+    expect(notices['brush'], isA<BatchUnchosenNotice>());
+  });
+
+  test('"several batches" is offered only when no one batch is enough', () {
+    final e = _estimate(26, [_soon, _fresh]);
+    expect(offersMix(sellOptions(e), 16), isFalse);
+    expect(offersMix(sellOptions(e), 17), isTrue);
   });
 }
