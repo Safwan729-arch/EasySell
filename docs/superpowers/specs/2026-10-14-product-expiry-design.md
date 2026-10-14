@@ -425,3 +425,46 @@ where it is now handled:
 | 22 | Loss valued at the current buying price, not the delivery's | §3 `buying_price` on batch, §3.2 |
 | 23 | Changing a product's unit left deliveries in the old unit | §5 unit change blocked |
 | 24 | Restock retry after a lost reply added stock (and a delivery) twice | §3.1 retry-safe restock (user chose to include) |
+
+## 12. Final whole-branch review (2026-10-14, after the build)
+
+One fresh reviewer read the whole branch. Fixed, each with a test that failed
+first:
+
+- **The cart block undid 0010 (Critical).** After a lost reply the refreshed
+  stock makes the *same* cart look too big or expired. Blocking that retry
+  pushes the shopkeeper to edit the cart -- a new request, a new sale id --
+  and the sale is recorded twice. Now a sale that was *sent and never
+  answered* may be retried with its id past the block; one the gate stopped
+  before sending, or the server refused, may not. The lesson: any new check
+  in front of `record_sale_cart` must let an unanswered identical retry
+  through, or it reopens the double-sale bug.
+- **Opening the app offline cancelled every reminder.** The shop is fetched
+  from the server, so offline it is an error, which read as "signed out".
+  Only a real sign-out cancels now.
+- **The deliveries feed pulled every closed delivery** (`.stream()` allows
+  one filter). Daily bread and milk close ~1,000 a year, past PostgREST's
+  1000-row cap, after which open deliveries silently drop out. It is now a
+  server-filtered read -- no table is in the realtime publication anyway.
+  No unit test (no Supabase fake in the project); covered by the device
+  checklist.
+- **Correcting a still-expired delivery's amount left its lock high**, so
+  "Remove from stock" removed good units as a loss. The lock is now capped
+  at the corrected amount.
+- **"Remove expired" failed silently** on a delivery expired by date but not
+  yet locked (just added with a past date, just after midnight). It now
+  stores pending locks first, and every delivery action reports a failure.
+- **A pending restock id outlived the sheet**, so an identical restock days
+  later replayed an unanswered one and was swallowed. The phone's date is
+  now part of the request key.
+- **The reconcile read the whole product table**, which a 1000+ product shop
+  exceeds; their expired units could then be sold. It reads only products
+  that have open deliveries.
+
+Deferred (minor): a second phone restocking between the reconcile's two
+reads can over-lock; `remove_expired_stock` can remove more than its row
+shows when two locked deliveries share hand-lowered stock; after 9 AM only
+6 future reminder days are scheduled and reschedules are not serialised;
+Settings says "Blocked" on Android 13+ before permission is ever asked;
+"None left" on an expired delivery makes its units sellable; the cart's
+"Remove expired" has no confirmation.
