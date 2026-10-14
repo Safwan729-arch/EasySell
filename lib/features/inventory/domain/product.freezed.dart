@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Product {
 
- String get id; String get shopId; String get name; UnitType get unitType; ProductUnit get unit; String? get brand; String? get variant; String? get categoryId; String? get category; double get quantity; double get buyingPrice; double get sellingPrice; double get reorderThreshold; List<String> get imageUrls; DateTime? get createdAt; DateTime? get updatedAt;
+ String get id; String get shopId; String get name; UnitType get unitType; ProductUnit get unit; String? get brand; String? get variant; String? get categoryId; String? get category; double get quantity; double get buyingPrice; double get sellingPrice; double get reorderThreshold; int? get expiryWarnDays; List<String> get imageUrls; DateTime? get createdAt; DateTime? get updatedAt;
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.variant, variant) || other.variant == variant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.reorderThreshold, reorderThreshold) || other.reorderThreshold == reorderThreshold)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.variant, variant) || other.variant == variant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.reorderThreshold, reorderThreshold) || other.reorderThreshold == reorderThreshold)&&(identical(other.expiryWarnDays, expiryWarnDays) || other.expiryWarnDays == expiryWarnDays)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,shopId,name,unitType,unit,brand,variant,categoryId,category,quantity,buyingPrice,sellingPrice,reorderThreshold,const DeepCollectionEquality().hash(imageUrls),createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,shopId,name,unitType,unit,brand,variant,categoryId,category,quantity,buyingPrice,sellingPrice,reorderThreshold,expiryWarnDays,const DeepCollectionEquality().hash(imageUrls),createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Product(id: $id, shopId: $shopId, name: $name, unitType: $unitType, unit: $unit, brand: $brand, variant: $variant, categoryId: $categoryId, category: $category, quantity: $quantity, buyingPrice: $buyingPrice, sellingPrice: $sellingPrice, reorderThreshold: $reorderThreshold, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Product(id: $id, shopId: $shopId, name: $name, unitType: $unitType, unit: $unit, brand: $brand, variant: $variant, categoryId: $categoryId, category: $category, quantity: $quantity, buyingPrice: $buyingPrice, sellingPrice: $sellingPrice, reorderThreshold: $reorderThreshold, expiryWarnDays: $expiryWarnDays, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ProductCopyWith<$Res>  {
   factory $ProductCopyWith(Product value, $Res Function(Product) _then) = _$ProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String shopId, String name, UnitType unitType, ProductUnit unit, String? brand, String? variant, String? categoryId, String? category, double quantity, double buyingPrice, double sellingPrice, double reorderThreshold, List<String> imageUrls, DateTime? createdAt, DateTime? updatedAt
+ String id, String shopId, String name, UnitType unitType, ProductUnit unit, String? brand, String? variant, String? categoryId, String? category, double quantity, double buyingPrice, double sellingPrice, double reorderThreshold, int? expiryWarnDays, List<String> imageUrls, DateTime? createdAt, DateTime? updatedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? shopId = null,Object? name = null,Object? unitType = null,Object? unit = null,Object? brand = freezed,Object? variant = freezed,Object? categoryId = freezed,Object? category = freezed,Object? quantity = null,Object? buyingPrice = null,Object? sellingPrice = null,Object? reorderThreshold = null,Object? imageUrls = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? shopId = null,Object? name = null,Object? unitType = null,Object? unit = null,Object? brand = freezed,Object? variant = freezed,Object? categoryId = freezed,Object? category = freezed,Object? quantity = null,Object? buyingPrice = null,Object? sellingPrice = null,Object? reorderThreshold = null,Object? expiryWarnDays = freezed,Object? imageUrls = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,shopId: null == shopId ? _self.shopId : shopId // ignore: cast_nullable_to_non_nullable
@@ -80,7 +80,8 @@ as String?,quantity: null == quantity ? _self.quantity : quantity // ignore: cas
 as double,buyingPrice: null == buyingPrice ? _self.buyingPrice : buyingPrice // ignore: cast_nullable_to_non_nullable
 as double,sellingPrice: null == sellingPrice ? _self.sellingPrice : sellingPrice // ignore: cast_nullable_to_non_nullable
 as double,reorderThreshold: null == reorderThreshold ? _self.reorderThreshold : reorderThreshold // ignore: cast_nullable_to_non_nullable
-as double,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as double,expiryWarnDays: freezed == expiryWarnDays ? _self.expiryWarnDays : expiryWarnDays // ignore: cast_nullable_to_non_nullable
+as int?,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
 as List<String>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -168,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String shopId,  String name,  UnitType unitType,  ProductUnit unit,  String? brand,  String? variant,  String? categoryId,  String? category,  double quantity,  double buyingPrice,  double sellingPrice,  double reorderThreshold,  List<String> imageUrls,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String shopId,  String name,  UnitType unitType,  ProductUnit unit,  String? brand,  String? variant,  String? categoryId,  String? category,  double quantity,  double buyingPrice,  double sellingPrice,  double reorderThreshold,  int? expiryWarnDays,  List<String> imageUrls,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that.brand,_that.variant,_that.categoryId,_that.category,_that.quantity,_that.buyingPrice,_that.sellingPrice,_that.reorderThreshold,_that.imageUrls,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that.brand,_that.variant,_that.categoryId,_that.category,_that.quantity,_that.buyingPrice,_that.sellingPrice,_that.reorderThreshold,_that.expiryWarnDays,_that.imageUrls,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -189,10 +190,10 @@ return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String shopId,  String name,  UnitType unitType,  ProductUnit unit,  String? brand,  String? variant,  String? categoryId,  String? category,  double quantity,  double buyingPrice,  double sellingPrice,  double reorderThreshold,  List<String> imageUrls,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String shopId,  String name,  UnitType unitType,  ProductUnit unit,  String? brand,  String? variant,  String? categoryId,  String? category,  double quantity,  double buyingPrice,  double sellingPrice,  double reorderThreshold,  int? expiryWarnDays,  List<String> imageUrls,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Product():
-return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that.brand,_that.variant,_that.categoryId,_that.category,_that.quantity,_that.buyingPrice,_that.sellingPrice,_that.reorderThreshold,_that.imageUrls,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that.brand,_that.variant,_that.categoryId,_that.category,_that.quantity,_that.buyingPrice,_that.sellingPrice,_that.reorderThreshold,_that.expiryWarnDays,_that.imageUrls,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +210,10 @@ return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String shopId,  String name,  UnitType unitType,  ProductUnit unit,  String? brand,  String? variant,  String? categoryId,  String? category,  double quantity,  double buyingPrice,  double sellingPrice,  double reorderThreshold,  List<String> imageUrls,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String shopId,  String name,  UnitType unitType,  ProductUnit unit,  String? brand,  String? variant,  String? categoryId,  String? category,  double quantity,  double buyingPrice,  double sellingPrice,  double reorderThreshold,  int? expiryWarnDays,  List<String> imageUrls,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that.brand,_that.variant,_that.categoryId,_that.category,_that.quantity,_that.buyingPrice,_that.sellingPrice,_that.reorderThreshold,_that.imageUrls,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that.brand,_that.variant,_that.categoryId,_that.category,_that.quantity,_that.buyingPrice,_that.sellingPrice,_that.reorderThreshold,_that.expiryWarnDays,_that.imageUrls,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -224,7 +225,7 @@ return $default(_that.id,_that.shopId,_that.name,_that.unitType,_that.unit,_that
 @JsonSerializable()
 
 class _Product extends Product {
-  const _Product({required this.id, required this.shopId, required this.name, this.unitType = UnitType.piece, this.unit = ProductUnit.pcs, this.brand, this.variant, this.categoryId, this.category, this.quantity = 0, this.buyingPrice = 0, this.sellingPrice = 0, this.reorderThreshold = 0, final  List<String> imageUrls = const <String>[], this.createdAt, this.updatedAt}): _imageUrls = imageUrls,super._();
+  const _Product({required this.id, required this.shopId, required this.name, this.unitType = UnitType.piece, this.unit = ProductUnit.pcs, this.brand, this.variant, this.categoryId, this.category, this.quantity = 0, this.buyingPrice = 0, this.sellingPrice = 0, this.reorderThreshold = 0, this.expiryWarnDays, final  List<String> imageUrls = const <String>[], this.createdAt, this.updatedAt}): _imageUrls = imageUrls,super._();
   factory _Product.fromJson(Map<String, dynamic> json) => _$ProductFromJson(json);
 
 @override final  String id;
@@ -240,6 +241,7 @@ class _Product extends Product {
 @override@JsonKey() final  double buyingPrice;
 @override@JsonKey() final  double sellingPrice;
 @override@JsonKey() final  double reorderThreshold;
+@override final  int? expiryWarnDays;
  final  List<String> _imageUrls;
 @override@JsonKey() List<String> get imageUrls {
   if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
@@ -263,16 +265,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.variant, variant) || other.variant == variant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.reorderThreshold, reorderThreshold) || other.reorderThreshold == reorderThreshold)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.variant, variant) || other.variant == variant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.reorderThreshold, reorderThreshold) || other.reorderThreshold == reorderThreshold)&&(identical(other.expiryWarnDays, expiryWarnDays) || other.expiryWarnDays == expiryWarnDays)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,shopId,name,unitType,unit,brand,variant,categoryId,category,quantity,buyingPrice,sellingPrice,reorderThreshold,const DeepCollectionEquality().hash(_imageUrls),createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,shopId,name,unitType,unit,brand,variant,categoryId,category,quantity,buyingPrice,sellingPrice,reorderThreshold,expiryWarnDays,const DeepCollectionEquality().hash(_imageUrls),createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Product(id: $id, shopId: $shopId, name: $name, unitType: $unitType, unit: $unit, brand: $brand, variant: $variant, categoryId: $categoryId, category: $category, quantity: $quantity, buyingPrice: $buyingPrice, sellingPrice: $sellingPrice, reorderThreshold: $reorderThreshold, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Product(id: $id, shopId: $shopId, name: $name, unitType: $unitType, unit: $unit, brand: $brand, variant: $variant, categoryId: $categoryId, category: $category, quantity: $quantity, buyingPrice: $buyingPrice, sellingPrice: $sellingPrice, reorderThreshold: $reorderThreshold, expiryWarnDays: $expiryWarnDays, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -283,7 +285,7 @@ abstract mixin class _$ProductCopyWith<$Res> implements $ProductCopyWith<$Res> {
   factory _$ProductCopyWith(_Product value, $Res Function(_Product) _then) = __$ProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String shopId, String name, UnitType unitType, ProductUnit unit, String? brand, String? variant, String? categoryId, String? category, double quantity, double buyingPrice, double sellingPrice, double reorderThreshold, List<String> imageUrls, DateTime? createdAt, DateTime? updatedAt
+ String id, String shopId, String name, UnitType unitType, ProductUnit unit, String? brand, String? variant, String? categoryId, String? category, double quantity, double buyingPrice, double sellingPrice, double reorderThreshold, int? expiryWarnDays, List<String> imageUrls, DateTime? createdAt, DateTime? updatedAt
 });
 
 
@@ -300,7 +302,7 @@ class __$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? shopId = null,Object? name = null,Object? unitType = null,Object? unit = null,Object? brand = freezed,Object? variant = freezed,Object? categoryId = freezed,Object? category = freezed,Object? quantity = null,Object? buyingPrice = null,Object? sellingPrice = null,Object? reorderThreshold = null,Object? imageUrls = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? shopId = null,Object? name = null,Object? unitType = null,Object? unit = null,Object? brand = freezed,Object? variant = freezed,Object? categoryId = freezed,Object? category = freezed,Object? quantity = null,Object? buyingPrice = null,Object? sellingPrice = null,Object? reorderThreshold = null,Object? expiryWarnDays = freezed,Object? imageUrls = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Product(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,shopId: null == shopId ? _self.shopId : shopId // ignore: cast_nullable_to_non_nullable
@@ -315,7 +317,8 @@ as String?,quantity: null == quantity ? _self.quantity : quantity // ignore: cas
 as double,buyingPrice: null == buyingPrice ? _self.buyingPrice : buyingPrice // ignore: cast_nullable_to_non_nullable
 as double,sellingPrice: null == sellingPrice ? _self.sellingPrice : sellingPrice // ignore: cast_nullable_to_non_nullable
 as double,reorderThreshold: null == reorderThreshold ? _self.reorderThreshold : reorderThreshold // ignore: cast_nullable_to_non_nullable
-as double,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as double,expiryWarnDays: freezed == expiryWarnDays ? _self.expiryWarnDays : expiryWarnDays // ignore: cast_nullable_to_non_nullable
+as int?,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
 as List<String>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,

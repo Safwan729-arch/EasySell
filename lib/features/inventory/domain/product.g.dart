@@ -24,6 +24,7 @@ _Product _$ProductFromJson(Map<String, dynamic> json) => _Product(
   buyingPrice: (json['buying_price'] as num?)?.toDouble() ?? 0,
   sellingPrice: (json['selling_price'] as num?)?.toDouble() ?? 0,
   reorderThreshold: (json['reorder_threshold'] as num?)?.toDouble() ?? 0,
+  expiryWarnDays: (json['expiry_warn_days'] as num?)?.toInt(),
   imageUrls:
       (json['image_urls'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -51,6 +52,7 @@ Map<String, dynamic> _$ProductToJson(_Product instance) => <String, dynamic>{
   'buying_price': instance.buyingPrice,
   'selling_price': instance.sellingPrice,
   'reorder_threshold': instance.reorderThreshold,
+  'expiry_warn_days': instance.expiryWarnDays,
   'image_urls': instance.imageUrls,
   'created_at': instance.createdAt?.toIso8601String(),
   'updated_at': instance.updatedAt?.toIso8601String(),

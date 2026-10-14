@@ -88,6 +88,9 @@ abstract class Product with _$Product {
     @Default(0) double sellingPrice,
     // Expressed in the same unit as quantity.
     @Default(0) double reorderThreshold,
+    // "Warn me N days before expiry" for this product. Null = the automatic
+    // shelf-life rule (expiry spec §4.3).
+    int? expiryWarnDays,
     @Default(<String>[]) List<String> imageUrls,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -97,7 +100,12 @@ abstract class Product with _$Product {
       _$ProductFromJson(json);
 
   /// At or below the reorder threshold (threshold of 0 disables the alert).
-  bool get isLowStock => reorderThreshold > 0 && quantity <= reorderThreshold;
+  bool get isLowStock => isLowStockAt(quantity);
+
+  /// Low-stock check against a given amount -- the GOOD (unexpired) stock when
+  /// the product has expired units, so 5 expired + 1 good counts as low.
+  bool isLowStockAt(double available) =>
+      reorderThreshold > 0 && available <= reorderThreshold;
 
   /// Current stock valued at cost.
   double get inventoryValue => buyingPrice * quantity;
@@ -134,6 +142,7 @@ abstract class Product with _$Product {
     'buying_price': buyingPrice,
     'selling_price': sellingPrice,
     'reorder_threshold': reorderThreshold,
+    'expiry_warn_days': expiryWarnDays,
     'image_urls': imageUrls,
   };
 }
