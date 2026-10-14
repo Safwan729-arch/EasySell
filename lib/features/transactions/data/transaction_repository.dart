@@ -30,9 +30,14 @@ class TransactionRepository {
   /// transaction via `record_sale_cart`, or none of them if any line fails
   /// (e.g. insufficient stock). Returns the inserted rows, all sharing one
   /// `sale_group_id` so History can group them into a single receipt.
+  ///
+  /// [saleGroupId] is minted by the caller, not the server. The server records
+  /// a given id once and returns the existing rows on a repeat, so re-sending
+  /// the same id after a lost reply cannot record the sale twice.
   Future<Result<List<Transaction>>> recordSaleCart({
     required String shopId,
     required List<Map<String, dynamic>> items,
+    required String saleGroupId,
     String source = 'manual',
     String? customerId,
     double discount = 0,
@@ -46,6 +51,7 @@ class TransactionRepository {
           'p_source': source,
           'p_customer_id': ?customerId,
           'p_discount': discount,
+          'p_sale_group_id': saleGroupId,
         },
       );
       final rows = result as List;

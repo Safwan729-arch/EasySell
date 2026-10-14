@@ -54,6 +54,9 @@ dependencies:
   # like the recording auto-stop countdown is testable without a real 15s wait.
   clock: ^1.1.2
   camera: ^0.12.0+2
+  # The phone mints each checkout's sale id so a retry can re-send it and the
+  # server records the sale once (record_sale_cart, migration 0010).
+  uuid: ^4.5.3
 
 dev_dependencies:
   flutter_test:

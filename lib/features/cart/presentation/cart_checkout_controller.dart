@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
@@ -32,6 +34,18 @@ class CartCheckoutController extends AsyncNotifier<void> {
   /// constraint can reject because each call is individually valid.
   bool _inFlight = false;
 
+  /// The sale id of the last checkout that did not come back as a success, and
+  /// the exact request it was sent with.
+  ///
+  /// A failure does not prove the sale was not saved: on weak signal the server
+  /// can commit and the reply can be lost. The cart is kept so the user can
+  /// retry, and the retry re-sends this id, which the server records only once
+  /// (migration 0010). The id is reused ONLY for an identical request. A
+  /// changed cart, discount or customer is a different sale, and reusing the id
+  /// would make the server hand back the old one and drop the change.
+  String? _pendingSaleId;
+  String? _pendingRequest;
+
   @override
   FutureOr<void> build() {
     // A rebuilt notifier has no call in flight; stale `true` would wedge
@@ -54,6 +68,19 @@ class CartCheckoutController extends AsyncNotifier<void> {
     }
     if (lines.isEmpty) return false;
 
+    final items = cartItemsPayload(lines);
+    final request = jsonEncode({
+      'shop': shopId,
+      'items': items,
+      'source': source,
+      'customer': customerId,
+      'discount': discount,
+    });
+    if (request != _pendingRequest) {
+      _pendingSaleId = const Uuid().v4();
+      _pendingRequest = request;
+    }
+
     state = const AsyncLoading();
     _inFlight = true;
     final Result<List<Transaction>> result;
@@ -62,7 +89,8 @@ class CartCheckoutController extends AsyncNotifier<void> {
           .read(transactionRepositoryProvider)
           .recordSaleCart(
             shopId: shopId,
-            items: cartItemsPayload(lines),
+            items: items,
+            saleGroupId: _pendingSaleId!,
             source: source,
             customerId: customerId,
             discount: discount,
@@ -74,6 +102,10 @@ class CartCheckoutController extends AsyncNotifier<void> {
     }
     return result.when(
       success: (_) {
+        // The sale is recorded. An identical next sale is a real second sale
+        // and needs its own id, or the server would drop it as a repeat.
+        _pendingSaleId = null;
+        _pendingRequest = null;
         ref.read(cartControllerProvider.notifier).clear();
         ref.read(cartDiscountControllerProvider.notifier).clear();
         ref.invalidate(productsStreamProvider);

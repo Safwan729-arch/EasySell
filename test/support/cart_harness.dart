@@ -83,6 +83,7 @@ class CapturingTransactionRepository implements TransactionRepository {
   Future<Result<List<Transaction>>> recordSaleCart({
     required String shopId,
     required List<Map<String, dynamic>> items,
+    required String saleGroupId,
     String source = 'manual',
     String? customerId,
     double discount = 0,
