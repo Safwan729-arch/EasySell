@@ -407,5 +407,10 @@
   "expiry_farDateBody": "{date} পাঁচ বছরেরও বেশি পরে।",
   "@expiry_farDateBody": { "placeholders": { "date": { "type": "String" } } },
   "expiry_saveAnyway": "তবুও সংরক্ষণ",
-  "expiry_changeDate": "তারিখ বদলান"
+  "expiry_changeDate": "তারিখ বদলান",
+  "expiry_moreOptions": "আরও অপশন",
+  "expiry_warnDaysLabel": "মেয়াদ শেষের কত দিন আগে জানাবে",
+  "expiry_warnDaysHint": "খালি রাখলে অ্যাপ নিজে ঠিক করবে",
+  "expiry_unitChangeBlocked": "একক বদলানোর আগে এই পণ্যের ডেলিভারিগুলো বন্ধ করুন",
+  "expiry_savedWithoutDate": "পণ্য সংরক্ষিত হয়েছে, কিন্তু মেয়াদের তারিখ হয়নি। পণ্যের পাতা থেকে যোগ করুন।"
 }

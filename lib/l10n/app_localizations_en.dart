@@ -1323,4 +1323,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expiry_changeDate => 'Change date';
+
+  @override
+  String get expiry_moreOptions => 'More options';
+
+  @override
+  String get expiry_warnDaysLabel => 'Warn me this many days before expiry';
+
+  @override
+  String get expiry_warnDaysHint => 'Leave empty to let the app decide';
+
+  @override
+  String get expiry_unitChangeBlocked =>
+      'Clear this product\'s deliveries before changing its unit';
+
+  @override
+  String get expiry_savedWithoutDate =>
+      'Product saved, but its expiry date wasn\'t. Add it from the product page.';
 }

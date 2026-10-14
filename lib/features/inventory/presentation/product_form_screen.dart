@@ -7,6 +7,8 @@ import '../../../core/error/failure.dart';
 import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../expiry/presentation/expiry_date_field.dart';
+import '../../expiry/presentation/expiry_providers.dart';
 import '../domain/product.dart';
 import 'category_picker.dart';
 import 'inventory_controller.dart';
@@ -39,6 +41,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late final TextEditingController _buyingPrice;
   late final TextEditingController _sellingPrice;
   late final TextEditingController _reorder;
+  late final TextEditingController _warnDays;
+
+  /// The first delivery's expiry date (new products only, spec §5).
+  DateTime? _expiryDate;
 
   /// Selected category id (null = uncategorized). Managed here so it survives
   /// rebuilds and is included on save.
@@ -64,6 +70,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _reorder = TextEditingController(
       text: p == null ? '0' : Product.trimNum(p.reorderThreshold),
     );
+    _warnDays = TextEditingController(
+      text: p?.expiryWarnDays?.toString() ?? '',
+    );
+    // The expiry field only shows while quantity > 0 (a 0-quantity delivery
+    // is rejected by the database), so rebuild as the quantity is typed.
+    _quantity.addListener(_onQuantityChanged);
 
     // Seed the unit selector from the edited product (defaults to piece/pcs for
     // a new one). Done post-frame so we don't mutate a provider mid-initState.
@@ -81,11 +93,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _name.dispose();
     _brand.dispose();
     _variant.dispose();
+    _quantity.removeListener(_onQuantityChanged);
     _quantity.dispose();
     _buyingPrice.dispose();
     _sellingPrice.dispose();
     _reorder.dispose();
+    _warnDays.dispose();
     super.dispose();
+  }
+
+  void _onQuantityChanged() {
+    if (mounted) setState(() {});
   }
 
   String? _emptyToNull(String s) => s.trim().isEmpty ? null : s.trim();
@@ -111,13 +129,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _reorder.text.trim().isEmpty ? '0' : _reorder.text.trim(),
       ),
       categoryId: _categoryId,
+      expiryWarnDays: _warnDays.text.trim().isEmpty
+          ? null
+          : int.parse(_warnDays.text.trim()),
     );
 
-    final ok = await ref
+    final outcome = await ref
         .read(inventoryControllerProvider.notifier)
-        .save(draft, isNew: widget.isNew);
+        .save(draft, isNew: widget.isNew, expiryDate: _expiryDate);
 
-    if (ok && mounted) Navigator.of(context).pop();
+    if (!mounted || outcome == ProductSaveOutcome.failed) return;
+    if (outcome == ProductSaveOutcome.savedWithoutExpiry) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.expiry_savedWithoutDate)),
+      );
+    }
+    Navigator.of(context).pop();
   }
 
   // --- validation ------------------------------------------------------------
@@ -133,7 +160,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final n = double.tryParse(s);
     if (n == null) return l10n.form_enterNumber;
     if (n < 0) return l10n.form_cannotBeNegative;
-    if (!allowDecimal && n != n.roundToDouble()) return l10n.form_wholeNumberOnly;
+    if (!allowDecimal && n != n.roundToDouble())
+      return l10n.form_wholeNumberOnly;
     return null;
   }
 
@@ -146,6 +174,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     return null;
   }
 
+  /// Optional whole number of days (the formatter already allows digits only).
+  String? _optionalWholeDays(String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    return int.tryParse(v.trim()) == null
+        ? context.l10n.form_wholeNumberOnly
+        : null;
+  }
+
+  void _unitChangeBlocked() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(context.l10n.expiry_unitChangeBlocked)),
+      );
+  }
+
   // --- build -----------------------------------------------------------------
 
   @override
@@ -156,6 +200,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final isLoading = ref.watch(inventoryControllerProvider).isLoading;
     final l10n = context.l10n;
     final perUnit = unitType == UnitType.piece ? '' : ' / ${unit.label}';
+    // A product with open deliveries keeps its unit: their amounts are in it.
+    final hasDeliveries =
+        !widget.isNew &&
+        ref.watch(productExpiryProvider).containsKey(widget.product!.id);
+    final quantityTyped = double.tryParse(_quantity.text.trim()) ?? 0;
 
     ref.listen<AsyncValue<void>>(inventoryControllerProvider, (_, next) {
       if (next is AsyncError) {
@@ -171,7 +220,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isNew ? l10n.inventory_formAddTitle : l10n.inventory_formEditTitle),
+        title: Text(
+          widget.isNew
+              ? l10n.inventory_formAddTitle
+              : l10n.inventory_formEditTitle,
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -189,9 +242,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 RepaintBoundary(
                   child: _UnitTypeSelector(
                     selected: unitType,
-                    onChanged: (t) => ref
-                        .read(productFormUnitProvider.notifier)
-                        .selectType(t),
+                    onChanged: (t) => hasDeliveries
+                        ? _unitChangeBlocked()
+                        : ref
+                              .read(productFormUnitProvider.notifier)
+                              .selectType(t),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -255,9 +310,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         controller: _quantity,
                         unitType: unitType,
                         unit: unit,
-                        onUnitChanged: (u) => ref
-                            .read(productFormUnitProvider.notifier)
-                            .selectUnit(u),
+                        onUnitChanged: (u) => hasDeliveries
+                            ? _unitChangeBlocked()
+                            : ref
+                                  .read(productFormUnitProvider.notifier)
+                                  .selectUnit(u),
                         validator: (v) => _quantityField(
                           v,
                           allowDecimal: unitType.allowsDecimal,
@@ -283,6 +340,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                   ],
                 ),
+
+                if (widget.isNew && quantityTyped > 0)
+                  ExpiryDateField(
+                    value: _expiryDate,
+                    enabled: !isLoading,
+                    onChanged: (d) => setState(() => _expiryDate = d),
+                  ),
 
                 // Per-unit prices. ------------------------------------------
                 Row(
@@ -315,6 +379,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   ],
                 ),
 
+                Theme(
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(l10n.expiry_moreOptions),
+                    initiallyExpanded: widget.product?.expiryWarnDays != null,
+                    children: [
+                      _field(
+                        _warnDays,
+                        l10n.expiry_warnDaysLabel,
+                        helperText: l10n.expiry_warnDaysHint,
+                        keyboardType: _numberKeyboard(false),
+                        inputFormatters: _numberFormatters(false),
+                        textInputAction: TextInputAction.done,
+                        validator: _optionalWholeDays,
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 8),
                 FilledButton(
                   onPressed: isLoading ? null : _save,
@@ -324,7 +410,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(widget.isNew ? l10n.inventory_formCreate : l10n.inventory_formSaveChanges),
+                      : Text(
+                          widget.isNew
+                              ? l10n.inventory_formCreate
+                              : l10n.inventory_formSaveChanges,
+                        ),
                 ),
 
                 // Quick-fill examples that showcase the three selling modes.
@@ -358,6 +448,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? suffixText,
+    String? helperText,
     String? Function(String?)? validator,
     TextInputAction? textInputAction,
     TextCapitalization textCapitalization = TextCapitalization.none,
@@ -375,7 +466,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         onFieldSubmitted: textInputAction == TextInputAction.next
             ? (_) => FocusScope.of(context).nextFocus()
             : null,
-        decoration: InputDecoration(labelText: label, suffixText: suffixText),
+        decoration: InputDecoration(
+          labelText: label,
+          suffixText: suffixText,
+          helperText: helperText,
+        ),
         validator: validator,
       ),
     );

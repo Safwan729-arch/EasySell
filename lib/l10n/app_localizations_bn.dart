@@ -1317,4 +1317,21 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get expiry_changeDate => 'তারিখ বদলান';
+
+  @override
+  String get expiry_moreOptions => 'আরও অপশন';
+
+  @override
+  String get expiry_warnDaysLabel => 'মেয়াদ শেষের কত দিন আগে জানাবে';
+
+  @override
+  String get expiry_warnDaysHint => 'খালি রাখলে অ্যাপ নিজে ঠিক করবে';
+
+  @override
+  String get expiry_unitChangeBlocked =>
+      'একক বদলানোর আগে এই পণ্যের ডেলিভারিগুলো বন্ধ করুন';
+
+  @override
+  String get expiry_savedWithoutDate =>
+      'পণ্য সংরক্ষিত হয়েছে, কিন্তু মেয়াদের তারিখ হয়নি। পণ্যের পাতা থেকে যোগ করুন।';
 }

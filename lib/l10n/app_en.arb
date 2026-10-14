@@ -443,5 +443,10 @@
   "expiry_farDateBody": "{date} is more than 5 years away.",
   "@expiry_farDateBody": { "placeholders": { "date": { "type": "String" } } },
   "expiry_saveAnyway": "Save anyway",
-  "expiry_changeDate": "Change date"
+  "expiry_changeDate": "Change date",
+  "expiry_moreOptions": "More options",
+  "expiry_warnDaysLabel": "Warn me this many days before expiry",
+  "expiry_warnDaysHint": "Leave empty to let the app decide",
+  "expiry_unitChangeBlocked": "Clear this product's deliveries before changing its unit",
+  "expiry_savedWithoutDate": "Product saved, but its expiry date wasn't. Add it from the product page."
 }

@@ -2305,6 +2305,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change date'**
   String get expiry_changeDate;
+
+  /// No description provided for @expiry_moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get expiry_moreOptions;
+
+  /// No description provided for @expiry_warnDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn me this many days before expiry'**
+  String get expiry_warnDaysLabel;
+
+  /// No description provided for @expiry_warnDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to let the app decide'**
+  String get expiry_warnDaysHint;
+
+  /// No description provided for @expiry_unitChangeBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear this product\'s deliveries before changing its unit'**
+  String get expiry_unitChangeBlocked;
+
+  /// No description provided for @expiry_savedWithoutDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Product saved, but its expiry date wasn\'t. Add it from the product page.'**
+  String get expiry_savedWithoutDate;
 }
 
 class _AppLocalizationsDelegate
