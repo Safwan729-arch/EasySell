@@ -1,5 +1,6 @@
 import '../../cart/domain/cart_line.dart';
 import '../../inventory/domain/product.dart';
+import 'batch_pick.dart';
 import 'expiry_estimate.dart';
 
 /// Why a cart line cannot be checked out as it stands (spec §5 Cart).
@@ -28,6 +29,13 @@ final class OverStockNotice extends CartLineNotice {
   final double stock;
 }
 
+/// The line's chosen delivery has fewer units than the line wants (0 when
+/// that delivery is gone).
+final class BatchShortNotice extends CartLineNotice {
+  const BatchShortNotice(this.left);
+  final double left;
+}
+
 /// One notice per product whose line cannot go through. [liveProducts] is the
 /// live product list keyed by id -- a cart line holds a snapshot of the
 /// product from when it was added, so its own `quantity` may be stale.
@@ -46,6 +54,11 @@ Map<String, CartLineNotice> cartLineNotices({
         expired: e.expired,
         expiredBatchIds: [for (final b in e.expiredWithStock) b.batch.id],
       );
+      continue;
+    }
+    final left = chosenLeft(l, e);
+    if (left != null && l.quantity > left + 1e-9) {
+      out[id] = BatchShortNotice(left);
       continue;
     }
     final live = liveProducts[id];

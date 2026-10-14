@@ -78,11 +78,6 @@ List<CartLine> removeLine(List<CartLine> lines, String productId) =>
 double cartTotal(List<CartLine> lines) =>
     lines.fold(0, (sum, l) => sum + l.subtotal);
 
-/// The wire shape `record_sale_cart` expects for its `p_items` jsonb array.
-List<Map<String, dynamic>> cartItemsPayload(List<CartLine> lines) => [
-  for (final l in lines) {'product_id': l.product.id, 'quantity': l.quantity},
-];
-
 /// Quantity-stepper increment matched to how a product is sold: whole units
 /// for pieces, fractional for weight/volume. Used by the add-to-cart sheet
 /// and the cart screen's line stepper.

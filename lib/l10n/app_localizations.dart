@@ -2516,6 +2516,66 @@ abstract class AppLocalizations {
   /// **'Some items in the cart are expired. Fix them before checkout.'**
   String get error_expiredStockInCart;
 
+  /// No description provided for @error_batchShortInCart.
+  ///
+  /// In en, this message translates to:
+  /// **'A batch you picked doesn\'t have enough left. Check the cart.'**
+  String get error_batchShortInCart;
+
+  /// No description provided for @error_batchNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'That batch is no longer available. Pick another one in the cart.'**
+  String get error_batchNotAvailable;
+
+  /// No description provided for @cart_batchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch: {choice}'**
+  String cart_batchLabel(String choice);
+
+  /// No description provided for @cart_batchAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Soonest expiry first'**
+  String get cart_batchAuto;
+
+  /// No description provided for @cart_batchNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No expiry date'**
+  String get cart_batchNoDate;
+
+  /// No description provided for @cart_batchExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String cart_batchExpires(String date);
+
+  /// No description provided for @cart_batchPickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell from which batch?'**
+  String get cart_batchPickTitle;
+
+  /// No description provided for @cart_batchOptionLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} {unit} left'**
+  String cart_batchOptionLeft(String qty, String unit);
+
+  /// No description provided for @cart_batchShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {qty} {unit} left in this batch'**
+  String cart_batchShort(String qty, String unit);
+
+  /// No description provided for @cart_batchGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This batch is no longer available. Pick another.'**
+  String get cart_batchGone;
+
   /// No description provided for @expiry_alertExpired.
   ///
   /// In en, this message translates to:

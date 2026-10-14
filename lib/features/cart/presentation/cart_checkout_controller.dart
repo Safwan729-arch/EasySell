@@ -10,13 +10,14 @@ import '../../../shared/providers/refresh_provider.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../customers/presentation/customers_controller.dart';
 import '../../customers/presentation/receivables_controller.dart';
+import '../../expiry/domain/batch_pick.dart';
+import '../../expiry/domain/expiry_estimate.dart';
 import '../../expiry/presentation/expiry_gate.dart';
 import '../../expiry/presentation/expiry_reconciler.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/data/transaction_repository.dart';
 import '../../transactions/domain/transaction.dart';
 import '../domain/cart_line.dart';
-import '../domain/cart_math.dart';
 import 'cart_controller.dart';
 import 'cart_discount_controller.dart';
 
@@ -54,7 +55,16 @@ class CartCheckoutController extends AsyncNotifier<void> {
   /// before sending, or when the server answered with a refusal -- then the
   /// sale was certainly not recorded.
   bool _pendingUnacknowledged = false;
-  String? _pendingItems;
+
+  /// The cart as the shopkeeper set it up (lines, chosen deliveries, discount,
+  /// customer), and the items that were sent for it. A retry of an
+  /// unacknowledged sale re-sends [_pendingItems] as they are: re-splitting
+  /// the lines into deliveries from the refreshed estimate -- which already
+  /// counts the saved sale -- would name other deliveries, make a different
+  /// request with a new id, and record the sale twice.
+  String? _pendingCart;
+  String? _pendingLines;
+  List<Map<String, dynamic>>? _pendingItems;
 
   @override
   FutureOr<void> build() {
@@ -63,14 +73,17 @@ class CartCheckoutController extends AsyncNotifier<void> {
     _inFlight = false;
   }
 
+  String _linesKey(List<CartLine> lines) => jsonEncode([
+    for (final l in lines) [l.product.id, l.quantity, l.batchId],
+  ]);
+
   /// [lines] are exactly a sale that was sent and never acknowledged. After a
   /// lost reply the refreshed stock can make the SAME cart look too big or
   /// expired; the cart must still let it be retried, because the server
   /// replays a saved sale and editing the cart instead (a new request, a new
   /// sale id) would record it twice (expiry review #1, migration 0010).
   bool hasUnacknowledgedSale(List<CartLine> lines) =>
-      _pendingUnacknowledged &&
-      _pendingItems == jsonEncode(cartItemsPayload(lines));
+      _pendingUnacknowledged && _pendingLines == _linesKey(lines);
 
   Future<bool> checkout({String source = 'manual', String? customerId}) async {
     if (_inFlight) return false;
@@ -87,24 +100,18 @@ class CartCheckoutController extends AsyncNotifier<void> {
     }
     if (lines.isEmpty) return false;
 
-    final items = cartItemsPayload(lines);
-    final request = jsonEncode({
+    final cart = jsonEncode({
       'shop': shopId,
-      'items': items,
+      'lines': _linesKey(lines),
       'source': source,
       'customer': customerId,
       'discount': discount,
     });
     // An identical retry of a sale that may already be saved: the server will
-    // replay it, so the expiry block must not stand in its way.
+    // replay it, so neither the expiry block nor a fresh split into
+    // deliveries may stand in its way.
     final isUnacknowledgedRetry =
-        request == _pendingRequest && _pendingUnacknowledged;
-    if (request != _pendingRequest) {
-      _pendingSaleId = const Uuid().v4();
-      _pendingRequest = request;
-      _pendingItems = jsonEncode(items);
-      _pendingUnacknowledged = false;
-    }
+        cart == _pendingCart && _pendingUnacknowledged;
 
     state = const AsyncLoading();
     _inFlight = true;
@@ -115,12 +122,13 @@ class CartCheckoutController extends AsyncNotifier<void> {
       // shrink the expired count -- then refuses a cart that would sell
       // expired units. With no signal the gate fails, and the sale could not
       // have reached the server either.
+      final Map<String, ProductExpiry> byProduct;
       switch (await ref.read(expiryGateProvider).check(lines)) {
         case GateFailed(:final failure):
           state = AsyncError(failure, StackTrace.current);
           return false;
         case GateBlocked() when isUnacknowledgedRetry:
-          break;
+          byProduct = const {};
         case GateBlocked():
           state = AsyncError(
             const DatabaseFailure(
@@ -130,8 +138,36 @@ class CartCheckoutController extends AsyncNotifier<void> {
             StackTrace.current,
           );
           return false;
-        case GatePass():
-          break;
+        case GatePass(byProduct: final fresh):
+          byProduct = fresh;
+      }
+
+      final List<Map<String, dynamic>> items;
+      if (isUnacknowledgedRetry) {
+        items = _pendingItems!;
+      } else {
+        // Split from the gate's FRESH estimate: the screen's copy can be a
+        // sale or a restock behind.
+        final split = resolveSaleItems(lines, byProduct);
+        if (split.short.isNotEmpty) {
+          state = AsyncError(
+            const DatabaseFailure(
+              'A chosen delivery has too few left.',
+              code: ServerErrorCodes.batchShortInCart,
+            ),
+            StackTrace.current,
+          );
+          return false;
+        }
+        items = split.items;
+        final request = jsonEncode({'cart': cart, 'items': items});
+        if (request != _pendingRequest) {
+          _pendingSaleId = const Uuid().v4();
+          _pendingRequest = request;
+        }
+        _pendingCart = cart;
+        _pendingLines = _linesKey(lines);
+        _pendingItems = items;
       }
       // From here the outcome is unknown until an answer arrives.
       _pendingUnacknowledged = true;
@@ -156,6 +192,8 @@ class CartCheckoutController extends AsyncNotifier<void> {
         // and needs its own id, or the server would drop it as a repeat.
         _pendingSaleId = null;
         _pendingRequest = null;
+        _pendingCart = null;
+        _pendingLines = null;
         _pendingItems = null;
         _pendingUnacknowledged = false;
         ref.read(cartControllerProvider.notifier).clear();

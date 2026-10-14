@@ -7,7 +7,6 @@ import 'package:ai_shopkeeper/features/expiry/domain/expiry_estimate.dart';
 import 'package:ai_shopkeeper/features/expiry/domain/product_batch.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/expiry_reconciler.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/today_provider.dart';
-import 'package:ai_shopkeeper/features/inventory/data/product_repository.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,10 +19,10 @@ class _FakeBatchRepo implements BatchRepository {
   List<ReconcileWrite>? applied;
 
   @override
-  Future<Result<List<ProductBatch>>> fetchOpenBatches(String shopId) async {
-    calls.add('batches');
+  Future<Result<ExpirySnapshot>> fetchExpirySnapshot(String shopId) async {
+    calls.add('snapshot');
     if (failRead) return const Result.failure(NetworkFailure('offline'));
-    return Result.success(batches);
+    return Result.success((batches: batches, products: const [_pepsi]));
   }
 
   @override
@@ -31,26 +30,6 @@ class _FakeBatchRepo implements BatchRepository {
     calls.add('apply');
     applied = writes;
     return const Result.success(null);
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _FakeProductRepo implements ProductRepository {
-  _FakeProductRepo(this.calls, this.products);
-  final List<String> calls;
-  final List<Product> products;
-  Set<String>? askedIds;
-
-  @override
-  Future<Result<List<Product>>> fetchActiveProducts(
-    String shopId, {
-    Iterable<String>? ids,
-  }) async {
-    calls.add('products');
-    askedIds = ids?.toSet();
-    return Result.success(products);
   }
 
   @override
@@ -75,10 +54,7 @@ final _new = ProductBatch(
   expiryDate: DateTime(2026, 12, 15),
 );
 
-Future<ProviderContainer> _container(
-  BatchRepository b,
-  ProductRepository p,
-) async {
+Future<ProviderContainer> _container(BatchRepository b) async {
   final c = ProviderContainer(
     overrides: [
       myShopProvider.overrideWith(
@@ -86,7 +62,6 @@ Future<ProviderContainer> _container(
             const Shop(id: 's1', ownerId: 'o1', name: 'Shop', currency: 'BDT'),
       ),
       batchRepositoryProvider.overrideWithValue(b),
-      productRepositoryProvider.overrideWithValue(p),
       nowProvider.overrideWithValue(() => DateTime(2026, 10, 21, 10)),
     ],
   );
@@ -98,54 +73,41 @@ Future<ProviderContainer> _container(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('reconcile reads only the products that have deliveries', () async {
-    // The whole active product table is capped at 1000 rows by PostgREST; a
-    // big shop would lose products, skip their locks, and checkout would let
-    // their expired units through (expiry review #12).
-    final calls = <String>[];
-    final products = _FakeProductRepo(calls, [_pepsi]);
-    final c = await _container(
-      _FakeBatchRepo(calls, batches: [_old, _new]),
-      products,
-    );
-    await c.read(expiryReconcilerProvider).run();
-    expect(products.askedIds, {'pepsi'});
-  });
+  test(
+    'reconcile reads deliveries and stock in one request, then writes',
+    () async {
+      // Two separate reads let a sale land between them. A sale picked from
+      // one delivery then shows up as lower stock but not yet as a pick, the
+      // shortfall is pinned on the OLDEST delivery, and it is closed as sold
+      // out (or locked too low) while its units are still on the shelf.
+      final calls = <String>[];
+      final batches = _FakeBatchRepo(calls, batches: [_old, _new]);
+      final c = await _container(batches);
 
-  test('reconcile reads deliveries before products, then writes', () async {
-    final calls = <String>[];
-    final batches = _FakeBatchRepo(calls, batches: [_old, _new]);
-    final c = await _container(batches, _FakeProductRepo(calls, [_pepsi]));
+      final outcome = await c.read(expiryReconcilerProvider).run();
 
+      expect(calls, ['snapshot', 'apply']);
+      expect(batches.applied, [const LockExpired('old', 5)]);
+      expect(outcome.ok, isTrue);
+      // The outcome reflects the lock already applied.
+      expect(outcome.byProduct['pepsi']!.expired, 5);
+      expect(outcome.byProduct['pepsi']!.good, 10);
+      expect(outcome.byProduct['pepsi']!.writes, isEmpty);
+    },
+  );
+
+  test('a shop with no deliveries writes nothing', () async {
+    final calls = <String>[];
+    final c = await _container(_FakeBatchRepo(calls));
     final outcome = await c.read(expiryReconcilerProvider).run();
-
-    expect(calls, ['batches', 'products', 'apply']);
-    expect(batches.applied, [const LockExpired('old', 5)]);
-    expect(outcome.ok, isTrue);
-    // The outcome reflects the lock already applied.
-    expect(outcome.byProduct['pepsi']!.expired, 5);
-    expect(outcome.byProduct['pepsi']!.good, 10);
-    expect(outcome.byProduct['pepsi']!.writes, isEmpty);
-  });
-
-  test('a shop with no deliveries reads nothing else', () async {
-    final calls = <String>[];
-    final c = await _container(
-      _FakeBatchRepo(calls),
-      _FakeProductRepo(calls, [_pepsi]),
-    );
-    final outcome = await c.read(expiryReconcilerProvider).run();
-    expect(calls, ['batches']);
+    expect(calls, ['snapshot']);
     expect(outcome.ok, isTrue);
     expect(outcome.byProduct, isEmpty);
   });
 
   test('a failed read is reported, not thrown', () async {
     final calls = <String>[];
-    final c = await _container(
-      _FakeBatchRepo(calls, failRead: true),
-      _FakeProductRepo(calls, [_pepsi]),
-    );
+    final c = await _container(_FakeBatchRepo(calls, failRead: true));
     final outcome = await c.read(expiryReconcilerProvider).run();
     expect(outcome.ok, isFalse);
     expect(outcome.failure, isA<NetworkFailure>());
@@ -153,19 +115,9 @@ void main() {
 
   test('overlapping runs do not interleave', () async {
     final calls = <String>[];
-    final c = await _container(
-      _FakeBatchRepo(calls, batches: [_old, _new]),
-      _FakeProductRepo(calls, [_pepsi]),
-    );
+    final c = await _container(_FakeBatchRepo(calls, batches: [_old, _new]));
     final r = c.read(expiryReconcilerProvider);
     await Future.wait([r.run(), r.run()]);
-    expect(calls, [
-      'batches',
-      'products',
-      'apply',
-      'batches',
-      'products',
-      'apply',
-    ]);
+    expect(calls, ['snapshot', 'apply', 'snapshot', 'apply']);
   });
 }

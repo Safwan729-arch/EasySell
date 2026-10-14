@@ -11,9 +11,12 @@ import '../../../core/widgets/segment_pills.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../customers/presentation/customer_picker_sheet.dart';
+import '../../expiry/domain/batch_pick.dart';
 import '../../expiry/domain/cart_expiry.dart';
+import '../../expiry/domain/expiry_estimate.dart';
 import '../../expiry/presentation/batch_action_feedback.dart';
 import '../../expiry/presentation/batch_actions_controller.dart';
+import '../../expiry/presentation/expiry_date_field.dart';
 import '../../expiry/presentation/expiry_providers.dart';
 import '../../inventory/domain/product.dart';
 import '../domain/cart_line.dart';
@@ -238,8 +241,13 @@ class _CartLineCard extends ConsumerWidget {
     ].join(' · ');
 
     // Exactly one line per product (see cart_math.dart), so the ceiling is
-    // the product's own GOOD stock -- expired units are never offered.
-    final maxQty = ref.watch(goodStockProvider(product));
+    // the product's own GOOD stock -- expired units are never offered -- or,
+    // once a batch is chosen, what that batch has left.
+    final expiry = ref.watch(productExpiryProvider)[product.id];
+    final options = sellOptions(expiry);
+    final showBatch = needsBatchChoice(options) || line.batchId != null;
+    final double maxQty =
+        chosenLeft(line, expiry) ?? ref.watch(goodStockProvider(product));
     final notice = ref.watch(cartLineNoticesProvider)[product.id];
     final canDecrement = !isCheckingOut && line.quantity > _step;
     final canIncrement =
@@ -350,6 +358,10 @@ class _CartLineCard extends ConsumerWidget {
                 ),
               ],
             ),
+            if (showBatch) ...[
+              const SizedBox(height: 4),
+              _BatchRow(line: line, options: options, enabled: !isCheckingOut),
+            ],
             if (notice != null) ...[
               const SizedBox(height: 10),
               _LineNotice(
@@ -404,6 +416,13 @@ class _LineNotice extends ConsumerWidget {
       fontWeight: FontWeight.w600,
     );
     switch (notice) {
+      case BatchShortNotice(:final left):
+        return Text(
+          left > 0
+              ? l10n.cart_batchShort(Qty.format(left), product.unitLabel)
+              : l10n.cart_batchGone,
+          style: style,
+        );
       case OverStockNotice(:final stock):
         return Text(
           l10n.expiry_cartOnlyLeft(Qty.format(stock), product.unitLabel),
@@ -464,6 +483,160 @@ class _LineNotice extends ConsumerWidget {
           ],
         );
     }
+  }
+}
+
+/// Which batch (delivery) the line sells from. Shown only when the product
+/// has more than one place to sell from, so other lines look as before.
+class _BatchRow extends ConsumerWidget {
+  const _BatchRow({
+    required this.line,
+    required this.options,
+    required this.enabled,
+  });
+
+  final CartLine line;
+  final List<SellOption> options;
+  final bool enabled;
+
+  static const _auto = 'auto';
+
+  String _choiceText(BuildContext context) {
+    final l10n = context.l10n;
+    final choice = line.batchId;
+    if (choice == null) return l10n.cart_batchAuto;
+    if (choice == noDateBatch) return l10n.cart_batchNoDate;
+    for (final o in options) {
+      if (o.batchId == choice) {
+        return l10n.cart_batchExpires(formatExpiryDate(context, o.expiryDate!));
+      }
+    }
+    return '—';
+  }
+
+  Future<void> _pick(BuildContext context, WidgetRef ref) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) =>
+          _BatchSheet(line: line, options: options, autoValue: _auto),
+    );
+    if (choice == null) return;
+    AppHaptics.tap();
+    ref
+        .read(cartControllerProvider.notifier)
+        .setBatch(line.product.id, choice == _auto ? null : choice);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TextButton(
+      onPressed: enabled ? () => _pick(context, ref) : null,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              context.l10n.cart_batchLabel(_choiceText(context)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const Icon(Icons.arrow_drop_down, size: 20),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatchSheet extends StatelessWidget {
+  const _BatchSheet({
+    required this.line,
+    required this.options,
+    required this.autoValue,
+  });
+
+  final CartLine line;
+  final List<SellOption> options;
+  final String autoValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final colors = theme.extension<AppColors>()!;
+    final unit = line.product.unitLabel;
+
+    Widget tile({
+      required String value,
+      required String title,
+      String? subtitle,
+      Widget? trailing,
+    }) {
+      final selected = (line.batchId ?? autoValue) == value;
+      return ListTile(
+        key: ValueKey('batch-option-$value'),
+        leading: Icon(
+          selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+          color: selected ? theme.colorScheme.primary : null,
+        ),
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle),
+        trailing: trailing,
+        onTap: () => Navigator.of(context).pop(value),
+      );
+    }
+
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Text(
+              l10n.cart_batchPickTitle,
+              style: theme.textTheme.titleMedium,
+            ),
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                tile(value: autoValue, title: l10n.cart_batchAuto),
+                for (final o in options)
+                  tile(
+                    value: o.batchId ?? noDateBatch,
+                    title: o.batchId == null
+                        ? l10n.cart_batchNoDate
+                        : l10n.cart_batchExpires(
+                            formatExpiryDate(context, o.expiryDate!),
+                          ),
+                    subtitle: l10n.cart_batchOptionLeft(
+                      Qty.format(o.left),
+                      unit,
+                    ),
+                    trailing: o.status == BatchStatus.expiringSoon
+                        ? Text(
+                            l10n.expiry_statusSoon,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: colors.warning,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          )
+                        : null,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
   }
 }
 

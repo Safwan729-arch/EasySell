@@ -28,6 +28,14 @@ class CartController extends Notifier<List<CartLine>> {
     state = updateLineQuantity(state, productId, quantity);
   }
 
+  /// Which delivery the line sells from (see [CartLine.batchId]).
+  void setBatch(String productId, String? batchId) {
+    state = [
+      for (final l in state)
+        l.product.id == productId ? l.copyWith(batchId: batchId) : l,
+    ];
+  }
+
   void remove(String productId) {
     state = removeLine(state, productId);
   }

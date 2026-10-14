@@ -37,32 +37,6 @@ class ProductRepository {
         );
   }
 
-  /// A one-shot read of the shop's active (non-archived) products. Used by the
-  /// expiry reconcile, which must read stock fresh AFTER reading deliveries
-  /// rather than trust the stream (see `ExpiryReconciler`). [ids] narrows it
-  /// to the products that have deliveries: a whole big shop would hit
-  /// PostgREST's 1000-row cap and silently drop products.
-  Future<Result<List<Product>>> fetchActiveProducts(
-    String shopId, {
-    Iterable<String>? ids,
-  }) async {
-    try {
-      var query = _client
-          .from(_table)
-          .select()
-          .eq('shop_id', shopId)
-          .eq('is_archived', false);
-      if (ids != null) query = query.inFilter('id', ids.toList());
-      final rows = await query;
-      return Result.success([
-        for (final r in rows as List)
-          Product.fromJson(Map<String, dynamic>.from(r as Map)),
-      ]);
-    } catch (e) {
-      return Result.failure(_map(e));
-    }
-  }
-
   Future<Result<Product>> addProduct(Product product) async {
     try {
       final row = await _client

@@ -88,6 +88,8 @@ Widget cartApp(ProviderContainer container, Widget home) =>
 class CapturingTransactionRepository implements TransactionRepository {
   double? sentDiscount;
   String? sentCustomerId;
+  List<Map<String, dynamic>>? sentItems;
+  final sentGroupIds = <String>[];
   int calls = 0;
 
   @override
@@ -100,6 +102,8 @@ class CapturingTransactionRepository implements TransactionRepository {
     double discount = 0,
   }) async {
     calls++;
+    sentItems = items;
+    sentGroupIds.add(saleGroupId);
     sentDiscount = discount;
     sentCustomerId = customerId;
     return const Result.success(<Transaction>[]);

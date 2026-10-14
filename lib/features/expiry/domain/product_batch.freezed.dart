@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProductBatch {
 
- String get id; String get shopId; String get productId; double get quantity; double get buyingPrice; DateTime get receivedOn; DateTime get expiryDate; double? get expiredQty; DateTime? get closedAt; String? get closedReason; DateTime? get createdAt;
+ String get id; String get shopId; String get productId; double get quantity; double get buyingPrice; DateTime get receivedOn; DateTime get expiryDate; double? get expiredQty; double get pickedQty; DateTime? get closedAt; String? get closedReason; DateTime? get createdAt;
 /// Create a copy of ProductBatch
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ProductBatchCopyWith<ProductBatch> get copyWith => _$ProductBatchCopyWithImpl<P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProductBatch&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.receivedOn, receivedOn) || other.receivedOn == receivedOn)&&(identical(other.expiryDate, expiryDate) || other.expiryDate == expiryDate)&&(identical(other.expiredQty, expiredQty) || other.expiredQty == expiredQty)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&(identical(other.closedReason, closedReason) || other.closedReason == closedReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProductBatch&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.receivedOn, receivedOn) || other.receivedOn == receivedOn)&&(identical(other.expiryDate, expiryDate) || other.expiryDate == expiryDate)&&(identical(other.expiredQty, expiredQty) || other.expiredQty == expiredQty)&&(identical(other.pickedQty, pickedQty) || other.pickedQty == pickedQty)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&(identical(other.closedReason, closedReason) || other.closedReason == closedReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,shopId,productId,quantity,buyingPrice,receivedOn,expiryDate,expiredQty,closedAt,closedReason,createdAt);
+int get hashCode => Object.hash(runtimeType,id,shopId,productId,quantity,buyingPrice,receivedOn,expiryDate,expiredQty,pickedQty,closedAt,closedReason,createdAt);
 
 @override
 String toString() {
-  return 'ProductBatch(id: $id, shopId: $shopId, productId: $productId, quantity: $quantity, buyingPrice: $buyingPrice, receivedOn: $receivedOn, expiryDate: $expiryDate, expiredQty: $expiredQty, closedAt: $closedAt, closedReason: $closedReason, createdAt: $createdAt)';
+  return 'ProductBatch(id: $id, shopId: $shopId, productId: $productId, quantity: $quantity, buyingPrice: $buyingPrice, receivedOn: $receivedOn, expiryDate: $expiryDate, expiredQty: $expiredQty, pickedQty: $pickedQty, closedAt: $closedAt, closedReason: $closedReason, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ProductBatchCopyWith<$Res>  {
   factory $ProductBatchCopyWith(ProductBatch value, $Res Function(ProductBatch) _then) = _$ProductBatchCopyWithImpl;
 @useResult
 $Res call({
- String id, String shopId, String productId, double quantity, double buyingPrice, DateTime receivedOn, DateTime expiryDate, double? expiredQty, DateTime? closedAt, String? closedReason, DateTime? createdAt
+ String id, String shopId, String productId, double quantity, double buyingPrice, DateTime receivedOn, DateTime expiryDate, double? expiredQty, double pickedQty, DateTime? closedAt, String? closedReason, DateTime? createdAt
 });
 
 
@@ -65,7 +65,7 @@ class _$ProductBatchCopyWithImpl<$Res>
 
 /// Create a copy of ProductBatch
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? shopId = null,Object? productId = null,Object? quantity = null,Object? buyingPrice = null,Object? receivedOn = null,Object? expiryDate = null,Object? expiredQty = freezed,Object? closedAt = freezed,Object? closedReason = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? shopId = null,Object? productId = null,Object? quantity = null,Object? buyingPrice = null,Object? receivedOn = null,Object? expiryDate = null,Object? expiredQty = freezed,Object? pickedQty = null,Object? closedAt = freezed,Object? closedReason = freezed,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,shopId: null == shopId ? _self.shopId : shopId // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,8 @@ as double,buyingPrice: null == buyingPrice ? _self.buyingPrice : buyingPrice // 
 as double,receivedOn: null == receivedOn ? _self.receivedOn : receivedOn // ignore: cast_nullable_to_non_nullable
 as DateTime,expiryDate: null == expiryDate ? _self.expiryDate : expiryDate // ignore: cast_nullable_to_non_nullable
 as DateTime,expiredQty: freezed == expiredQty ? _self.expiredQty : expiredQty // ignore: cast_nullable_to_non_nullable
-as double?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
+as double?,pickedQty: null == pickedQty ? _self.pickedQty : pickedQty // ignore: cast_nullable_to_non_nullable
+as double,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,closedReason: freezed == closedReason ? _self.closedReason : closedReason // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -163,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String shopId,  String productId,  double quantity,  double buyingPrice,  DateTime receivedOn,  DateTime expiryDate,  double? expiredQty,  DateTime? closedAt,  String? closedReason,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String shopId,  String productId,  double quantity,  double buyingPrice,  DateTime receivedOn,  DateTime expiryDate,  double? expiredQty,  double pickedQty,  DateTime? closedAt,  String? closedReason,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProductBatch() when $default != null:
-return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyingPrice,_that.receivedOn,_that.expiryDate,_that.expiredQty,_that.closedAt,_that.closedReason,_that.createdAt);case _:
+return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyingPrice,_that.receivedOn,_that.expiryDate,_that.expiredQty,_that.pickedQty,_that.closedAt,_that.closedReason,_that.createdAt);case _:
   return orElse();
 
 }
@@ -184,10 +185,10 @@ return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyin
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String shopId,  String productId,  double quantity,  double buyingPrice,  DateTime receivedOn,  DateTime expiryDate,  double? expiredQty,  DateTime? closedAt,  String? closedReason,  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String shopId,  String productId,  double quantity,  double buyingPrice,  DateTime receivedOn,  DateTime expiryDate,  double? expiredQty,  double pickedQty,  DateTime? closedAt,  String? closedReason,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _ProductBatch():
-return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyingPrice,_that.receivedOn,_that.expiryDate,_that.expiredQty,_that.closedAt,_that.closedReason,_that.createdAt);case _:
+return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyingPrice,_that.receivedOn,_that.expiryDate,_that.expiredQty,_that.pickedQty,_that.closedAt,_that.closedReason,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +205,10 @@ return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyin
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String shopId,  String productId,  double quantity,  double buyingPrice,  DateTime receivedOn,  DateTime expiryDate,  double? expiredQty,  DateTime? closedAt,  String? closedReason,  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String shopId,  String productId,  double quantity,  double buyingPrice,  DateTime receivedOn,  DateTime expiryDate,  double? expiredQty,  double pickedQty,  DateTime? closedAt,  String? closedReason,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ProductBatch() when $default != null:
-return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyingPrice,_that.receivedOn,_that.expiryDate,_that.expiredQty,_that.closedAt,_that.closedReason,_that.createdAt);case _:
+return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyingPrice,_that.receivedOn,_that.expiryDate,_that.expiredQty,_that.pickedQty,_that.closedAt,_that.closedReason,_that.createdAt);case _:
   return null;
 
 }
@@ -219,7 +220,7 @@ return $default(_that.id,_that.shopId,_that.productId,_that.quantity,_that.buyin
 @JsonSerializable()
 
 class _ProductBatch extends ProductBatch {
-  const _ProductBatch({required this.id, required this.shopId, required this.productId, required this.quantity, this.buyingPrice = 0, required this.receivedOn, required this.expiryDate, this.expiredQty, this.closedAt, this.closedReason, this.createdAt}): super._();
+  const _ProductBatch({required this.id, required this.shopId, required this.productId, required this.quantity, this.buyingPrice = 0, required this.receivedOn, required this.expiryDate, this.expiredQty, this.pickedQty = 0, this.closedAt, this.closedReason, this.createdAt}): super._();
   factory _ProductBatch.fromJson(Map<String, dynamic> json) => _$ProductBatchFromJson(json);
 
 @override final  String id;
@@ -230,6 +231,7 @@ class _ProductBatch extends ProductBatch {
 @override final  DateTime receivedOn;
 @override final  DateTime expiryDate;
 @override final  double? expiredQty;
+@override@JsonKey() final  double pickedQty;
 @override final  DateTime? closedAt;
 @override final  String? closedReason;
 @override final  DateTime? createdAt;
@@ -247,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProductBatch&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.receivedOn, receivedOn) || other.receivedOn == receivedOn)&&(identical(other.expiryDate, expiryDate) || other.expiryDate == expiryDate)&&(identical(other.expiredQty, expiredQty) || other.expiredQty == expiredQty)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&(identical(other.closedReason, closedReason) || other.closedReason == closedReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProductBatch&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.buyingPrice, buyingPrice) || other.buyingPrice == buyingPrice)&&(identical(other.receivedOn, receivedOn) || other.receivedOn == receivedOn)&&(identical(other.expiryDate, expiryDate) || other.expiryDate == expiryDate)&&(identical(other.expiredQty, expiredQty) || other.expiredQty == expiredQty)&&(identical(other.pickedQty, pickedQty) || other.pickedQty == pickedQty)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&(identical(other.closedReason, closedReason) || other.closedReason == closedReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,shopId,productId,quantity,buyingPrice,receivedOn,expiryDate,expiredQty,closedAt,closedReason,createdAt);
+int get hashCode => Object.hash(runtimeType,id,shopId,productId,quantity,buyingPrice,receivedOn,expiryDate,expiredQty,pickedQty,closedAt,closedReason,createdAt);
 
 @override
 String toString() {
-  return 'ProductBatch(id: $id, shopId: $shopId, productId: $productId, quantity: $quantity, buyingPrice: $buyingPrice, receivedOn: $receivedOn, expiryDate: $expiryDate, expiredQty: $expiredQty, closedAt: $closedAt, closedReason: $closedReason, createdAt: $createdAt)';
+  return 'ProductBatch(id: $id, shopId: $shopId, productId: $productId, quantity: $quantity, buyingPrice: $buyingPrice, receivedOn: $receivedOn, expiryDate: $expiryDate, expiredQty: $expiredQty, pickedQty: $pickedQty, closedAt: $closedAt, closedReason: $closedReason, createdAt: $createdAt)';
 }
 
 
@@ -267,7 +269,7 @@ abstract mixin class _$ProductBatchCopyWith<$Res> implements $ProductBatchCopyWi
   factory _$ProductBatchCopyWith(_ProductBatch value, $Res Function(_ProductBatch) _then) = __$ProductBatchCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String shopId, String productId, double quantity, double buyingPrice, DateTime receivedOn, DateTime expiryDate, double? expiredQty, DateTime? closedAt, String? closedReason, DateTime? createdAt
+ String id, String shopId, String productId, double quantity, double buyingPrice, DateTime receivedOn, DateTime expiryDate, double? expiredQty, double pickedQty, DateTime? closedAt, String? closedReason, DateTime? createdAt
 });
 
 
@@ -284,7 +286,7 @@ class __$ProductBatchCopyWithImpl<$Res>
 
 /// Create a copy of ProductBatch
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? shopId = null,Object? productId = null,Object? quantity = null,Object? buyingPrice = null,Object? receivedOn = null,Object? expiryDate = null,Object? expiredQty = freezed,Object? closedAt = freezed,Object? closedReason = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? shopId = null,Object? productId = null,Object? quantity = null,Object? buyingPrice = null,Object? receivedOn = null,Object? expiryDate = null,Object? expiredQty = freezed,Object? pickedQty = null,Object? closedAt = freezed,Object? closedReason = freezed,Object? createdAt = freezed,}) {
   return _then(_ProductBatch(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,shopId: null == shopId ? _self.shopId : shopId // ignore: cast_nullable_to_non_nullable
@@ -294,7 +296,8 @@ as double,buyingPrice: null == buyingPrice ? _self.buyingPrice : buyingPrice // 
 as double,receivedOn: null == receivedOn ? _self.receivedOn : receivedOn // ignore: cast_nullable_to_non_nullable
 as DateTime,expiryDate: null == expiryDate ? _self.expiryDate : expiryDate // ignore: cast_nullable_to_non_nullable
 as DateTime,expiredQty: freezed == expiredQty ? _self.expiredQty : expiredQty // ignore: cast_nullable_to_non_nullable
-as double?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
+as double?,pickedQty: null == pickedQty ? _self.pickedQty : pickedQty // ignore: cast_nullable_to_non_nullable
+as double,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,closedReason: freezed == closedReason ? _self.closedReason : closedReason // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,

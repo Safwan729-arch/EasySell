@@ -46,6 +46,9 @@ void main() {
       ServerErrorCodes.discountExceedsTotal,
       ServerErrorCodes.discountNegative,
       ServerErrorCodes.quantityNotPositive,
+      ServerErrorCodes.expiredStockInCart,
+      ServerErrorCodes.batchShortInCart,
+      ServerErrorCodes.batchNotAvailable,
     ];
     for (final code in codes) {
       for (final AppLocalizations l10n in [en, bn]) {
@@ -122,6 +125,13 @@ void _classification() {
       expect(
         classifyServerMessage('Quantity must be greater than zero').code,
         ServerErrorCodes.quantityNotPositive,
+      );
+    });
+
+    test('0012: a picked delivery the server refuses', () {
+      expect(
+        classifyServerMessage('Batch not available').code,
+        ServerErrorCodes.batchNotAvailable,
       );
     });
 

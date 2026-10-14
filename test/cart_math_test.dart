@@ -106,15 +106,6 @@ void main() {
     });
   });
 
-  group('cartItemsPayload', () {
-    test('maps lines to the RPC wire shape', () {
-      final lines = [CartLine(product: _p('a'), quantity: 2.5)];
-      expect(cartItemsPayload(lines), [
-        {'product_id': 'a', 'quantity': 2.5},
-      ]);
-    });
-  });
-
   group('stepForUnit', () {
     test('whole units for pieces, fractional for weight/volume', () {
       expect(stepForUnit(ProductUnit.pcs), 1);

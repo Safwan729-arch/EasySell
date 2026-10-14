@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CartLine {
 
- Product get product; double get quantity;
+ Product get product; double get quantity; String? get batchId;
 /// Create a copy of CartLine
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $CartLineCopyWith<CartLine> get copyWith => _$CartLineCopyWithImpl<CartLine>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CartLine&&(identical(other.product, product) || other.product == product)&&(identical(other.quantity, quantity) || other.quantity == quantity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CartLine&&(identical(other.product, product) || other.product == product)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.batchId, batchId) || other.batchId == batchId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,product,quantity);
+int get hashCode => Object.hash(runtimeType,product,quantity,batchId);
 
 @override
 String toString() {
-  return 'CartLine(product: $product, quantity: $quantity)';
+  return 'CartLine(product: $product, quantity: $quantity, batchId: $batchId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $CartLineCopyWith<$Res>  {
   factory $CartLineCopyWith(CartLine value, $Res Function(CartLine) _then) = _$CartLineCopyWithImpl;
 @useResult
 $Res call({
- Product product, double quantity
+ Product product, double quantity, String? batchId
 });
 
 
@@ -62,11 +62,12 @@ class _$CartLineCopyWithImpl<$Res>
 
 /// Create a copy of CartLine
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? product = null,Object? quantity = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? product = null,Object? quantity = null,Object? batchId = freezed,}) {
   return _then(_self.copyWith(
 product: null == product ? _self.product : product // ignore: cast_nullable_to_non_nullable
 as Product,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as double,
+as double,batchId: freezed == batchId ? _self.batchId : batchId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of CartLine
@@ -160,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Product product,  double quantity)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Product product,  double quantity,  String? batchId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CartLine() when $default != null:
-return $default(_that.product,_that.quantity);case _:
+return $default(_that.product,_that.quantity,_that.batchId);case _:
   return orElse();
 
 }
@@ -181,10 +182,10 @@ return $default(_that.product,_that.quantity);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Product product,  double quantity)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Product product,  double quantity,  String? batchId)  $default,) {final _that = this;
 switch (_that) {
 case _CartLine():
-return $default(_that.product,_that.quantity);case _:
+return $default(_that.product,_that.quantity,_that.batchId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +202,10 @@ return $default(_that.product,_that.quantity);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Product product,  double quantity)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Product product,  double quantity,  String? batchId)?  $default,) {final _that = this;
 switch (_that) {
 case _CartLine() when $default != null:
-return $default(_that.product,_that.quantity);case _:
+return $default(_that.product,_that.quantity,_that.batchId);case _:
   return null;
 
 }
@@ -216,11 +217,12 @@ return $default(_that.product,_that.quantity);case _:
 
 
 class _CartLine extends CartLine {
-  const _CartLine({required this.product, required this.quantity}): super._();
+  const _CartLine({required this.product, required this.quantity, this.batchId}): super._();
   
 
 @override final  Product product;
 @override final  double quantity;
+@override final  String? batchId;
 
 /// Create a copy of CartLine
 /// with the given fields replaced by the non-null parameter values.
@@ -232,16 +234,16 @@ _$CartLineCopyWith<_CartLine> get copyWith => __$CartLineCopyWithImpl<_CartLine>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CartLine&&(identical(other.product, product) || other.product == product)&&(identical(other.quantity, quantity) || other.quantity == quantity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CartLine&&(identical(other.product, product) || other.product == product)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.batchId, batchId) || other.batchId == batchId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,product,quantity);
+int get hashCode => Object.hash(runtimeType,product,quantity,batchId);
 
 @override
 String toString() {
-  return 'CartLine(product: $product, quantity: $quantity)';
+  return 'CartLine(product: $product, quantity: $quantity, batchId: $batchId)';
 }
 
 
@@ -252,7 +254,7 @@ abstract mixin class _$CartLineCopyWith<$Res> implements $CartLineCopyWith<$Res>
   factory _$CartLineCopyWith(_CartLine value, $Res Function(_CartLine) _then) = __$CartLineCopyWithImpl;
 @override @useResult
 $Res call({
- Product product, double quantity
+ Product product, double quantity, String? batchId
 });
 
 
@@ -269,11 +271,12 @@ class __$CartLineCopyWithImpl<$Res>
 
 /// Create a copy of CartLine
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? product = null,Object? quantity = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? product = null,Object? quantity = null,Object? batchId = freezed,}) {
   return _then(_CartLine(
 product: null == product ? _self.product : product // ignore: cast_nullable_to_non_nullable
 as Product,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as double,
+as double,batchId: freezed == batchId ? _self.batchId : batchId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

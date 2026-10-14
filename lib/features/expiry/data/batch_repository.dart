@@ -6,9 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../shared/providers/supabase_provider.dart';
+import '../../inventory/domain/product.dart';
 import '../domain/expiry_dates.dart';
 import '../domain/expiry_estimate.dart';
 import '../domain/product_batch.dart';
+
+/// Open deliveries and the products they belong to, read together.
+typedef ExpirySnapshot = ({List<ProductBatch> batches, List<Product> products});
 
 /// Reads and writes `product_batches` (migration 0011). RLS scopes every row
 /// to the signed-in shop.
@@ -37,14 +41,34 @@ class BatchRepository {
     yield _parse(rows);
   }
 
-  Future<Result<List<ProductBatch>>> fetchOpenBatches(String shopId) async {
+  /// The shop's open deliveries WITH their products' stock, in ONE request:
+  /// one SQL statement, so both come from the same moment. Two reads let a
+  /// sale land between them; a sale picked from one delivery (migration
+  /// 0012) then shows as lower stock but not yet as a pick, the estimate
+  /// pins the shortfall on the oldest delivery and the reconcile closes it as
+  /// sold out -- or locks it too low -- while its units are on the shelf.
+  /// Archived products and their deliveries are left out; only products that
+  /// have deliveries come back, so a big shop stays under the 1000-row cap.
+  Future<Result<ExpirySnapshot>> fetchExpirySnapshot(String shopId) async {
     try {
       final rows = await _client
           .from(_table)
-          .select()
+          .select('*, products!inner(*)')
           .eq('shop_id', shopId)
-          .isFilter('closed_at', null);
-      return Result.success(_parse(rows));
+          .isFilter('closed_at', null)
+          .eq('products.is_archived', false);
+      final batches = <ProductBatch>[];
+      final products = <String, Product>{};
+      for (final r in rows as List) {
+        final row = Map<String, dynamic>.from(r as Map);
+        final p = Map<String, dynamic>.from(row.remove('products') as Map);
+        products[p['id'] as String] = Product.fromJson(p);
+        batches.add(ProductBatch.fromJson(row));
+      }
+      return Result.success((
+        batches: batches,
+        products: products.values.toList(),
+      ));
     } catch (e) {
       return Result.failure(_map(e));
     }

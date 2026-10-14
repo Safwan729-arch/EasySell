@@ -468,3 +468,71 @@ shows when two locked deliveries share hand-lowered stock; after 9 AM only
 Settings says "Blocked" on Android 13+ before permission is ever asked;
 "None left" on an expired delivery makes its units sellable; the cart's
 "Remove expired" has no confirmation.
+
+## 13. Picking the batch at checkout (2026-10-15, migration `0012_batch_pick.sql`)
+
+**Why.** On the phone the user had 10 toothbrushes expiring tomorrow and 16
+good ones. A customer who checks dates asks for a good one. The estimate
+assumed the older delivery sold, so after that sale it showed 9 expiring and
+16 good while the shelf held 10 and 15. When those expired, one expired unit
+would have been counted as good and been sellable. §2 rejected exact lot
+tracking. That rejection stands. This adds a pick count to the estimate, not
+per-unit tracking. (Built straight from the conversation at the user's
+request, with no separate spec.)
+
+**Approaches weighed.**
+- **A pick counter on each delivery (built).** It is one migration and changes
+  nothing in restock, voice or scan.
+- **Full exact tracking.** Every stock path would have to keep per-delivery
+  counts in step, and one missed path silently breaks them. This is the §2
+  rejection.
+- **The phone edits the delivery after the sale.** That is a second save, so
+  a lost reply or a retry leaves the counts wrong.
+
+**How it works.**
+- `product_batches.picked_qty` holds the units sold from that delivery by
+  choice. The estimate treats each delivery as holding `quantity − picked_qty`
+  (floored at 0) before it fills deliveries newest first. Stock and picks
+  drop by the same amount, so the other deliveries keep exactly what they had.
+  This holds whichever delivery is "older", and also when a later delivery
+  expires sooner (FIFO alone would get that case wrong).
+- `record_sale_cart` accepts an optional `batch_id` on each item. It checks
+  that the delivery belongs to the same shop and product, is open, is not
+  locked expired, and that its picks would not exceed what was delivered.
+  Otherwise it raises `Batch not available`. It increments `picked_qty` in
+  the same transaction as the sale, so 0010's replay can never count a pick
+  twice.
+  - The argument list is unchanged, so this is a plain `create or replace`
+    and older app builds keep working.
+  - The server does not check expiry dates, because its `current_date` is UTC.
+    The app's gate does that.
+  - `transactions.batch_id` is kept for history only.
+- **Cart.** A line shows "Batch: …" only when its product has two or more
+  places to sell from: unexpired deliveries with units left, plus "No expiry
+  date" when undated stock exists. Products with no dates look exactly as
+  before. The default is "Soonest expiry first", which needs no tap (the
+  user's choice). At checkout the default is split across deliveries in
+  soonest-expiry order (undated stock last), and every part names its
+  delivery. So the counts are exact even when you keep the default. If a
+  chosen delivery has fewer units than the line, the line says so and
+  checkout waits.
+
+**Gotchas that cost time.**
+- **Split from the gate's fresh estimate, and never re-split a retry.**
+  Checkout splits lines into deliveries using the estimate the gate has just
+  reconciled. The screen's copy can be a sale or a restock behind. After a
+  lost reply, the refreshed estimate already counts the saved sale. A fresh
+  split would then name other deliveries, produce a different request with a
+  new sale id, and record the sale twice (the §12 / 0010 trap again). So an
+  unacknowledged retry re-sends the exact items it sent before. The retry key
+  is the cart as the shopkeeper set it up (lines, chosen deliveries, discount,
+  customer), not the split.
+- **Reconcile now reads deliveries and stock in ONE request**
+  (`product_batches?select=*,products!inner(*)`, which is one SQL statement).
+  "Deliveries first, then stock" was enough while every sale was FIFO. A
+  picked sale landing between two reads shows up as lower stock but not yet
+  as a pick, so the shortfall lands on the oldest delivery. The reconcile
+  would then close it as sold out, or lock it too low, while its units are
+  still on the shelf. The inner join also replaces the product-id filter that
+  kept a big shop under the 1000-row cap. The join was checked against the
+  live API before shipping.

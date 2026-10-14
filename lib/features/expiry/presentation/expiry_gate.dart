@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/failure.dart';
 import '../../cart/domain/cart_line.dart';
 import '../domain/cart_expiry.dart';
+import '../domain/expiry_estimate.dart';
 import 'expiry_reconciler.dart';
 
 sealed class GateResult {
@@ -10,7 +11,11 @@ sealed class GateResult {
 }
 
 final class GatePass extends GateResult {
-  const GatePass();
+  const GatePass([this.byProduct = const {}]);
+
+  /// The estimate the check was made on, fresh from the reconcile. Checkout
+  /// splits the cart into deliveries from this, not from the screen's copy.
+  final Map<String, ProductExpiry> byProduct;
 }
 
 final class GateBlocked extends GateResult {
@@ -41,7 +46,7 @@ class ReconcilingExpiryGate implements ExpiryGate {
     final outcome = await _reconciler.run();
     if (outcome.failure case final failure?) return GateFailed(failure);
     final blocked = expiredBlockedProductIds(lines, outcome.byProduct);
-    return blocked.isEmpty ? const GatePass() : GateBlocked(blocked);
+    return blocked.isEmpty ? GatePass(outcome.byProduct) : GateBlocked(blocked);
   }
 }
 

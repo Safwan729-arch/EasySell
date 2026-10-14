@@ -47,6 +47,13 @@ abstract final class ServerErrorCodes {
   /// Set by the app, not the server: checkout's expiry gate refused a cart
   /// that would sell expired units (expiry spec §5 Cart).
   static const expiredStockInCart = 'expiredStockInCart';
+
+  /// Set by the app: a line's chosen delivery has fewer units than the line.
+  static const batchShortInCart = 'batchShortInCart';
+
+  /// `record_sale_cart` refused a delivery (closed, expired, another
+  /// product's, or fewer units than the line).
+  static const batchNotAvailable = 'batchNotAvailable';
 }
 
 /// Matches the product name out of `record_sale_cart`'s stock exception, whose
@@ -79,6 +86,8 @@ final _stockRe = RegExp(r'^Insufficient stock for (.+?): have ');
       ServerErrorCodes.discountNegative,
     _ when message.startsWith('Quantity must be greater than zero') =>
       ServerErrorCodes.quantityNotPositive,
+    _ when message.startsWith('Batch not available') =>
+      ServerErrorCodes.batchNotAvailable,
     _ => null,
   };
   return (code: code, detail: null);

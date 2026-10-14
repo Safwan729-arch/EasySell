@@ -1442,6 +1442,46 @@ class AppLocalizationsBn extends AppLocalizations {
       'কার্টের কিছু পণ্যের মেয়াদ শেষ। চেকআউটের আগে ঠিক করুন।';
 
   @override
+  String get error_batchShortInCart =>
+      'আপনার বাছাই করা ব্যাচে যথেষ্ট নেই। কার্ট দেখুন।';
+
+  @override
+  String get error_batchNotAvailable =>
+      'ওই ব্যাচটি আর নেই। কার্টে অন্য ব্যাচ বাছুন।';
+
+  @override
+  String cart_batchLabel(String choice) {
+    return 'ব্যাচ: $choice';
+  }
+
+  @override
+  String get cart_batchAuto => 'আগে যার মেয়াদ শেষ';
+
+  @override
+  String get cart_batchNoDate => 'মেয়াদের তারিখ নেই';
+
+  @override
+  String cart_batchExpires(String date) {
+    return 'মেয়াদ $date';
+  }
+
+  @override
+  String get cart_batchPickTitle => 'কোন ব্যাচ থেকে বিক্রি করবেন?';
+
+  @override
+  String cart_batchOptionLeft(String qty, String unit) {
+    return '$qty $unit বাকি';
+  }
+
+  @override
+  String cart_batchShort(String qty, String unit) {
+    return 'এই ব্যাচে মাত্র $qty $unit বাকি';
+  }
+
+  @override
+  String get cart_batchGone => 'এই ব্যাচটি আর নেই। অন্যটি বাছুন।';
+
+  @override
   String expiry_alertExpired(String qty, String name) {
     return 'মেয়াদোত্তীর্ণ: $qty $name';
   }

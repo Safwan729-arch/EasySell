@@ -1448,6 +1448,47 @@ class AppLocalizationsEn extends AppLocalizations {
       'Some items in the cart are expired. Fix them before checkout.';
 
   @override
+  String get error_batchShortInCart =>
+      'A batch you picked doesn\'t have enough left. Check the cart.';
+
+  @override
+  String get error_batchNotAvailable =>
+      'That batch is no longer available. Pick another one in the cart.';
+
+  @override
+  String cart_batchLabel(String choice) {
+    return 'Batch: $choice';
+  }
+
+  @override
+  String get cart_batchAuto => 'Soonest expiry first';
+
+  @override
+  String get cart_batchNoDate => 'No expiry date';
+
+  @override
+  String cart_batchExpires(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get cart_batchPickTitle => 'Sell from which batch?';
+
+  @override
+  String cart_batchOptionLeft(String qty, String unit) {
+    return '$qty $unit left';
+  }
+
+  @override
+  String cart_batchShort(String qty, String unit) {
+    return 'Only $qty $unit left in this batch';
+  }
+
+  @override
+  String get cart_batchGone =>
+      'This batch is no longer available. Pick another.';
+
+  @override
   String expiry_alertExpired(String qty, String name) {
     return 'Expired: $qty $name';
   }

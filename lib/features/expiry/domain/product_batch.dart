@@ -32,6 +32,10 @@ abstract class ProductBatch with _$ProductBatch {
     // Locked the first time the app sees this delivery expired; from then on
     // sales are never counted against these units (spec §4.2).
     double? expiredQty,
+    // Units the shopkeeper chose to sell from THIS delivery at checkout
+    // (migration 0012). The estimate takes them off this delivery before it
+    // works out who holds the rest.
+    @Default(0) double pickedQty,
     DateTime? closedAt,
     String? closedReason,
     DateTime? createdAt,

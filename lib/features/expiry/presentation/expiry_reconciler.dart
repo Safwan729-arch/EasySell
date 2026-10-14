@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../inventory/data/product_repository.dart';
 import '../../inventory/domain/product.dart';
 import '../data/batch_repository.dart';
 import '../domain/expiry_estimate.dart';
@@ -27,13 +26,14 @@ class ReconcileOutcome {
 /// Stores the estimate's reconcile writes (spec §4.2): locks expired counts
 /// and closes sold-out deliveries.
 ///
-/// Computed from a FRESH read, never from the screen streams, and the read
-/// order matters: deliveries first, then stock. The streams refresh
-/// independently, so a restock's new delivery can arrive before its new stock;
-/// estimating from that pair hands the old stock to the new delivery and
-/// closes the old one as "sold out" while its units are still on the shelf.
-/// Reading deliveries first means anything that changes between the two reads
-/// shows up as NEWER stock, which can only give old deliveries more.
+/// Computed from a FRESH read, never from the screen streams, and deliveries
+/// and stock come from ONE request (`fetchExpirySnapshot`). The streams
+/// refresh independently, so a restock's new delivery can arrive before its
+/// new stock; estimating from that pair hands the old stock to the new
+/// delivery and closes the old one as "sold out" while its units are still on
+/// the shelf. Reading deliveries first used to be enough, but a sale picked
+/// from a delivery (migration 0012) between two reads does the same damage
+/// from the other side, so the two are now read together.
 class ExpiryReconciler {
   ExpiryReconciler(this._ref);
 
@@ -55,28 +55,15 @@ class ExpiryReconciler {
       final batchRepo = _ref.read(batchRepositoryProvider);
 
       final List<ProductBatch> batches;
-      switch (await batchRepo.fetchOpenBatches(shopId)) {
+      final List<Product> products;
+      switch (await batchRepo.fetchExpirySnapshot(shopId)) {
         case ResultFailure(:final failure):
           return ReconcileOutcome.failed(failure);
         case Success(:final value):
-          batches = value;
+          batches = value.batches;
+          products = value.products;
       }
       if (batches.isEmpty) return const ReconcileOutcome.ok({});
-
-      final List<Product> products;
-      // Only the products that have deliveries: the whole table of a big
-      // shop is cut off at PostgREST's 1000-row cap.
-      switch (await _ref
-          .read(productRepositoryProvider)
-          .fetchActiveProducts(
-            shopId,
-            ids: {for (final b in batches) b.productId},
-          )) {
-        case ResultFailure(:final failure):
-          return ReconcileOutcome.failed(failure);
-        case Success(:final value):
-          products = value;
-      }
 
       final today = _ref.read(todayProvider);
       final warnDays = _ref.read(expiryPrefsProvider).warnDays;

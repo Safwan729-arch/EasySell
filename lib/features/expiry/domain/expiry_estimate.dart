@@ -120,7 +120,8 @@ DateTime _created(ProductBatch b) =>
 ///
 /// 1. Locked expired deliveries are reserved first, earliest expiry first.
 /// 2. Every other delivery is filled newest-received first, so whatever is
-///    left over lands on the oldest ("older sells first").
+///    left over lands on the oldest ("older sells first"). A delivery holds
+///    at most its amount minus the units picked from it at checkout.
 /// 3. Anything still left is untracked stock with no date, counted as good.
 ProductExpiry estimateProductExpiry({
   required String productId,
@@ -152,7 +153,10 @@ ProductExpiry estimateProductExpiry({
       return c != 0 ? c : _created(b).compareTo(_created(a));
     });
   for (final b in rest) {
-    final take = math.min(b.quantity, r);
+    // Units picked from this delivery at checkout already left it, so they
+    // are not FIFO's to hand out. Stock went down by the same amount, so the
+    // older deliveries keep exactly what they had.
+    final take = math.min(math.max(0.0, b.quantity - b.pickedQty), r);
     alloc[b.id] = take;
     r -= take;
   }
