@@ -7,6 +7,7 @@ import 'core/config/theme.dart';
 import 'core/router/app_router.dart';
 import 'core/widgets/offline_banner.dart';
 import 'features/expiry/presentation/expiry_providers.dart';
+import 'features/expiry/presentation/reminder_sync.dart';
 import 'features/voice/presentation/voice_controller.dart';
 import 'features/voice/presentation/voice_ready_banner.dart';
 import 'l10n/app_localizations.dart';
@@ -26,6 +27,9 @@ class App extends ConsumerWidget {
     // Locks expired counts / closes sold-out deliveries on shop load, date
     // change and app resume (expiry spec §4.2).
     ref.listen(expiryAutoReconcileProvider, (_, _) {});
+    // Daily 9 AM expiry reminders (expiry spec §6) and their tap routing.
+    ref.listen(reminderSyncProvider, (_, _) {});
+    ref.listen(reminderTapRouterProvider, (_, _) {});
 
     return MaterialApp.router(
       title: 'AI Shopkeeper',

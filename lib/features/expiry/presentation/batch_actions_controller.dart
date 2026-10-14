@@ -11,6 +11,7 @@ import '../../inventory/presentation/inventory_controller.dart';
 import '../data/batch_repository.dart';
 import '../domain/expiry_dates.dart';
 import '../domain/product_batch.dart';
+import 'expiry_prefs.dart';
 import 'expiry_providers.dart';
 import 'expiry_reconciler.dart';
 import 'today_provider.dart';
@@ -28,20 +29,26 @@ class BatchActionsController extends AsyncNotifier<void> {
     required double quantity,
     required DateTime expiryDate,
     required DateTime receivedOn,
-  }) => _run(() async {
-    final r = await _repo.addBatch(
-      shopId: product.shopId,
-      productId: product.id,
-      quantity: quantity,
-      buyingPrice: product.buyingPrice,
-      receivedOn: receivedOn,
-      expiryDate: expiryDate,
-    );
-    return r.when(
-      success: (_) => const Result<void>.success(null),
-      failure: (f) => Result<void>.failure(f),
-    );
-  });
+  }) async {
+    final ok = await _run(() async {
+      final r = await _repo.addBatch(
+        shopId: product.shopId,
+        productId: product.id,
+        quantity: quantity,
+        buyingPrice: product.buyingPrice,
+        receivedOn: receivedOn,
+        expiryDate: expiryDate,
+      );
+      return r.when(
+        success: (_) => const Result<void>.success(null),
+        failure: (f) => Result<void>.failure(f),
+      );
+    });
+    if (ok) {
+      unawaited(ref.read(expiryPrefsProvider.notifier).askPermissionOnce());
+    }
+    return ok;
+  }
 
   /// Moving a locked delivery's date to today or later clears the lock -- the
   /// lock came from a mistyped date (spec §3.3).

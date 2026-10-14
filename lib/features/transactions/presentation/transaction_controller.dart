@@ -9,6 +9,7 @@ import '../../../core/error/result.dart';
 import '../../../shared/providers/refresh_provider.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../expiry/domain/expiry_dates.dart';
+import '../../expiry/presentation/expiry_prefs.dart';
 import '../../expiry/presentation/expiry_providers.dart';
 import '../../expiry/presentation/expiry_reconciler.dart';
 import '../../expiry/presentation/today_provider.dart';
@@ -75,7 +76,10 @@ class TransactionController extends AsyncNotifier<void> {
       onSuccess: () {
         _pendingRestockId = null;
         _pendingRestockRequest = null;
-        if (expiryDate != null) ref.invalidate(batchesStreamProvider);
+        if (expiryDate != null) {
+          ref.invalidate(batchesStreamProvider);
+          unawaited(ref.read(expiryPrefsProvider.notifier).askPermissionOnce());
+        }
         unawaited(ref.read(expiryReconcilerProvider).run());
       },
     );

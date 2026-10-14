@@ -57,6 +57,9 @@ dependencies:
   # The phone mints each checkout's sale id so a retry can re-send it and the
   # server records the sale once (record_sale_cart, migration 0010).
   uuid: ^4.5.3
+  # Daily expiry reminder, scheduled on the phone (expiry spec §6).
+  flutter_local_notifications: ^19.4.0
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:

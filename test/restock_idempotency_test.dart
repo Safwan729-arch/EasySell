@@ -9,6 +9,7 @@ import 'package:ai_shopkeeper/features/transactions/domain/transaction.dart';
 import 'package:ai_shopkeeper/features/transactions/presentation/transaction_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/expiry_fakes.dart';
 
@@ -65,6 +66,8 @@ Future<ProviderContainer> _container(TransactionRepository repo) async {
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   test('a retry of the same restock reuses the restock id', () async {
     final repo = _FlakyRestockRepo();
     final c = await _container(repo);

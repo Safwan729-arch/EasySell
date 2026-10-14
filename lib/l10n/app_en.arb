@@ -496,5 +496,9 @@
   "@expiry_alertSoonDays": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" }, "days": { "type": "String" } } },
   "expiry_cardTitle": "Expiring & expired",
   "expiry_alertsTitle": "Expiry alerts",
-  "expiry_filter": "Expiring"
+  "expiry_filter": "Expiring",
+  "reminder_title": "Expiry check",
+  "reminder_more": "+{count} more",
+  "@reminder_more": { "placeholders": { "count": { "type": "String" } } },
+  "reminder_channelName": "Expiry reminders"
 }

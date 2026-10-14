@@ -1469,4 +1469,15 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get expiry_filter => 'মেয়াদ শেষ হচ্ছে';
+
+  @override
+  String get reminder_title => 'মেয়াদ যাচাই';
+
+  @override
+  String reminder_more(String count) {
+    return '+আরও $countটি';
+  }
+
+  @override
+  String get reminder_channelName => 'মেয়াদের রিমাইন্ডার';
 }

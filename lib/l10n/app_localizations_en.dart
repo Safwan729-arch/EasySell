@@ -1475,4 +1475,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expiry_filter => 'Expiring';
+
+  @override
+  String get reminder_title => 'Expiry check';
+
+  @override
+  String reminder_more(String count) {
+    return '+$count more';
+  }
+
+  @override
+  String get reminder_channelName => 'Expiry reminders';
 }

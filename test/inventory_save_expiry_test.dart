@@ -10,6 +10,7 @@ import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _ProductRepo implements ProductRepository {
   @override
@@ -88,6 +89,8 @@ const _bread = Product(
 );
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   test(
     'a new product with an expiry date records its first delivery',
     () async {

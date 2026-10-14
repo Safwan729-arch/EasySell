@@ -2557,6 +2557,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expiring'**
   String get expiry_filter;
+
+  /// No description provided for @reminder_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry check'**
+  String get reminder_title;
+
+  /// No description provided for @reminder_more.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String reminder_more(String count);
+
+  /// No description provided for @reminder_channelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry reminders'**
+  String get reminder_channelName;
 }
 
 class _AppLocalizationsDelegate

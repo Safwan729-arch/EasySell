@@ -7,6 +7,7 @@ import '../../../core/error/result.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../expiry/data/batch_repository.dart';
 import '../../expiry/domain/expiry_dates.dart';
+import '../../expiry/presentation/expiry_prefs.dart';
 import '../../expiry/presentation/expiry_providers.dart';
 import '../../expiry/presentation/today_provider.dart';
 import '../data/product_repository.dart';
@@ -90,6 +91,9 @@ class InventoryController extends AsyncNotifier<void> {
               );
           if (batch.isSuccess) {
             ref.invalidate(batchesStreamProvider);
+            unawaited(
+              ref.read(expiryPrefsProvider.notifier).askPermissionOnce(),
+            );
           } else {
             outcome = ProductSaveOutcome.savedWithoutExpiry;
           }

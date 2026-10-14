@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/reminder_service.dart';
+
 /// Phone-local expiry settings (spec §5 Settings), stored like the theme.
 class ExpiryPrefs {
   const ExpiryPrefs({
@@ -59,6 +61,17 @@ class ExpiryPrefsController extends Notifier<ExpiryPrefs> {
     state = state.copyWith(permissionAsked: true);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kPermissionAsked, true);
+  }
+
+  /// Requests notification permission the first time an expiry date is saved
+  /// (spec §6). Marked asked BEFORE requesting so a crash cannot loop it. A
+  /// failure here must never break the save that triggered it.
+  Future<void> askPermissionOnce() async {
+    if (state.permissionAsked) return;
+    try {
+      await markPermissionAsked();
+      await ref.read(reminderServiceProvider).requestPermission();
+    } catch (_) {}
   }
 }
 

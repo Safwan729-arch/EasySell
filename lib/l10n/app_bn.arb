@@ -460,5 +460,9 @@
   "@expiry_alertSoonDays": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" }, "days": { "type": "String" } } },
   "expiry_cardTitle": "মেয়াদ শেষ ও শেষ হচ্ছে",
   "expiry_alertsTitle": "মেয়াদের সতর্কতা",
-  "expiry_filter": "মেয়াদ শেষ হচ্ছে"
+  "expiry_filter": "মেয়াদ শেষ হচ্ছে",
+  "reminder_title": "মেয়াদ যাচাই",
+  "reminder_more": "+আরও {count}টি",
+  "@reminder_more": { "placeholders": { "count": { "type": "String" } } },
+  "reminder_channelName": "মেয়াদের রিমাইন্ডার"
 }
