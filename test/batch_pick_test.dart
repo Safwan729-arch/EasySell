@@ -94,6 +94,20 @@ void main() {
     });
   });
 
+  group('undatedStock', () {
+    test('stock beyond the deliveries has no date', () {
+      expect(undatedStock(30, _estimate(30, [_soon, _fresh])), 4);
+    });
+
+    test('nothing when every unit is in a delivery', () {
+      expect(undatedStock(26, _estimate(26, [_soon, _fresh])), 0);
+    });
+
+    test('all of it when there are no deliveries', () {
+      expect(undatedStock(12, null), 12);
+    });
+  });
+
   group('sell options', () {
     test('soonest expiry first, then stock with no date', () {
       final e = _estimate(30, [_fresh, _soon]);

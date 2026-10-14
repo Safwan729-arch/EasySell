@@ -6,6 +6,7 @@ import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../inventory/domain/product.dart';
 import '../domain/expiry_dates.dart';
+import '../domain/expiry_estimate.dart';
 import '../domain/product_batch.dart';
 import 'batch_actions_controller.dart';
 import 'expiry_date_field.dart';
@@ -58,11 +59,10 @@ class _BatchFormSheetState extends ConsumerState<_BatchFormSheet> {
   /// Stock not yet covered by an open delivery -- the default amount when
   /// adding a date to stock already on the shelf (spec §3.3).
   double _uncovered() {
-    final e = ref.read(productExpiryProvider)[widget.product.id];
-    final covered = e == null
-        ? 0.0
-        : e.batches.fold<double>(0, (s, b) => s + b.left);
-    final rest = widget.product.quantity - covered;
+    final rest = undatedStock(
+      widget.product.quantity,
+      ref.read(productExpiryProvider)[widget.product.id],
+    );
     return rest > 0 ? rest : widget.product.quantity;
   }
 

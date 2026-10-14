@@ -38,8 +38,7 @@ List<SellOption> sellOptions(ProductExpiry? e) {
           status: b.status,
         ),
   ];
-  final held = e.batches.fold<double>(0, (s, b) => s + b.left);
-  final loose = round3(e.stock - held);
+  final loose = undatedStock(e.stock, e);
   return [...dated, if (loose > 0) SellOption(batchId: null, left: loose)];
 }
 

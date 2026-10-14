@@ -54,9 +54,10 @@ class _Repo implements BatchRepository {
 const _pepsi = Product(id: 'pepsi', shopId: 's1', name: 'Pepsi', quantity: 15);
 final _today = DateTime(2026, 10, 21);
 
-Future<void> _pump(WidgetTester tester, _Repo repo) async {
+Future<void> _pump(WidgetTester tester, _Repo repo, {double stock = 15}) async {
+  final pepsi = _pepsi.copyWith(quantity: stock);
   final byProduct = estimateAll(
-    products: [_pepsi],
+    products: [pepsi],
     openBatches: [
       ProductBatch(
         id: 'old',
@@ -106,10 +107,8 @@ Future<void> _pump(WidgetTester tester, _Repo repo) async {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: const Scaffold(
-          body: SingleChildScrollView(
-            child: DeliveriesSection(product: _pepsi),
-          ),
+        home: Scaffold(
+          body: SingleChildScrollView(child: DeliveriesSection(product: pepsi)),
         ),
       ),
     ),
@@ -138,6 +137,22 @@ void main() {
       );
     },
   );
+
+  testWidgets('no "Add expiry date" when every unit already has a date', (
+    tester,
+  ) async {
+    // 15 in stock, 5 + 10 in deliveries: nothing is left to date, and the
+    // link read as "you still have to add a date" (2026-10-15, Pepsi).
+    await _pump(tester, _Repo());
+    expect(find.text('Add expiry date'), findsNothing);
+  });
+
+  testWidgets('"Add expiry date" shows while some stock has no date', (
+    tester,
+  ) async {
+    await _pump(tester, _Repo(), stock: 18);
+    expect(find.text('Add expiry date'), findsOneWidget);
+  });
 
   testWidgets('the remove dialog keeps its two buttons side by side', (
     tester,

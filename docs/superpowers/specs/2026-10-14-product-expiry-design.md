@@ -282,7 +282,9 @@ shown with the app's locale formatting.
   left, status label (Good / Expiring soon / Expired). Expired rows: **Remove
   from stock**. All open rows: **Edit** and **None left**. A short "Closed"
   history below (sold out / removed / none left). Plus **Add expiry date**,
-  shown only when stock is above 0 (same reason as the form field).
+  shown only while some stock has no date (2026-10-15: with every unit in a
+  delivery it read as "you still have to add a date"; new stock gets its date
+  from Restock).
 - **Home:** **"Expiring & expired"** card beside Low stock ("Expired: 5 Pepsi",
   "Bread: 3 expire tomorrow"); tap → product page.
 - **Bell:** lists the same items with a count badge, replacing the placeholder

@@ -37,7 +37,10 @@ class DeliveriesSection extends ConsumerWidget {
         children: [
           Text(l10n.expiry_deliveries, style: theme.textTheme.titleMedium),
           for (final e in open) _DeliveryRow(product: product, estimate: e),
-          if (product.quantity > 0)
+          // Only while some stock has no date. Once every unit sits in a
+          // delivery the link read as "you still have to add a date"; new
+          // stock gets its date from Restock.
+          if (undatedStock(product.quantity, expiry) > 0)
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(

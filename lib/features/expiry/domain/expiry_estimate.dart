@@ -231,6 +231,13 @@ Map<String, ProductExpiry> estimateAll({
   };
 }
 
+/// Units of [stock] that sit in no open delivery, so have no expiry date.
+/// Never negative.
+double undatedStock(double stock, ProductExpiry? e) {
+  final dated = e?.batches.fold<double>(0, (s, b) => s + b.left) ?? 0;
+  return math.max(0.0, round3(stock - dated));
+}
+
 /// Units of [p] that may be sold. A product with no open deliveries is
 /// entirely good stock.
 double goodStockOf(Product p, Map<String, ProductExpiry> byProduct) =>
