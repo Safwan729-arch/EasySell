@@ -47,12 +47,19 @@ class _Repo implements BatchRepository {
     required String shopId,
     required String batchId,
     double? quantity,
+    bool close = true,
+    String? removalId,
   }) async {
+    removalIds.add(removalId);
     log.add(
-      'remove $shopId $batchId${quantity == null ? '' : ' qty=$quantity'}',
+      'remove $shopId $batchId'
+      '${quantity == null ? '' : ' qty=$quantity'}'
+      '${close ? '' : ' keep-open'}',
     );
     return _r;
   }
+
+  final removalIds = <String?>[];
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -185,17 +192,50 @@ void main() {
       final c = await _container(repo);
       final ok = await c
           .read(batchActionsControllerProvider.notifier)
-          .removeBatch('b2', quantity: 7);
+          .removeBatch('b2', quantity: 7, left: 7);
       expect(ok, isTrue);
       expect(repo.log, ['remove s1 b2 qty=7.0']);
     },
   );
 
+  test('removing part of a delivery keeps it open', () async {
+    // One broken bottle out of 10: the other 9 are still on the shelf.
+    final repo = _Repo();
+    final c = await _container(repo);
+    await c
+        .read(batchActionsControllerProvider.notifier)
+        .removeBatch('b2', quantity: 1, left: 10);
+    expect(repo.log, ['remove s1 b2 qty=1.0 keep-open']);
+  });
+
+  test('a retry of an unanswered removal re-sends its id', () async {
+    // A partial removal leaves the delivery open, so "already closed" cannot
+    // catch a retry: without the same id a lost reply removes it twice.
+    final repo = _Repo(fail: true);
+    final c = await _container(repo);
+    final actions = c.read(batchActionsControllerProvider.notifier);
+    await actions.removeBatch('b2', quantity: 1, left: 10);
+    await actions.removeBatch('b2', quantity: 1, left: 10);
+    await actions.removeBatch('b2', quantity: 2, left: 10);
+    expect(repo.removalIds[0], isNotNull);
+    expect(repo.removalIds[1], repo.removalIds[0]);
+    expect(repo.removalIds[2], isNot(repo.removalIds[0]));
+  });
+
+  test('after a removal succeeds the same amount again is new', () async {
+    final repo = _Repo();
+    final c = await _container(repo);
+    final actions = c.read(batchActionsControllerProvider.notifier);
+    await actions.removeBatch('b2', quantity: 1, left: 10);
+    await actions.removeBatch('b2', quantity: 1, left: 9);
+    expect(repo.removalIds[1], isNot(repo.removalIds[0]));
+  });
+
   test('a failure is reported and surfaced as an error state', () async {
     final c = await _container(_Repo(fail: true));
     final ok = await c
         .read(batchActionsControllerProvider.notifier)
-        .removeBatch('b1', quantity: 1);
+        .removeBatch('b1', quantity: 1, left: 1);
     expect(ok, isFalse);
     expect(c.read(batchActionsControllerProvider).error, isA<NetworkFailure>());
   });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme.dart';
@@ -99,46 +100,51 @@ class _DeliveryRow extends ConsumerWidget {
   Future<void> _confirmRemove(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          l10n.expiry_removeConfirmTitle(
-            Qty.format(estimate.left),
-            product.unitLabel,
-            product.name,
-          ),
-        ),
-        content: Text(l10n.expiry_removeConfirmBody),
-        // Side by side, like the cart's Clear dialog: "Cancel" + "Remove from
-        // stock" did not fit one row on a 360 dp phone and stacked. The title
-        // already says what is removed, so the button can just say Remove.
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.common_cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(0, 44),
-              backgroundColor: Theme.of(ctx).extension<AppColors>()!.negative,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.common_remove),
-          ),
-        ],
-      ),
-    );
-    if (yes != true) return;
     final actions = ref.read(batchActionsControllerProvider.notifier);
-    // Expired: the server removes the locked count. Not expired (thrown away
-    // or returned early): the amount shown here, which only the app knows.
-    final ok = estimate.status == BatchStatus.expired
-        ? await actions.removeExpired([estimate.batch.id])
-        : await actions.removeBatch(estimate.batch.id, quantity: estimate.left);
+    final bool ok;
+    if (estimate.status == BatchStatus.expired) {
+      // All of an expired delivery goes: the server removes the locked count.
+      final yes = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(
+            l10n.expiry_removeConfirmTitle(
+              Qty.format(estimate.left),
+              product.unitLabel,
+              product.name,
+            ),
+          ),
+          content: Text(l10n.expiry_removeConfirmBody),
+          // Side by side, like the cart's Clear dialog: "Cancel" + "Remove
+          // from stock" did not fit one row on a 360 dp phone and stacked.
+          // The title already says what is removed, so the button says Remove.
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.common_cancel),
+            ),
+            _RemoveButton(onPressed: () => Navigator.of(ctx).pop(true)),
+          ],
+        ),
+      );
+      if (yes != true) return;
+      ok = await actions.removeExpired([estimate.batch.id]);
+    } else {
+      // Thrown away or returned early: any amount up to what is left. Part
+      // of it keeps the delivery open with the rest.
+      final qty = await showDialog<double>(
+        context: context,
+        builder: (_) =>
+            _RemoveAmountDialog(product: product, left: estimate.left),
+      );
+      if (qty == null) return;
+      ok = await actions.removeBatch(
+        estimate.batch.id,
+        quantity: qty,
+        left: estimate.left,
+      );
+    }
     if (ok) {
       messenger
         ..hideCurrentSnackBar()
@@ -230,6 +236,106 @@ class _DeliveryRow extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// The red Remove button of the removal dialogs.
+class _RemoveButton extends StatelessWidget {
+  const _RemoveButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => FilledButton(
+    style: FilledButton.styleFrom(
+      minimumSize: const Size(0, 44),
+      backgroundColor: Theme.of(context).extension<AppColors>()!.negative,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+    ),
+    onPressed: onPressed,
+    child: Text(context.l10n.common_remove),
+  );
+}
+
+/// "How many?" for removing part or all of a delivery that has not expired.
+/// Pops the amount, or null on Cancel.
+class _RemoveAmountDialog extends StatefulWidget {
+  const _RemoveAmountDialog({required this.product, required this.left});
+
+  final Product product;
+  final double left;
+
+  @override
+  State<_RemoveAmountDialog> createState() => _RemoveAmountDialogState();
+}
+
+class _RemoveAmountDialogState extends State<_RemoveAmountDialog> {
+  late final _amount = TextEditingController(text: plainQty(widget.left));
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    super.dispose();
+  }
+
+  bool get _decimals => widget.product.unitType.allowsDecimal;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final unit = widget.product.unitLabel;
+    final qty = double.tryParse(_amount.text.trim());
+    final String? error;
+    if (qty == null || qty <= 0 || (!_decimals && qty != qty.roundToDouble())) {
+      error = l10n.expiry_amountInvalid;
+    } else if (qty > widget.left + 1e-9) {
+      error = l10n.cart_batchShort(Qty.format(widget.left), unit);
+    } else {
+      error = null;
+    }
+
+    return AlertDialog(
+      title: Text(l10n.expiry_removeAmountTitle(widget.product.name)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.expiry_removeConfirmBody),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _amount,
+            onChanged: (_) => setState(() {}),
+            keyboardType: TextInputType.numberWithOptions(decimal: _decimals),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(
+                _decimals ? RegExp(r'[0-9.]') : RegExp(r'[0-9]'),
+              ),
+            ],
+            decoration: InputDecoration(
+              labelText: l10n.expiry_removeAmountLabel,
+              suffixText: unit,
+              helperText: error == null
+                  ? l10n.cart_batchOptionLeft(Qty.format(widget.left), unit)
+                  : null,
+              errorText: error,
+            ),
+          ),
+        ],
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.common_cancel),
+        ),
+        _RemoveButton(
+          onPressed: error == null
+              ? () => Navigator.of(context).pop(qty)
+              : null,
+        ),
+      ],
     );
   }
 }

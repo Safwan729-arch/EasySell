@@ -179,14 +179,17 @@ class BatchRepository {
     }
   }
 
-  /// `remove_batch_stock` (0013): lowers stock by an expired delivery's
-  /// locked count, or by [quantity] (what the app shows as left) for one that
-  /// has not expired, records the loss as an `adjustment`, and closes the
-  /// delivery. Safe to retry: a closed delivery is left alone.
+  /// `remove_batch_stock` (0014): lowers stock by an expired delivery's
+  /// locked count, or by [quantity] for one that has not expired, and records
+  /// the loss as an `adjustment`. [close] false removes only part: the units
+  /// come off the delivery (as a pick) and it stays open. [removalId], minted
+  /// by the phone and re-sent on a retry, makes a lost reply's retry a no-op.
   Future<Result<void>> removeStock({
     required String shopId,
     required String batchId,
     double? quantity,
+    bool close = true,
+    String? removalId,
   }) async {
     try {
       await _client.rpc(
@@ -195,6 +198,8 @@ class BatchRepository {
           'p_shop_id': shopId,
           'p_batch_id': batchId,
           'p_quantity': ?quantity,
+          'p_close': close,
+          'p_removal_id': ?removalId,
         },
       );
       return const Result.success(null);

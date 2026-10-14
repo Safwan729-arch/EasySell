@@ -1409,6 +1409,18 @@ class AppLocalizationsBn extends AppLocalizations {
   String get expiry_removed => 'স্টক থেকে বাদ দেওয়া হয়েছে';
 
   @override
+  String expiry_removeAmountTitle(String name) {
+    return '$name স্টক থেকে বাদ দেবেন?';
+  }
+
+  @override
+  String get expiry_removeAmountLabel => 'কতগুলো?';
+
+  @override
+  String get expiry_editAmountHelper =>
+      'শুধু এই ব্যাচের হিসাব ঠিক করে। স্টক বদলায় না।';
+
+  @override
   String expiry_cartOnlyGood(String good, String name, String expired) {
     return 'ভালো $name মাত্র $good বাকি ($expired মেয়াদোত্তীর্ণ)';
   }

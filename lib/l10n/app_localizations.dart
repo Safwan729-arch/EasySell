@@ -2468,6 +2468,24 @@ abstract class AppLocalizations {
   /// **'Removed from stock'**
   String get expiry_removed;
 
+  /// No description provided for @expiry_removeAmountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from stock?'**
+  String expiry_removeAmountTitle(String name);
+
+  /// No description provided for @expiry_removeAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many?'**
+  String get expiry_removeAmountLabel;
+
+  /// No description provided for @expiry_editAmountHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixes this batch\'s record only. Stock doesn\'t change.'**
+  String get expiry_editAmountHelper;
+
   /// No description provided for @expiry_cartOnlyGood.
   ///
   /// In en, this message translates to:

@@ -38,8 +38,10 @@ class _Repo implements BatchRepository {
     required String shopId,
     required String batchId,
     double? quantity,
+    bool close = true,
+    String? removalId,
   }) async {
-    removed.add('$batchId $quantity');
+    removed.add('$batchId $quantity${close ? '' : ' keep-open'}');
     return failRemove
         ? const Result.failure(
             NetworkFailure('No internet connection. Please try again.'),
@@ -229,4 +231,55 @@ void main() {
       expect(find.text('Removed from stock'), findsOneWidget);
     },
   );
+
+  Future<_Repo> openGoodRemove(WidgetTester tester) async {
+    final repo = _Repo();
+    await _pump(tester, repo);
+    await ProviderScope.containerOf(
+      tester.element(find.byType(DeliveriesSection)),
+    ).read(myShopProvider.future);
+    await tester.tap(find.byType(PopupMenuButton<String>).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove from stock').last);
+    await tester.pumpAndSettle();
+    return repo;
+  }
+
+  Finder dialogRemove() => find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.widgetWithText(FilledButton, 'Remove'),
+  );
+
+  testWidgets('part of a good delivery can be removed', (tester) async {
+    // One broken bottle: the batch stays open with the rest.
+    final repo = await openGoodRemove(tester);
+    final field = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(TextField),
+    );
+    expect(tester.widget<TextField>(field).controller!.text, '10');
+
+    await tester.enterText(field, '3');
+    await tester.pumpAndSettle();
+    await tester.tap(dialogRemove());
+    await tester.pumpAndSettle();
+
+    expect(repo.removed, ['new 3.0 keep-open']);
+  });
+
+  testWidgets('more than the batch has cannot be removed', (tester) async {
+    final repo = await openGoodRemove(tester);
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      ),
+      '11',
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<FilledButton>(dialogRemove()).onPressed, isNull);
+    expect(find.text('Only 10 pcs left in this batch'), findsOneWidget);
+    expect(repo.removed, isEmpty);
+  });
 }

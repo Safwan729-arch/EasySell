@@ -569,3 +569,39 @@ and could be sold.
 - `remove_expired_stock` stays for older app builds.
 - **0013 needs 0012** (`picked_qty`, `transactions.batch_id`).
 - Old rows closed as `none_left` still show "Marked none left" in the history.
+
+## 15. Remove part of a delivery (2026-10-15, migration `0014_partial_batch_removal.sql`)
+
+**Why.** The user asked which batch loses a unit when stock is lowered by hand
+with ✏️. The answer is undated stock first, then the delivery added earliest
+(the estimate's FIFO). That can be the wrong batch when a newer delivery
+expires sooner. Before this, "Remove from stock" took everything left in a
+delivery, so one broken bottle had no exact path. Hand-editing stock is now
+only for fixing a miscount.
+
+**How it works.**
+- **The dialog.** Removing from a delivery that has not expired asks "How
+  many?". The box starts at everything left and accepts more than 0 up to that
+  amount, in whole units for pieces.
+  - **All of it:** the delivery closes, as in §14.
+  - **Part of it:** the delivery stays open. `remove_batch_stock` adds the
+    units to `picked_qty`, because they left that delivery just like a sale
+    picked from it (§13). The estimate then takes them off that batch and no
+    other.
+- **Expired deliveries** still remove their whole locked count.
+- **The Edit form's Amount box** now says it only fixes the batch record and
+  that stock doesn't change. The user lowered a delivery from 30 to 29,
+  expected stock to follow, and it didn't.
+
+**Retry safety (the gotcha).** 0013 was retry-safe only because a removed
+delivery closes. A partial removal leaves it open, so a lost reply plus a retry
+would remove the units twice. The phone now mints `p_removal_id` (restock's
+0011 pattern):
+- The id is keyed on batch, amount, close and the local day.
+- It is cleared after a success, or after a refusal from the server.
+- The adjustment row is inserted with that id. A repeat finds the row and
+  changes nothing.
+- The check runs first, before the closed check, because the first call has
+  already lowered stock and the cap.
+
+0014 drops 0013's three-argument signature. That is the overload trap again.

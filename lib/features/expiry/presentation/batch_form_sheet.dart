@@ -53,7 +53,9 @@ class _BatchFormSheetState extends ConsumerState<_BatchFormSheet> {
     final b = widget.batch;
     _expiry = b?.expiryDate;
     _received = b?.receivedOn;
-    _amount = TextEditingController(text: _plain(b?.quantity ?? _uncovered()));
+    _amount = TextEditingController(
+      text: plainQty(b?.quantity ?? _uncovered()),
+    );
   }
 
   /// Stock not yet covered by an open delivery -- the default amount when
@@ -65,15 +67,6 @@ class _BatchFormSheetState extends ConsumerState<_BatchFormSheet> {
     );
     return rest > 0 ? rest : widget.product.quantity;
   }
-
-  /// Plain ASCII digits for the text field (see add_to_cart_sheet: `Qty.format`
-  /// localises digits, which `double.tryParse` cannot read back).
-  String _plain(double v) => v == v.roundToDouble()
-      ? v.toStringAsFixed(0)
-      : v
-            .toStringAsFixed(3)
-            .replaceFirst(RegExp(r'0+$'), '')
-            .replaceFirst(RegExp(r'\.$'), '');
 
   @override
   void dispose() {
@@ -184,6 +177,11 @@ class _BatchFormSheetState extends ConsumerState<_BatchFormSheet> {
             decoration: InputDecoration(
               labelText: l10n.expiry_formAmount,
               suffixText: widget.product.unitLabel,
+              // Editing a delivery's amount only fixes its record; thrown-away
+              // units go through Remove from stock (2026-10-15: lowering a
+              // delivery to 29 left stock at 30 and puzzled the user).
+              helperText: _isEdit ? l10n.expiry_editAmountHelper : null,
+              helperMaxLines: 2,
             ),
           ),
           const SizedBox(height: 16),
@@ -235,3 +233,12 @@ class _BatchFormSheetState extends ConsumerState<_BatchFormSheet> {
     );
   }
 }
+
+/// Plain ASCII digits for an amount field (see add_to_cart_sheet: `Qty.format`
+/// localises digits, which `double.tryParse` cannot read back).
+String plainQty(double v) => v == v.roundToDouble()
+    ? v.toStringAsFixed(0)
+    : v
+          .toStringAsFixed(3)
+          .replaceFirst(RegExp(r'0+$'), '')
+          .replaceFirst(RegExp(r'\.$'), '');

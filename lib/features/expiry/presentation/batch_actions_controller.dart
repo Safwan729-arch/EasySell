@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
@@ -108,31 +110,62 @@ class BatchActionsController extends AsyncNotifier<void> {
     });
   }
 
-  /// Throws away (or returns) what is left of one delivery, expired or not:
-  /// stock goes down by [quantity] -- the amount the product page shows --
-  /// the loss is recorded and the delivery closes. For an expired delivery
-  /// the server removes its locked count instead.
+  /// The removal id of the last removal that got no answer, and the request
+  /// it was for -- the restock pattern (0011). A partial removal leaves the
+  /// delivery open, so "already closed" cannot catch a retry; the server
+  /// records an id once instead. Anything changed is a new removal.
+  String? _pendingRemovalId;
+  String? _pendingRemovalRequest;
+
+  /// Throws away (or returns) [quantity] of one delivery that has not
+  /// expired: stock goes down, the loss is recorded. Removing all of what is
+  /// [left] closes the delivery; removing part keeps it open with the rest.
   ///
   /// There is no "None left": a delivery whose units were sold closes by
   /// itself, and closing one WITHOUT lowering stock left thrown-away units
   /// counted as good, sellable stock with no date.
-  Future<bool> removeBatch(String batchId, {required double quantity}) {
+  Future<bool> removeBatch(
+    String batchId, {
+    required double quantity,
+    required double left,
+  }) async {
     final shopId = ref.read(myShopProvider).value?.id;
     if (shopId == null) {
       state = AsyncError(
         const AuthFailure('No shop found for this account.'),
         StackTrace.current,
       );
-      return Future.value(false);
+      return false;
     }
-    return _run(
+    final close = quantity >= left - 1e-9;
+    final request = jsonEncode({
+      'batch': batchId,
+      'quantity': quantity,
+      'close': close,
+      // A retry is the same day; the same removal days later is a new one.
+      'day': ymd(ref.read(todayProvider)),
+    });
+    if (request != _pendingRemovalRequest) {
+      _pendingRemovalId = const Uuid().v4();
+      _pendingRemovalRequest = request;
+    }
+    final ok = await _run(
       stockChanged: true,
       () => _repo.removeStock(
         shopId: shopId,
         batchId: batchId,
         quantity: quantity,
+        close: close,
+        removalId: _pendingRemovalId,
       ),
     );
+    // Recorded, or refused by the server (so certainly not recorded): the
+    // next removal is a new one.
+    if (ok || state.error is DatabaseFailure) {
+      _pendingRemovalId = null;
+      _pendingRemovalRequest = null;
+    }
+    return ok;
   }
 
   Future<bool> _run(
