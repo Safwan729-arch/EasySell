@@ -15,6 +15,7 @@ import '../../expiry/presentation/expiry_reconciler.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/data/transaction_repository.dart';
 import '../../transactions/domain/transaction.dart';
+import '../domain/cart_line.dart';
 import '../domain/cart_math.dart';
 import 'cart_controller.dart';
 import 'cart_discount_controller.dart';
@@ -48,12 +49,28 @@ class CartCheckoutController extends AsyncNotifier<void> {
   String? _pendingSaleId;
   String? _pendingRequest;
 
+  /// The pending sale was SENT and no answer came back (a lost reply, a
+  /// timeout), so it may already be saved. False when the gate stopped it
+  /// before sending, or when the server answered with a refusal -- then the
+  /// sale was certainly not recorded.
+  bool _pendingUnacknowledged = false;
+  String? _pendingItems;
+
   @override
   FutureOr<void> build() {
     // A rebuilt notifier has no call in flight; stale `true` would wedge
     // checkout permanently.
     _inFlight = false;
   }
+
+  /// [lines] are exactly a sale that was sent and never acknowledged. After a
+  /// lost reply the refreshed stock can make the SAME cart look too big or
+  /// expired; the cart must still let it be retried, because the server
+  /// replays a saved sale and editing the cart instead (a new request, a new
+  /// sale id) would record it twice (expiry review #1, migration 0010).
+  bool hasUnacknowledgedSale(List<CartLine> lines) =>
+      _pendingUnacknowledged &&
+      _pendingItems == jsonEncode(cartItemsPayload(lines));
 
   Future<bool> checkout({String source = 'manual', String? customerId}) async {
     if (_inFlight) return false;
@@ -78,9 +95,15 @@ class CartCheckoutController extends AsyncNotifier<void> {
       'customer': customerId,
       'discount': discount,
     });
+    // An identical retry of a sale that may already be saved: the server will
+    // replay it, so the expiry block must not stand in its way.
+    final isUnacknowledgedRetry =
+        request == _pendingRequest && _pendingUnacknowledged;
     if (request != _pendingRequest) {
       _pendingSaleId = const Uuid().v4();
       _pendingRequest = request;
+      _pendingItems = jsonEncode(items);
+      _pendingUnacknowledged = false;
     }
 
     state = const AsyncLoading();
@@ -96,6 +119,8 @@ class CartCheckoutController extends AsyncNotifier<void> {
         case GateFailed(:final failure):
           state = AsyncError(failure, StackTrace.current);
           return false;
+        case GateBlocked() when isUnacknowledgedRetry:
+          break;
         case GateBlocked():
           state = AsyncError(
             const DatabaseFailure(
@@ -108,6 +133,8 @@ class CartCheckoutController extends AsyncNotifier<void> {
         case GatePass():
           break;
       }
+      // From here the outcome is unknown until an answer arrives.
+      _pendingUnacknowledged = true;
       result = await ref
           .read(transactionRepositoryProvider)
           .recordSaleCart(
@@ -129,6 +156,8 @@ class CartCheckoutController extends AsyncNotifier<void> {
         // and needs its own id, or the server would drop it as a repeat.
         _pendingSaleId = null;
         _pendingRequest = null;
+        _pendingItems = null;
+        _pendingUnacknowledged = false;
         ref.read(cartControllerProvider.notifier).clear();
         ref.read(cartDiscountControllerProvider.notifier).clear();
         ref.invalidate(productsStreamProvider);
@@ -143,6 +172,10 @@ class CartCheckoutController extends AsyncNotifier<void> {
         return true;
       },
       failure: (f) {
+        // The server answered with a refusal (stock, discount ...): the RPC is
+        // atomic, so nothing was recorded. Only a missing answer leaves the
+        // sale possibly saved.
+        if (f is DatabaseFailure) _pendingUnacknowledged = false;
         state = AsyncError(f, StackTrace.current);
         return false;
       },

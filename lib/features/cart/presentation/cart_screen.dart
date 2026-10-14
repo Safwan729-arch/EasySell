@@ -114,7 +114,14 @@ class CartScreen extends ConsumerWidget {
     final checkoutState = ref.watch(cartCheckoutControllerProvider);
     // A line that would sell expired units, or more than is left, blocks
     // checkout until it is fixed (expiry spec §5 Cart).
-    final blocked = ref.watch(cartLineNoticesProvider).isNotEmpty;
+    // Except a retry of a sale that was sent and never answered: it may
+    // already be saved, the server replays it, and editing the cart instead
+    // would record it twice.
+    final blocked =
+        ref.watch(cartLineNoticesProvider).isNotEmpty &&
+        !ref
+            .read(cartCheckoutControllerProvider.notifier)
+            .hasUnacknowledgedSale(lines);
 
     ref.listen<AsyncValue<void>>(cartCheckoutControllerProvider, (_, next) {
       if (next is AsyncError) {
