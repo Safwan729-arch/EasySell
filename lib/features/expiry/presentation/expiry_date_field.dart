@@ -33,6 +33,9 @@ Future<bool> confirmOddExpiryDate(
             ? l10n.expiry_pastDateBody
             : l10n.expiry_farDateBody(formatExpiryDate(ctx, picked)),
       ),
+      // Tighter than the default so the two buttons stay on one row on a
+      // 360 dp phone instead of stacking.
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),

@@ -139,6 +139,26 @@ void main() {
     },
   );
 
+  testWidgets('the remove dialog keeps its two buttons side by side', (
+    tester,
+  ) async {
+    // On the S22 (360 dp wide) "Cancel" + "Remove from stock" did not fit on
+    // one row, so the dialog stacked them one above the other.
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+    await _pump(tester, _Repo());
+
+    await tester.tap(find.text('Remove from stock'));
+    await tester.pumpAndSettle();
+
+    final dialog = find.byType(AlertDialog);
+    final cancel = find.descendant(of: dialog, matching: find.text('Cancel'));
+    final remove = find.descendant(of: dialog, matching: find.text('Remove'));
+    expect(tester.getCenter(cancel).dy, tester.getCenter(remove).dy);
+    expect(tester.getCenter(cancel).dx, lessThan(tester.getCenter(remove).dx));
+  });
+
   testWidgets('a failed removal says why instead of doing nothing', (
     tester,
   ) async {
@@ -153,7 +173,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.text('Remove from stock'),
+        matching: find.text('Remove'),
       ),
     );
     await tester.pumpAndSettle();
@@ -185,7 +205,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.text('Remove from stock'),
+          matching: find.text('Remove'),
         ),
       );
       await tester.pumpAndSettle();

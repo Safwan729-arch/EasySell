@@ -107,14 +107,24 @@ class _DeliveryRow extends ConsumerWidget {
           ),
         ),
         content: Text(l10n.expiry_removeConfirmBody),
+        // Side by side, like the cart's Clear dialog: "Cancel" + "Remove from
+        // stock" did not fit one row on a 360 dp phone and stacked. The title
+        // already says what is removed, so the button can just say Remove.
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(l10n.common_cancel),
           ),
-          TextButton(
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              backgroundColor: Theme.of(ctx).extension<AppColors>()!.negative,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.expiry_removeFromStock),
+            child: Text(l10n.common_remove),
           ),
         ],
       ),
