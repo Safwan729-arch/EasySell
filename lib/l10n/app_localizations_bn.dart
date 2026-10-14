@@ -112,7 +112,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get dashboard_notificationsHint =>
-      'কম স্টক আর বিক্রির খবর এখানে পাবেন।';
+      'যে স্টকের মেয়াদ শেষ হচ্ছে বা শেষ হয়েছে, তা এখানে দেখাব।';
 
   @override
   String get dashboard_salesLast7 => 'বিক্রি · গত ৭ দিন';
@@ -1440,4 +1440,33 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get error_expiredStockInCart =>
       'কার্টের কিছু পণ্যের মেয়াদ শেষ। চেকআউটের আগে ঠিক করুন।';
+
+  @override
+  String expiry_alertExpired(String qty, String name) {
+    return 'মেয়াদোত্তীর্ণ: $qty $name';
+  }
+
+  @override
+  String expiry_alertSoonToday(String name, String qty) {
+    return '$name: $qty আজ মেয়াদ শেষ';
+  }
+
+  @override
+  String expiry_alertSoonTomorrow(String name, String qty) {
+    return '$name: $qty আগামীকাল মেয়াদ শেষ';
+  }
+
+  @override
+  String expiry_alertSoonDays(String name, String qty, String days) {
+    return '$name: $qty $days দিনে মেয়াদ শেষ';
+  }
+
+  @override
+  String get expiry_cardTitle => 'মেয়াদ শেষ ও শেষ হচ্ছে';
+
+  @override
+  String get expiry_alertsTitle => 'মেয়াদের সতর্কতা';
+
+  @override
+  String get expiry_filter => 'মেয়াদ শেষ হচ্ছে';
 }

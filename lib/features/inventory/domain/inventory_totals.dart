@@ -1,3 +1,4 @@
+import '../../expiry/domain/expiry_estimate.dart';
 import 'product.dart';
 
 /// Whole-inventory figures behind the `N items · value` line on the Items
@@ -30,14 +31,19 @@ class InventoryTotals {
   /// move — which is why the sheet labels it "potential".
   double get potentialProfit => retailValue - costValue;
 
-  static InventoryTotals of(List<Product> products) {
+  /// [expiry] (the estimate map) makes low stock judge GOOD stock, so 5
+  /// expired + 1 good counts as low (expiry spec §5).
+  static InventoryTotals of(
+    List<Product> products, {
+    Map<String, ProductExpiry> expiry = const {},
+  }) {
     var cost = 0.0;
     var retail = 0.0;
     var low = 0;
     for (final p in products) {
       cost += p.inventoryValue;
       retail += p.sellingPrice * p.quantity;
-      if (p.isLowStock) low++;
+      if (p.isLowStockAt(goodStockOf(p, expiry))) low++;
     }
     return InventoryTotals(
       productCount: products.length,

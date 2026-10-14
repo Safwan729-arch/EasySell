@@ -115,7 +115,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboard_notificationsHint =>
-      'We\'ll alert you about low stock and sales here.';
+      'We\'ll show stock that is about to expire, or has expired, here.';
 
   @override
   String get dashboard_salesLast7 => 'Sales · last 7 days';
@@ -1446,4 +1446,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get error_expiredStockInCart =>
       'Some items in the cart are expired. Fix them before checkout.';
+
+  @override
+  String expiry_alertExpired(String qty, String name) {
+    return 'Expired: $qty $name';
+  }
+
+  @override
+  String expiry_alertSoonToday(String name, String qty) {
+    return '$name: $qty expire today';
+  }
+
+  @override
+  String expiry_alertSoonTomorrow(String name, String qty) {
+    return '$name: $qty expire tomorrow';
+  }
+
+  @override
+  String expiry_alertSoonDays(String name, String qty, String days) {
+    return '$name: $qty expire in $days days';
+  }
+
+  @override
+  String get expiry_cardTitle => 'Expiring & expired';
+
+  @override
+  String get expiry_alertsTitle => 'Expiry alerts';
+
+  @override
+  String get expiry_filter => 'Expiring';
 }

@@ -16,6 +16,8 @@ import '../../../core/widgets/skeleton.dart';
 import '../../../shared/extensions/format.dart';
 import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../expiry/domain/expiry_estimate.dart';
+import '../../expiry/presentation/expiry_providers.dart';
 import '../../voice/presentation/voice_sale_sheet.dart';
 import '../domain/inventory_totals.dart';
 import '../domain/product.dart';
@@ -54,7 +56,12 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
     });
   }
 
-  List<Product> _filter(List<Product> products, _InvFilter active) {
+  List<Product> _filter(
+    List<Product> products,
+    _InvFilter active,
+    Map<String, ProductExpiry> expiry,
+    Set<String> alertIds,
+  ) {
     final q = _query.trim().toLowerCase();
     return products.where((p) {
       final matchesQuery =
@@ -63,7 +70,8 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
           (p.brand?.toLowerCase().contains(q) ?? false) ||
           (p.variant?.toLowerCase().contains(q) ?? false);
       final matchesFilter = switch (active) {
-        _InvFilter(lowOnly: true) => p.isLowStock,
+        _InvFilter(lowOnly: true) => p.isLowStockAt(goodStockOf(p, expiry)),
+        _InvFilter(expiringOnly: true) => alertIds.contains(p.id),
         _InvFilter(categoryId: final id?) => p.categoryId == id,
         _ => true, // All
       };
@@ -78,12 +86,17 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
     final productsAsync = ref.watch(productsStreamProvider);
     final categories = ref.watch(usedCategoriesProvider);
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
+    final expiry = ref.watch(productExpiryProvider);
+    final alertIds = {
+      for (final a in ref.watch(expiryAlertsProvider)) a.product.id,
+    };
     final categoryNames = {for (final c in categories) c.id: c.name};
 
     // Filter pills: All, Low stock, then one per in-use category.
     final filters = <_InvFilter>[
       const _InvFilter.all(),
       const _InvFilter.low(),
+      const _InvFilter.expiring(),
       for (final c in categories) _InvFilter.category(c.id, c.name),
     ];
     // If the selected category stopped having products (so its pill is gone),
@@ -95,7 +108,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
     final products = productsAsync.value ?? const <Product>[];
     // Whole-inventory figures, not the filtered view: the header describes the
     // shop, and the value must not change when a category pill is tapped.
-    final totals = InventoryTotals.of(products);
+    final totals = InventoryTotals.of(products, expiry: expiry);
 
     return Scaffold(
       body: SafeArea(
@@ -177,6 +190,8 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                 selected: activeFilter,
                 labelOf: (f) => f.lowOnly
                     ? l10n.inventory_filterLowStock
+                    : f.expiringOnly
+                    ? l10n.expiry_filter
                     : (f.categoryId == null
                           ? l10n.inventory_filterAll
                           : f.label),
@@ -193,7 +208,12 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                   onRetry: () => ref.invalidate(productsStreamProvider),
                 ),
                 data: (products) {
-                  final filtered = _filter(products, activeFilter);
+                  final filtered = _filter(
+                    products,
+                    activeFilter,
+                    expiry,
+                    alertIds,
+                  );
                   if (products.isEmpty) {
                     return _EmptyState(
                       icon: Icons.inventory_2_outlined,
@@ -239,19 +259,34 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
 /// Equality is keyed so a rebuilt list still matches the stored selection.
 @immutable
 class _InvFilter {
-  const _InvFilter.all() : label = 'All', categoryId = null, lowOnly = false;
+  const _InvFilter.all()
+    : label = 'All',
+      categoryId = null,
+      lowOnly = false,
+      expiringOnly = false;
   const _InvFilter.low()
     : label = 'Low stock',
       categoryId = null,
-      lowOnly = true;
-  const _InvFilter.category(this.categoryId, this.label) : lowOnly = false;
+      lowOnly = true,
+      expiringOnly = false;
+  const _InvFilter.expiring()
+    : label = 'Expiring',
+      categoryId = null,
+      lowOnly = false,
+      expiringOnly = true;
+  const _InvFilter.category(this.categoryId, this.label)
+    : lowOnly = false,
+      expiringOnly = false;
 
   final String label;
   final String? categoryId; // non-null only for a category filter
   final bool lowOnly;
+  final bool expiringOnly;
 
-  // Stable identity for selection matching: low stock, a category id, or "all".
-  String get _key => lowOnly ? 'low' : (categoryId ?? 'all');
+  // Stable identity for selection matching: low stock, expiring, a category
+  // id, or "all".
+  String get _key =>
+      lowOnly ? 'low' : (expiringOnly ? 'expiring' : (categoryId ?? 'all'));
 
   @override
   bool operator ==(Object other) => other is _InvFilter && other._key == _key;
@@ -379,16 +414,17 @@ class _ProductTile extends StatelessWidget {
 
 /// In-line stock count, green when healthy and amber when at/below the reorder
 /// threshold (e.g. "24 in stock" / "6 in stock").
-class _StockText extends StatelessWidget {
+class _StockText extends ConsumerWidget {
   const _StockText({required this.product});
 
   final Product product;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.extension<AppColors>()!;
-    final color = product.isLowStock ? colors.warning : colors.positive;
+    final isLow = product.isLowStockAt(ref.watch(goodStockProvider(product)));
+    final color = isLow ? colors.warning : colors.positive;
     return Text(
       context.l10n.inventory_inStock(product.quantityLabel),
       style: theme.textTheme.labelMedium?.copyWith(

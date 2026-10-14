@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// No description provided for @dashboard_notificationsHint.
   ///
   /// In en, this message translates to:
-  /// **'We\'ll alert you about low stock and sales here.'**
+  /// **'We\'ll show stock that is about to expire, or has expired, here.'**
   String get dashboard_notificationsHint;
 
   /// No description provided for @dashboard_salesLast7.
@@ -2515,6 +2515,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Some items in the cart are expired. Fix them before checkout.'**
   String get error_expiredStockInCart;
+
+  /// No description provided for @expiry_alertExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired: {qty} {name}'**
+  String expiry_alertExpired(String qty, String name);
+
+  /// No description provided for @expiry_alertSoonToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {qty} expire today'**
+  String expiry_alertSoonToday(String name, String qty);
+
+  /// No description provided for @expiry_alertSoonTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {qty} expire tomorrow'**
+  String expiry_alertSoonTomorrow(String name, String qty);
+
+  /// No description provided for @expiry_alertSoonDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {qty} expire in {days} days'**
+  String expiry_alertSoonDays(String name, String qty, String days);
+
+  /// No description provided for @expiry_cardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiring & expired'**
+  String get expiry_cardTitle;
+
+  /// No description provided for @expiry_alertsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry alerts'**
+  String get expiry_alertsTitle;
+
+  /// No description provided for @expiry_filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiring'**
+  String get expiry_filter;
 }
 
 class _AppLocalizationsDelegate

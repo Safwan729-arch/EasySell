@@ -34,7 +34,7 @@
   "common_period_all": "All",
   "dashboard_yourShop": "Your shop",
   "dashboard_notificationsCaughtUp": "You're all caught up",
-  "dashboard_notificationsHint": "We'll alert you about low stock and sales here.",
+  "dashboard_notificationsHint": "We'll show stock that is about to expire, or has expired, here.",
   "dashboard_salesLast7": "Sales · last 7 days",
   "dashboard_bestDay": "{day} best",
   "@dashboard_bestDay": { "placeholders": { "day": { "type": "String" } } },
@@ -485,5 +485,16 @@
   "@expiry_cartOnlyLeft": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
   "expiry_addSheetExpiredNote": "{qty} {unit} expired — not counted",
   "@expiry_addSheetExpiredNote": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
-  "error_expiredStockInCart": "Some items in the cart are expired. Fix them before checkout."
+  "error_expiredStockInCart": "Some items in the cart are expired. Fix them before checkout.",
+  "expiry_alertExpired": "Expired: {qty} {name}",
+  "@expiry_alertExpired": { "placeholders": { "qty": { "type": "String" }, "name": { "type": "String" } } },
+  "expiry_alertSoonToday": "{name}: {qty} expire today",
+  "@expiry_alertSoonToday": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" } } },
+  "expiry_alertSoonTomorrow": "{name}: {qty} expire tomorrow",
+  "@expiry_alertSoonTomorrow": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" } } },
+  "expiry_alertSoonDays": "{name}: {qty} expire in {days} days",
+  "@expiry_alertSoonDays": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" }, "days": { "type": "String" } } },
+  "expiry_cardTitle": "Expiring & expired",
+  "expiry_alertsTitle": "Expiry alerts",
+  "expiry_filter": "Expiring"
 }

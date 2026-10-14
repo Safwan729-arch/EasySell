@@ -19,6 +19,9 @@ import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../analytics/domain/analytics.dart';
 import '../../analytics/presentation/analytics_controller.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../expiry/domain/expiry_estimate.dart';
+import '../../expiry/presentation/expiry_alerts_card.dart';
+import '../../expiry/presentation/expiry_providers.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/presentation/sales_providers.dart';
@@ -47,42 +50,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     AnalyticsPeriod.month,
   ];
 
-  /// Placeholder notifications surface. // MEMBER C owns the real one (push
-  /// alerts, low-stock and sale events); this keeps the bell honest until then.
-  static void _showNotificationsSheet(BuildContext context) {
-    AppHaptics.tap();
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: theme.colorScheme.surface,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.notifications_none_rounded,
-              size: 48,
-              color: theme.colorScheme.outline,
-            ),
-            const SizedBox(height: 12),
-            Text(l10n.dashboard_notificationsCaughtUp, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              l10n.dashboard_notificationsHint,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -96,10 +63,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ? ref.watch(daySummaryProvider(selectedDay))
         : ref.watch(summaryProvider(_period));
     final seriesAsync = ref.watch(seriesProvider(ChartBucket.daily));
+    // Low stock judges GOOD stock: 5 expired + 1 good is low (expiry spec §5).
+    final expiry = ref.watch(productExpiryProvider);
     final lowStock =
         (ref.watch(productsStreamProvider).value ?? const <Product>[])
-            .where((p) => p.isLowStock)
+            .where((p) => p.isLowStockAt(goodStockOf(p, expiry)))
             .toList();
+    final alertCount = ref.watch(expiryAlertsProvider).length;
 
     return Scaffold(
       floatingActionButton: _SellFab(
@@ -154,12 +124,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ],
                       ),
                     ),
-                    _HeaderIcon(
-                      icon: Icons.notifications_none_rounded,
-                      // MEMBER C: replace this placeholder with the real
-                      // notifications surface (push alerts, low-stock/sale
-                      // events). No dot until there's a real unread signal.
-                      onTap: () => _showNotificationsSheet(context),
+                    // Expiry alerts (expiry spec §5). // MEMBER C: other
+                    // notification kinds (sales, low stock) can join this
+                    // screen later.
+                    Badge.count(
+                      count: alertCount,
+                      isLabelVisible: alertCount > 0,
+                      child: _HeaderIcon(
+                        icon: Icons.notifications_none_rounded,
+                        onTap: () {
+                          AppHaptics.tap();
+                          context.push(AppRoutes.alerts);
+                        },
+                      ),
                     ),
                     const SizedBox(width: 8),
                     // Permanent door to the customer credit (khata) ledger. The
@@ -243,7 +220,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       currency: currency,
                       periodWord: label,
                       deltaPercent: delta,
-                      showDeltaSuffix: !isDay && _period == AnalyticsPeriod.today,
+                      showDeltaSuffix:
+                          !isDay && _period == AnalyticsPeriod.today,
                       onTap: () => showSummaryBreakdownSheet(
                         context,
                         summary: s,
@@ -270,8 +248,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(height: 20),
               Entrance(index: 5, child: _TopPerformer(currency: currency)),
               const SizedBox(height: 16),
+              const Entrance(index: 6, child: ExpiryAlertsCard()),
               Entrance(
-                index: 6,
+                index: 7,
                 child: _LowStockCard(products: lowStock, currency: currency),
               ),
             ],
@@ -384,7 +363,9 @@ class _WeeklySalesCard extends StatelessWidget {
           ),
           error: (_, _) => SizedBox(
             height: 180,
-            child: Center(child: Text(context.l10n.dashboard_couldNotLoadSales)),
+            child: Center(
+              child: Text(context.l10n.dashboard_couldNotLoadSales),
+            ),
           ),
           data: (points) {
             final values = [for (final p in points) p.revenue];
@@ -557,7 +538,6 @@ class _TopPerformer extends ConsumerWidget {
       ],
     );
   }
-
 }
 
 class _LowStockCard extends StatelessWidget {
@@ -691,4 +671,3 @@ class _ErrorText extends StatelessWidget {
     return SizedBox(height: 80, child: Center(child: Text(message)));
   }
 }
-

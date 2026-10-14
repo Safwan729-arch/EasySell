@@ -34,7 +34,7 @@
   "common_period_all": "সব",
   "dashboard_yourShop": "আপনার দোকান",
   "dashboard_notificationsCaughtUp": "সব দেখা হয়ে গেছে",
-  "dashboard_notificationsHint": "কম স্টক আর বিক্রির খবর এখানে পাবেন।",
+  "dashboard_notificationsHint": "যে স্টকের মেয়াদ শেষ হচ্ছে বা শেষ হয়েছে, তা এখানে দেখাব।",
   "dashboard_salesLast7": "বিক্রি · গত ৭ দিন",
   "dashboard_bestDay": "{day} সেরা",
   "@dashboard_bestDay": { "placeholders": { "day": { "type": "String" } } },
@@ -449,5 +449,16 @@
   "@expiry_cartOnlyLeft": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
   "expiry_addSheetExpiredNote": "{qty} {unit} মেয়াদোত্তীর্ণ — গণনা হয়নি",
   "@expiry_addSheetExpiredNote": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
-  "error_expiredStockInCart": "কার্টের কিছু পণ্যের মেয়াদ শেষ। চেকআউটের আগে ঠিক করুন।"
+  "error_expiredStockInCart": "কার্টের কিছু পণ্যের মেয়াদ শেষ। চেকআউটের আগে ঠিক করুন।",
+  "expiry_alertExpired": "মেয়াদোত্তীর্ণ: {qty} {name}",
+  "@expiry_alertExpired": { "placeholders": { "qty": { "type": "String" }, "name": { "type": "String" } } },
+  "expiry_alertSoonToday": "{name}: {qty} আজ মেয়াদ শেষ",
+  "@expiry_alertSoonToday": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" } } },
+  "expiry_alertSoonTomorrow": "{name}: {qty} আগামীকাল মেয়াদ শেষ",
+  "@expiry_alertSoonTomorrow": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" } } },
+  "expiry_alertSoonDays": "{name}: {qty} {days} দিনে মেয়াদ শেষ",
+  "@expiry_alertSoonDays": { "placeholders": { "name": { "type": "String" }, "qty": { "type": "String" }, "days": { "type": "String" } } },
+  "expiry_cardTitle": "মেয়াদ শেষ ও শেষ হচ্ছে",
+  "expiry_alertsTitle": "মেয়াদের সতর্কতা",
+  "expiry_filter": "মেয়াদ শেষ হচ্ছে"
 }

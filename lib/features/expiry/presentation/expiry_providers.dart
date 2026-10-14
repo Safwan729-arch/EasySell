@@ -51,9 +51,13 @@ final goodStockProvider = Provider.autoDispose.family<double, Product>(
 );
 
 final expiryAlertsProvider = Provider.autoDispose<List<ExpiryAlert>>((ref) {
+  final byProduct = ref.watch(productExpiryProvider);
+  // No deliveries, no alerts -- and no reason to start `todayProvider`'s
+  // midnight timer for a shop that never records an expiry date.
+  if (byProduct.isEmpty) return const <ExpiryAlert>[];
   return buildExpiryAlerts(
     products: ref.watch(productsStreamProvider).value ?? const <Product>[],
-    byProduct: ref.watch(productExpiryProvider),
+    byProduct: byProduct,
     today: ref.watch(todayProvider),
   );
 });
