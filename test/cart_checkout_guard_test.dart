@@ -7,11 +7,15 @@ import 'package:ai_shopkeeper/features/auth/domain/shop.dart';
 import 'package:ai_shopkeeper/features/cart/domain/cart_line.dart';
 import 'package:ai_shopkeeper/features/cart/presentation/cart_checkout_controller.dart';
 import 'package:ai_shopkeeper/features/cart/presentation/cart_controller.dart';
+import 'package:ai_shopkeeper/features/expiry/presentation/expiry_gate.dart';
+import 'package:ai_shopkeeper/features/expiry/presentation/expiry_reconciler.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/transactions/data/transaction_repository.dart';
 import 'package:ai_shopkeeper/features/transactions/domain/transaction.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/expiry_fakes.dart';
 
 class _SeededCart extends CartController {
   _SeededCart(this._seed);
@@ -67,6 +71,8 @@ ProviderContainer _container(TransactionRepository repo) {
         ),
       ),
       transactionRepositoryProvider.overrideWithValue(repo),
+      expiryGateProvider.overrideWithValue(const PassingExpiryGate()),
+      expiryReconcilerProvider.overrideWithValue(NoopReconciler()),
     ],
   );
   addTearDown(container.dispose);
@@ -84,6 +90,9 @@ void main() {
 
       final first = notifier.checkout();
       final second = notifier.checkout(); // before the first resolves
+      // Checkout awaits the expiry gate before the RPC, so let that settle;
+      // the guard has already refused the second call by now.
+      await Future<void>.delayed(Duration.zero);
 
       // One sale, not two. Without a guard both reads see a non-empty cart
       // (it is only cleared on success) and both RPCs commit -- duplicate

@@ -1416,4 +1416,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expiry_removed => 'Expired stock removed';
+
+  @override
+  String expiry_cartOnlyGood(String good, String name, String expired) {
+    return 'Only $good good $name left ($expired expired)';
+  }
+
+  @override
+  String expiry_cartOnlyExpired(String name, String expired) {
+    return 'Only expired $name left ($expired)';
+  }
+
+  @override
+  String get expiry_cartRemoveExpired => 'Remove expired';
+
+  @override
+  String get expiry_cartNotExpired => 'They\'re not expired';
+
+  @override
+  String expiry_cartOnlyLeft(String qty, String unit) {
+    return 'Only $qty $unit left';
+  }
+
+  @override
+  String expiry_addSheetExpiredNote(String qty, String unit) {
+    return '$qty $unit expired — not counted';
+  }
+
+  @override
+  String get error_expiredStockInCart =>
+      'Some items in the cart are expired. Fix them before checkout.';
 }

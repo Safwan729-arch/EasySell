@@ -14,8 +14,7 @@ class PaymentSelection {
   final PaymentMethod method;
   final Customer? customer;
 
-  bool get isReady =>
-      method == PaymentMethod.cash || customer != null;
+  bool get isReady => method == PaymentMethod.cash || customer != null;
 }
 
 class PaymentMethodController extends Notifier<PaymentSelection> {
@@ -27,8 +26,10 @@ class PaymentMethodController extends Notifier<PaymentSelection> {
   void setCredit() =>
       state = const PaymentSelection(method: PaymentMethod.credit);
 
-  void chooseCustomer(Customer customer) => state =
-      PaymentSelection(method: PaymentMethod.credit, customer: customer);
+  void chooseCustomer(Customer customer) => state = PaymentSelection(
+    method: PaymentMethod.credit,
+    customer: customer,
+  );
 
   void reset() => state = const PaymentSelection.cash();
 }

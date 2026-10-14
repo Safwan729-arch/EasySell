@@ -34,13 +34,19 @@ List<CartLine> addOrIncrementLine(
   return updated;
 }
 
-/// How much more of [product] can be added right now: current stock minus
-/// whatever quantity of it is already staged in [lines]. Never negative.
-double remainingStockForLines(List<CartLine> lines, Product product) {
+/// How much more of [product] can be added right now: [stock] (default: the
+/// product's current stock) minus whatever of it is already staged in
+/// [lines]. Never negative. Callers pass the GOOD stock so expired units are
+/// never offered (expiry spec §5 Cart).
+double remainingStockForLines(
+  List<CartLine> lines,
+  Product product, {
+  double? stock,
+}) {
   final staged = lines
       .where((l) => l.product.id == product.id)
       .fold<double>(0, (sum, l) => sum + l.quantity);
-  final remaining = product.quantity - staged;
+  final remaining = (stock ?? product.quantity) - staged;
   return remaining < 0 ? 0 : remaining;
 }
 

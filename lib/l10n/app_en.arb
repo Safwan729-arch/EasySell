@@ -474,5 +474,16 @@
   "expiry_removeConfirmTitle": "Remove {qty} {unit} of {name}?",
   "@expiry_removeConfirmTitle": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" }, "name": { "type": "String" } } },
   "expiry_removeConfirmBody": "Stock goes down and the loss is recorded. Your sales figures don't change.",
-  "expiry_removed": "Expired stock removed"
+  "expiry_removed": "Expired stock removed",
+  "expiry_cartOnlyGood": "Only {good} good {name} left ({expired} expired)",
+  "@expiry_cartOnlyGood": { "placeholders": { "good": { "type": "String" }, "name": { "type": "String" }, "expired": { "type": "String" } } },
+  "expiry_cartOnlyExpired": "Only expired {name} left ({expired})",
+  "@expiry_cartOnlyExpired": { "placeholders": { "name": { "type": "String" }, "expired": { "type": "String" } } },
+  "expiry_cartRemoveExpired": "Remove expired",
+  "expiry_cartNotExpired": "They're not expired",
+  "expiry_cartOnlyLeft": "Only {qty} {unit} left",
+  "@expiry_cartOnlyLeft": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
+  "expiry_addSheetExpiredNote": "{qty} {unit} expired — not counted",
+  "@expiry_addSheetExpiredNote": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
+  "error_expiredStockInCart": "Some items in the cart are expired. Fix them before checkout."
 }

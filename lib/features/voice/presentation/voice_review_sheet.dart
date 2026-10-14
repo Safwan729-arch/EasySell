@@ -9,6 +9,7 @@ import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../../shared/extensions/format.dart';
 import '../../cart/domain/cart_math.dart';
 import '../../cart/presentation/cart_controller.dart';
+import '../../expiry/presentation/expiry_providers.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../scan/presentation/product_picker_sheet.dart';
@@ -194,26 +195,27 @@ class _ChipLabel extends StatelessWidget {
   );
 }
 
-/// A caption warning that the chosen product's stock can't cover the line's
-/// quantity. Advisory only -- `record_sale_cart` remains the real authority,
-/// so this never disables anything.
-class _LowStockCaption extends StatelessWidget {
+/// A caption warning that the chosen product's GOOD stock can't cover the
+/// line's quantity -- expired units cannot be sold (expiry spec §5). Advisory
+/// only -- the cart and `record_sale_cart` remain the real authority, so this
+/// never disables anything.
+class _LowStockCaption extends ConsumerWidget {
   const _LowStockCaption({required this.product, required this.quantity});
 
   final Product? product;
   final double quantity;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final product = this.product;
-    if (product == null || product.quantity >= quantity) {
-      return const SizedBox.shrink();
-    }
+    if (product == null) return const SizedBox.shrink();
+    final available = ref.watch(goodStockProvider(product));
+    if (available >= quantity) return const SizedBox.shrink();
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Text(
-        context.l10n.voice_lowStock(product.quantity.round()),
+        context.l10n.voice_lowStock(available.round()),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.error,
         ),

@@ -2,6 +2,8 @@ import 'package:ai_shopkeeper/core/config/theme.dart';
 import 'package:ai_shopkeeper/core/error/result.dart';
 import 'package:ai_shopkeeper/features/auth/data/auth_repository.dart';
 import 'package:ai_shopkeeper/features/auth/domain/shop.dart';
+import 'package:ai_shopkeeper/features/expiry/presentation/expiry_gate.dart';
+import 'package:ai_shopkeeper/features/expiry/presentation/expiry_reconciler.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/transactions/data/transaction_repository.dart';
 import 'package:ai_shopkeeper/features/transactions/domain/transaction.dart';
@@ -11,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'expiry_fakes.dart';
 
 /// 850 sell / 700 buy => 150 profit on one unit. Chosen so a 162 discount
 /// lands 12 below cost, which is the below-cost warning's test case.
@@ -39,7 +43,10 @@ const kPepsi = Product(
 /// reset when that provider resolves. Stage a cart before the shop settles and
 /// the lines vanish underneath the test, which reads as a broken feature
 /// rather than a broken harness.
-Future<ProviderContainer> cartContainer({TransactionRepository? repo}) async {
+Future<ProviderContainer> cartContainer({
+  TransactionRepository? repo,
+  ExpiryGate gate = const PassingExpiryGate(),
+}) async {
   final container = ProviderContainer(
     overrides: [
       myShopProvider.overrideWith(
@@ -47,6 +54,10 @@ Future<ProviderContainer> cartContainer({TransactionRepository? repo}) async {
             const Shop(id: 's1', ownerId: 'o1', name: 'Shop', currency: 'BDT'),
       ),
       if (repo != null) transactionRepositoryProvider.overrideWithValue(repo),
+      // Checkout now runs the expiry gate (and a reconcile after a sale);
+      // neither has a backend in tests.
+      expiryGateProvider.overrideWithValue(gate),
+      expiryReconcilerProvider.overrideWithValue(NoopReconciler()),
     ],
   );
   addTearDown(container.dispose);

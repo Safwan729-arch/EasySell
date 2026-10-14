@@ -34,11 +34,12 @@ class CartController extends Notifier<List<CartLine>> {
 
   void clear() => state = const [];
 
-  /// How much more of [product] can still be added right now: current stock
-  /// minus whatever quantity of it is already staged.
-  double remainingStockFor(Product product) =>
-      remainingStockForLines(state, product);
+  /// How much more of [product] can still be added right now: [stock] (the
+  /// good stock, by default the whole stock) minus what is already staged.
+  double remainingStockFor(Product product, {double? stock}) =>
+      remainingStockForLines(state, product, stock: stock);
 }
 
-final cartControllerProvider =
-    NotifierProvider<CartController, List<CartLine>>(CartController.new);
+final cartControllerProvider = NotifierProvider<CartController, List<CartLine>>(
+  CartController.new,
+);

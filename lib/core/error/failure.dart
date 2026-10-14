@@ -43,6 +43,10 @@ abstract final class ServerErrorCodes {
   static const discountExceedsTotal = 'discountExceedsTotal';
   static const discountNegative = 'discountNegative';
   static const quantityNotPositive = 'quantityNotPositive';
+
+  /// Set by the app, not the server: checkout's expiry gate refused a cart
+  /// that would sell expired units (expiry spec §5 Cart).
+  static const expiredStockInCart = 'expiredStockInCart';
 }
 
 /// Matches the product name out of `record_sale_cart`'s stock exception, whose

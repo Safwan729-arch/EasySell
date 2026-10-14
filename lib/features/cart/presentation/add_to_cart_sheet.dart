@@ -5,6 +5,7 @@ import '../../../core/config/haptics.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../expiry/presentation/expiry_providers.dart';
 import '../../inventory/domain/product.dart';
 import '../domain/cart_math.dart';
 import 'cart_controller.dart';
@@ -66,7 +67,10 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
     super.initState();
     final remaining = ref
         .read(cartControllerProvider.notifier)
-        .remainingStockFor(widget.product);
+        .remainingStockFor(
+          widget.product,
+          stock: ref.read(goodStockProvider(widget.product)),
+        );
     _qty = remaining <= 0 ? 0 : _step.clamp(0, remaining).toDouble();
     _qtyController = TextEditingController(text: _fieldText(_qty));
   }
@@ -121,9 +125,11 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
     final l10n = context.l10n;
     final product = widget.product;
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
+    final goodStock = ref.watch(goodStockProvider(product));
+    final expired = ref.watch(productExpiryProvider)[product.id]?.expired ?? 0;
     final maxQty = ref
         .read(cartControllerProvider.notifier)
-        .remainingStockFor(product);
+        .remainingStockFor(product, stock: goodStock);
     final outOfStock = maxQty <= 0;
     final total = product.sellingPrice * _qty;
 
@@ -167,11 +173,24 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
           Text(
             outOfStock
                 ? l10n.addToCart_noMore
-                : l10n.addToCart_available(Product.trimNum(maxQty), product.unitLabel),
+                : l10n.addToCart_available(
+                    Product.trimNum(maxQty),
+                    product.unitLabel,
+                  ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          if (expired > 0)
+            Text(
+              l10n.expiry_addSheetExpiredNote(
+                Qty.format(expired),
+                product.unitLabel,
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

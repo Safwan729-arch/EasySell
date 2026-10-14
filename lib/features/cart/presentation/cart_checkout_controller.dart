@@ -10,6 +10,8 @@ import '../../../shared/providers/refresh_provider.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../customers/presentation/customers_controller.dart';
 import '../../customers/presentation/receivables_controller.dart';
+import '../../expiry/presentation/expiry_gate.dart';
+import '../../expiry/presentation/expiry_reconciler.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/data/transaction_repository.dart';
 import '../../transactions/domain/transaction.dart';
@@ -85,6 +87,27 @@ class CartCheckoutController extends AsyncNotifier<void> {
     _inFlight = true;
     final Result<List<Transaction>> result;
     try {
+      // Expiry gate BEFORE the sale (expiry spec §4.2, §5 Cart): it first
+      // stores any pending expired-count locks -- otherwise this sale would
+      // shrink the expired count -- then refuses a cart that would sell
+      // expired units. With no signal the gate fails, and the sale could not
+      // have reached the server either.
+      switch (await ref.read(expiryGateProvider).check(lines)) {
+        case GateFailed(:final failure):
+          state = AsyncError(failure, StackTrace.current);
+          return false;
+        case GateBlocked():
+          state = AsyncError(
+            const DatabaseFailure(
+              'Expired stock in the cart.',
+              code: ServerErrorCodes.expiredStockInCart,
+            ),
+            StackTrace.current,
+          );
+          return false;
+        case GatePass():
+          break;
+      }
       result = await ref
           .read(transactionRepositoryProvider)
           .recordSaleCart(
@@ -110,6 +133,8 @@ class CartCheckoutController extends AsyncNotifier<void> {
         ref.read(cartDiscountControllerProvider.notifier).clear();
         ref.invalidate(productsStreamProvider);
         ref.read(dataRefreshProvider.notifier).bump();
+        // Stock went down: a delivery may now be sold out (spec §4.2).
+        unawaited(ref.read(expiryReconcilerProvider).run());
         if (customerId != null) {
           ref.invalidate(customersControllerProvider);
           ref.invalidate(receivablesControllerProvider);

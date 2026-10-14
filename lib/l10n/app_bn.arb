@@ -438,5 +438,16 @@
   "expiry_removeConfirmTitle": "{name}-এর {qty} {unit} বাদ দেবেন?",
   "@expiry_removeConfirmTitle": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" }, "name": { "type": "String" } } },
   "expiry_removeConfirmBody": "স্টক কমবে এবং ক্ষতি লেখা থাকবে। বিক্রির হিসাব বদলাবে না।",
-  "expiry_removed": "মেয়াদোত্তীর্ণ স্টক বাদ দেওয়া হয়েছে"
+  "expiry_removed": "মেয়াদোত্তীর্ণ স্টক বাদ দেওয়া হয়েছে",
+  "expiry_cartOnlyGood": "ভালো {name} মাত্র {good} বাকি ({expired} মেয়াদোত্তীর্ণ)",
+  "@expiry_cartOnlyGood": { "placeholders": { "good": { "type": "String" }, "name": { "type": "String" }, "expired": { "type": "String" } } },
+  "expiry_cartOnlyExpired": "শুধু মেয়াদোত্তীর্ণ {name} বাকি ({expired})",
+  "@expiry_cartOnlyExpired": { "placeholders": { "name": { "type": "String" }, "expired": { "type": "String" } } },
+  "expiry_cartRemoveExpired": "মেয়াদোত্তীর্ণ বাদ দিন",
+  "expiry_cartNotExpired": "মেয়াদ শেষ হয়নি",
+  "expiry_cartOnlyLeft": "মাত্র {qty} {unit} বাকি",
+  "@expiry_cartOnlyLeft": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
+  "expiry_addSheetExpiredNote": "{qty} {unit} মেয়াদোত্তীর্ণ — গণনা হয়নি",
+  "@expiry_addSheetExpiredNote": { "placeholders": { "qty": { "type": "String" }, "unit": { "type": "String" } } },
+  "error_expiredStockInCart": "কার্টের কিছু পণ্যের মেয়াদ শেষ। চেকআউটের আগে ঠিক করুন।"
 }

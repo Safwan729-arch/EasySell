@@ -11,6 +11,10 @@ import '../../../core/widgets/segment_pills.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../customers/presentation/customer_picker_sheet.dart';
+import '../../expiry/domain/cart_expiry.dart';
+import '../../expiry/presentation/batch_actions_controller.dart';
+import '../../expiry/presentation/expiry_providers.dart';
+import '../../inventory/domain/product.dart';
 import '../domain/cart_line.dart';
 import '../domain/cart_math.dart';
 import 'cart_checkout_controller.dart';
@@ -108,6 +112,9 @@ class CartScreen extends ConsumerWidget {
     final lines = ref.watch(cartControllerProvider);
     final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
     final checkoutState = ref.watch(cartCheckoutControllerProvider);
+    // A line that would sell expired units, or more than is left, blocks
+    // checkout until it is fixed (expiry spec §5 Cart).
+    final blocked = ref.watch(cartLineNoticesProvider).isNotEmpty;
 
     ref.listen<AsyncValue<void>>(cartCheckoutControllerProvider, (_, next) {
       if (next is AsyncError) {
@@ -179,6 +186,7 @@ class CartScreen extends ConsumerWidget {
               itemCount: lines.length,
               currency: currency,
               isLoading: checkoutState.isLoading,
+              blocked: blocked,
               onCheckout: () => _checkout(context, ref),
             ),
     );
@@ -222,10 +230,12 @@ class _CartLineCard extends ConsumerWidget {
     ].join(' · ');
 
     // Exactly one line per product (see cart_math.dart), so the ceiling is
-    // just the product's own stock.
-    final maxQty = product.quantity;
+    // the product's own GOOD stock -- expired units are never offered.
+    final maxQty = ref.watch(goodStockProvider(product));
+    final notice = ref.watch(cartLineNoticesProvider)[product.id];
     final canDecrement = !isCheckingOut && line.quantity > _step;
-    final canIncrement = !isCheckingOut && line.quantity + _step <= maxQty + 1e-9;
+    final canIncrement =
+        !isCheckingOut && line.quantity + _step <= maxQty + 1e-9;
 
     final card = Card(
       child: Padding(
@@ -269,7 +279,10 @@ class _CartLineCard extends ConsumerWidget {
                       const SizedBox(height: 3),
                       Text(
                         context.l10n.cart_pricePerUnit(
-                          Money.format(product.sellingPrice, currencyCode: currency),
+                          Money.format(
+                            product.sellingPrice,
+                            currencyCode: currency,
+                          ),
                           product.unitLabel,
                         ),
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -329,6 +342,14 @@ class _CartLineCard extends ConsumerWidget {
                 ),
               ],
             ),
+            if (notice != null) ...[
+              const SizedBox(height: 10),
+              _LineNotice(
+                notice: notice,
+                product: product,
+                isCheckingOut: isCheckingOut,
+              ),
+            ],
           ],
         ),
       ),
@@ -351,6 +372,84 @@ class _CartLineCard extends ConsumerWidget {
       ),
       child: card,
     );
+  }
+}
+
+/// Why this line cannot be checked out, with the way out (expiry spec §5).
+class _LineNotice extends ConsumerWidget {
+  const _LineNotice({
+    required this.notice,
+    required this.product,
+    required this.isCheckingOut,
+  });
+
+  final CartLineNotice notice;
+  final Product product;
+  final bool isCheckingOut;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final style = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.error,
+      fontWeight: FontWeight.w600,
+    );
+    switch (notice) {
+      case OverStockNotice(:final stock):
+        return Text(
+          l10n.expiry_cartOnlyLeft(Qty.format(stock), product.unitLabel),
+          style: style,
+        );
+      case ExpiredStockNotice(
+        :final good,
+        :final expired,
+        :final expiredBatchIds,
+      ):
+        final busy =
+            isCheckingOut ||
+            ref.watch(batchActionsControllerProvider).isLoading;
+        final actions = ref.read(batchActionsControllerProvider.notifier);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              good > 0
+                  ? l10n.expiry_cartOnlyGood(
+                      Qty.format(good),
+                      product.name,
+                      Qty.format(expired),
+                    )
+                  : l10n.expiry_cartOnlyExpired(
+                      product.name,
+                      Qty.format(expired),
+                    ),
+              style: style,
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              children: [
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 36),
+                  ),
+                  onPressed: busy
+                      ? null
+                      : () => actions.removeExpired(expiredBatchIds),
+                  child: Text(l10n.expiry_cartRemoveExpired),
+                ),
+                TextButton(
+                  onPressed: busy
+                      ? null
+                      : () => actions.markNotExpired(expiredBatchIds),
+                  child: Text(l10n.expiry_cartNotExpired),
+                ),
+              ],
+            ),
+          ],
+        );
+    }
   }
 }
 
@@ -446,7 +545,9 @@ class _StepButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 18,
-          color: enabled ? scheme.primary : scheme.onSurfaceVariant.withValues(alpha: 0.4),
+          color: enabled
+              ? scheme.primary
+              : scheme.onSurfaceVariant.withValues(alpha: 0.4),
         ),
       ),
     );
@@ -465,6 +566,7 @@ class _CheckoutBar extends ConsumerWidget {
     required this.itemCount,
     required this.currency,
     required this.isLoading,
+    required this.blocked,
     required this.onCheckout,
   });
 
@@ -477,6 +579,9 @@ class _CheckoutBar extends ConsumerWidget {
   final int itemCount;
   final String currency;
   final bool isLoading;
+
+  /// A cart line needs fixing first (expired units, or more than is left).
+  final bool blocked;
   final VoidCallback onCheckout;
 
   @override
@@ -514,8 +619,8 @@ class _CheckoutBar extends ConsumerWidget {
                   onChanged: isLoading
                       ? (_) {}
                       : (m) => m == PaymentMethod.cash
-                          ? notifier.setCash()
-                          : notifier.setCredit(),
+                            ? notifier.setCash()
+                            : notifier.setCredit(),
                 ),
               ),
               if (isCredit) ...[
@@ -605,8 +710,8 @@ class _CheckoutBar extends ConsumerWidget {
                       onPressed: isLoading
                           ? null
                           : () => ref
-                              .read(cartDiscountControllerProvider.notifier)
-                              .clear(),
+                                .read(cartDiscountControllerProvider.notifier)
+                                .clear(),
                       icon: const Icon(Icons.close_rounded, size: 16),
                       visualDensity: VisualDensity.compact,
                       tooltip: l10n.cart_discountRemove,
@@ -652,7 +757,7 @@ class _CheckoutBar extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: (isLoading || !selection.isReady)
+                  onPressed: (isLoading || blocked || !selection.isReady)
                       ? null
                       : onCheckout,
                   icon: isLoading
@@ -696,11 +801,7 @@ class _EmptyCart extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 56,
-              color: scheme.outline,
-            ),
+            Icon(Icons.shopping_cart_outlined, size: 56, color: scheme.outline),
             const SizedBox(height: 14),
             Text(
               context.l10n.cart_empty,

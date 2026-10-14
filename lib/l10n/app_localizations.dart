@@ -2473,6 +2473,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expired stock removed'**
   String get expiry_removed;
+
+  /// No description provided for @expiry_cartOnlyGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {good} good {name} left ({expired} expired)'**
+  String expiry_cartOnlyGood(String good, String name, String expired);
+
+  /// No description provided for @expiry_cartOnlyExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Only expired {name} left ({expired})'**
+  String expiry_cartOnlyExpired(String name, String expired);
+
+  /// No description provided for @expiry_cartRemoveExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove expired'**
+  String get expiry_cartRemoveExpired;
+
+  /// No description provided for @expiry_cartNotExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'re not expired'**
+  String get expiry_cartNotExpired;
+
+  /// No description provided for @expiry_cartOnlyLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {qty} {unit} left'**
+  String expiry_cartOnlyLeft(String qty, String unit);
+
+  /// No description provided for @expiry_addSheetExpiredNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} {unit} expired — not counted'**
+  String expiry_addSheetExpiredNote(String qty, String unit);
+
+  /// No description provided for @error_expiredStockInCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Some items in the cart are expired. Fix them before checkout.'**
+  String get error_expiredStockInCart;
 }
 
 class _AppLocalizationsDelegate

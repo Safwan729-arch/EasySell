@@ -22,5 +22,6 @@ String failureText(AppLocalizations l10n, Failure failure) =>
       ServerErrorCodes.discountExceedsTotal => l10n.error_discountExceedsTotal,
       ServerErrorCodes.discountNegative => l10n.error_discountNegative,
       ServerErrorCodes.quantityNotPositive => l10n.error_quantityNotPositive,
+      ServerErrorCodes.expiredStockInCart => l10n.error_expiredStockInCart,
       _ => failure.message,
     };

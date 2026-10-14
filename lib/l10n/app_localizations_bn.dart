@@ -1410,4 +1410,34 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get expiry_removed => 'মেয়াদোত্তীর্ণ স্টক বাদ দেওয়া হয়েছে';
+
+  @override
+  String expiry_cartOnlyGood(String good, String name, String expired) {
+    return 'ভালো $name মাত্র $good বাকি ($expired মেয়াদোত্তীর্ণ)';
+  }
+
+  @override
+  String expiry_cartOnlyExpired(String name, String expired) {
+    return 'শুধু মেয়াদোত্তীর্ণ $name বাকি ($expired)';
+  }
+
+  @override
+  String get expiry_cartRemoveExpired => 'মেয়াদোত্তীর্ণ বাদ দিন';
+
+  @override
+  String get expiry_cartNotExpired => 'মেয়াদ শেষ হয়নি';
+
+  @override
+  String expiry_cartOnlyLeft(String qty, String unit) {
+    return 'মাত্র $qty $unit বাকি';
+  }
+
+  @override
+  String expiry_addSheetExpiredNote(String qty, String unit) {
+    return '$qty $unit মেয়াদোত্তীর্ণ — গণনা হয়নি';
+  }
+
+  @override
+  String get error_expiredStockInCart =>
+      'কার্টের কিছু পণ্যের মেয়াদ শেষ। চেকআউটের আগে ঠিক করুন।';
 }
