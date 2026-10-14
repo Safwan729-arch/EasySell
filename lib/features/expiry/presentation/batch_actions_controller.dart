@@ -51,21 +51,25 @@ class BatchActionsController extends AsyncNotifier<void> {
   }
 
   /// Moving a locked delivery's date to today or later clears the lock -- the
-  /// lock came from a mistyped date (spec §3.3).
+  /// lock came from a mistyped date (spec §3.3). A lock that stays is capped
+  /// at the corrected amount: an amount typed as 50 instead of 5 was locked at
+  /// 50, and "Remove from stock" would otherwise remove 50.
   Future<bool> editBatch(
     ProductBatch batch, {
     required double quantity,
     required DateTime expiryDate,
   }) {
     final today = ref.read(todayProvider);
-    final clearLock =
-        batch.expiredQty != null && !today.isAfter(dateOnly(expiryDate));
+    final locked = batch.expiredQty;
+    final clearLock = locked != null && !today.isAfter(dateOnly(expiryDate));
+    final lowerLock = locked != null && !clearLock && quantity < locked;
     return _run(
       () => _repo.updateBatch(
         batchId: batch.id,
         quantity: quantity,
         expiryDate: expiryDate,
         clearLock: clearLock,
+        lockedQty: lowerLock ? quantity : null,
       ),
     );
   }

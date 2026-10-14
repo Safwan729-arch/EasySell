@@ -97,11 +97,14 @@ class BatchRepository {
 
   /// Edits an OPEN delivery. [clearLock] removes a locked expired count -- used
   /// when a mistyped date is corrected to today or later (spec §3.3).
+  /// [lockedQty] lowers a lock that stays, when the amount is corrected below
+  /// it.
   Future<Result<void>> updateBatch({
     required String batchId,
     required double quantity,
     required DateTime expiryDate,
     required bool clearLock,
+    double? lockedQty,
   }) async {
     try {
       await _client
@@ -109,7 +112,7 @@ class BatchRepository {
           .update({
             'quantity': quantity,
             'expiry_date': ymd(expiryDate),
-            if (clearLock) 'expired_qty': null,
+            if (clearLock) 'expired_qty': null else 'expired_qty': ?lockedQty,
           })
           .eq('id', batchId)
           .isFilter('closed_at', null);

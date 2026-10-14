@@ -27,8 +27,12 @@ class _Repo implements BatchRepository {
     required double quantity,
     required DateTime expiryDate,
     required bool clearLock,
+    double? lockedQty,
   }) async {
-    log.add('update $batchId clearLock=$clearLock');
+    log.add(
+      'update $batchId clearLock=$clearLock'
+      '${lockedQty == null ? '' : ' lock=$lockedQty'}',
+    );
     return _r;
   }
 
@@ -98,6 +102,21 @@ void main() {
         .editBatch(_locked, quantity: 5, expiryDate: DateTime(2026, 10, 5));
     expect(repo.log, ['update b1 clearLock=false']);
   });
+
+  test(
+    'lowering the amount of a still-expired delivery lowers its lock',
+    () async {
+      // Typed 50 instead of 5 and locked at 50: correcting the amount must
+      // correct the expired count, or "Remove from stock" removes 50 (45 of
+      // them good) and calls them a loss.
+      final repo = _Repo();
+      final c = await _container(repo);
+      await c
+          .read(batchActionsControllerProvider.notifier)
+          .editBatch(_locked, quantity: 3, expiryDate: DateTime(2026, 10, 5));
+      expect(repo.log, ['update b1 clearLock=false lock=3.0']);
+    },
+  );
 
   test(
     'they-are-not-expired closes each expired delivery with that reason',
