@@ -4,9 +4,9 @@ tags: [design, inventory, expiry, notifications]
 
 # Product expiry dates and alerts — design
 
-**Status:** design approved in conversation 2026-10-14, then revised after an
-edge-case review the same day (§11 lists all 24 findings and where each is
-handled). Awaiting spec review. Not built. Next step: implementation plan.
+**Status:** built 2026-10-14 on `feat/product-expiry` (plan:
+[[2026-10-14-product-expiry]]). Migration `0011` applied and probed before the
+app work. Edge-case review in §11.
 
 ## 1. Goal
 
