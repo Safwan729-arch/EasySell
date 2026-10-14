@@ -37,6 +37,25 @@ class ProductRepository {
         );
   }
 
+  /// A one-shot read of the shop's active (non-archived) products. Used by the
+  /// expiry reconcile, which must read stock fresh AFTER reading deliveries
+  /// rather than trust the stream (see `ExpiryReconciler`).
+  Future<Result<List<Product>>> fetchActiveProducts(String shopId) async {
+    try {
+      final rows = await _client
+          .from(_table)
+          .select()
+          .eq('shop_id', shopId)
+          .eq('is_archived', false);
+      return Result.success([
+        for (final r in rows as List)
+          Product.fromJson(Map<String, dynamic>.from(r as Map)),
+      ]);
+    } catch (e) {
+      return Result.failure(_map(e));
+    }
+  }
+
   Future<Result<Product>> addProduct(Product product) async {
     try {
       final row = await _client
@@ -70,10 +89,7 @@ class ProductRepository {
   /// inventory list (see [watchProducts]) while preserving history. Reversible.
   Future<Result<void>> deleteProduct(String id) async {
     try {
-      await _client
-          .from(_table)
-          .update({'is_archived': true})
-          .eq('id', id);
+      await _client.from(_table).update({'is_archived': true}).eq('id', id);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(_map(e));
@@ -101,10 +117,7 @@ class ProductRepository {
   /// Un-archives a product, returning it to the active inventory.
   Future<Result<void>> restoreProduct(String id) async {
     try {
-      await _client
-          .from(_table)
-          .update({'is_archived': false})
-          .eq('id', id);
+      await _client.from(_table).update({'is_archived': false}).eq('id', id);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(_map(e));
