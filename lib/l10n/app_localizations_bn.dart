@@ -1288,4 +1288,33 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get voice_levelLabel => 'মাইক্রোফোনের মাত্রা';
+
+  @override
+  String get expiry_dateLabel => 'মেয়াদ শেষের তারিখ';
+
+  @override
+  String get expiry_dateOptional => 'ঐচ্ছিক';
+
+  @override
+  String get expiry_dateClear => 'তারিখ মুছুন';
+
+  @override
+  String get expiry_pastDateTitle => 'এই তারিখ পার হয়ে গেছে';
+
+  @override
+  String get expiry_pastDateBody => 'তবুও সংরক্ষণ করবেন?';
+
+  @override
+  String get expiry_farDateTitle => 'সালটা কি ঠিক আছে?';
+
+  @override
+  String expiry_farDateBody(String date) {
+    return '$date পাঁচ বছরেরও বেশি পরে।';
+  }
+
+  @override
+  String get expiry_saveAnyway => 'তবুও সংরক্ষণ';
+
+  @override
+  String get expiry_changeDate => 'তারিখ বদলান';
 }

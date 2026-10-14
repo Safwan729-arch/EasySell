@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../shared/providers/supabase_provider.dart';
+import '../../expiry/domain/expiry_dates.dart';
 import '../domain/transaction.dart';
 import 'day_range.dart';
 
@@ -17,13 +18,42 @@ class TransactionRepository {
 
   final SupabaseClient _client;
 
+  /// Atomic restock via `record_restock` (0011). [restockId] is minted by the
+  /// caller and re-sent on a retry: the server records a given id once and
+  /// returns the existing row on a repeat, so a lost reply cannot add the
+  /// stock twice. With [expiryDate] the delivery is recorded in the same
+  /// transaction; [receivedOn] is the PHONE's local date (expiry spec §3.4).
   Future<Result<Transaction>> recordRestock({
     required String shopId,
     required String productId,
     required double quantity,
+    required String restockId,
     String source = 'manual',
-  }) {
-    return _callRpc('record_restock', shopId, productId, quantity, source);
+    DateTime? expiryDate,
+    DateTime? receivedOn,
+  }) async {
+    try {
+      final result = await _client.rpc(
+        'record_restock',
+        params: {
+          'p_shop_id': shopId,
+          'p_product_id': productId,
+          'p_quantity': quantity,
+          'p_source': source,
+          'p_restock_id': restockId,
+          if (expiryDate != null) 'p_expiry_date': ymd(expiryDate),
+          if (receivedOn != null) 'p_received_on': ymd(receivedOn),
+        },
+      );
+      // A function `returns transactions` yields a single composite object;
+      // some setups return a single-element list. Handle both.
+      final row = result is List ? result.first : result;
+      return Result.success(
+        Transaction.fromJson(Map<String, dynamic>.from(row as Map)),
+      );
+    } catch (e) {
+      return Result.failure(_map(e));
+    }
   }
 
   /// Atomic multi-item checkout: commits every cart line in one Postgres
@@ -138,34 +168,6 @@ class TransactionRepository {
       final raw = (list.first as Map)['created_at'] as String;
       final local = DateTime.parse(raw).toLocal();
       return Result.success(DateTime(local.year, local.month, local.day));
-    } catch (e) {
-      return Result.failure(_map(e));
-    }
-  }
-
-  Future<Result<Transaction>> _callRpc(
-    String fn,
-    String shopId,
-    String productId,
-    double quantity,
-    String source,
-  ) async {
-    try {
-      final result = await _client.rpc(
-        fn,
-        params: {
-          'p_shop_id': shopId,
-          'p_product_id': productId,
-          'p_quantity': quantity,
-          'p_source': source,
-        },
-      );
-      // A function `returns transactions` yields a single composite object;
-      // some setups return a single-element list. Handle both.
-      final row = result is List ? result.first : result;
-      return Result.success(
-        Transaction.fromJson(Map<String, dynamic>.from(row as Map)),
-      );
     } catch (e) {
       return Result.failure(_map(e));
     }

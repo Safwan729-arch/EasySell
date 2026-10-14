@@ -433,5 +433,15 @@
   "voice_stoppingIn": "Stopping in {seconds}s",
   "@voice_stoppingIn": { "placeholders": { "seconds": { "type": "int" } } },
   "voice_speakCloser": "Can't hear you — hold the phone closer",
-  "voice_levelLabel": "Microphone level"
+  "voice_levelLabel": "Microphone level",
+  "expiry_dateLabel": "Expiry date",
+  "expiry_dateOptional": "Optional",
+  "expiry_dateClear": "Remove date",
+  "expiry_pastDateTitle": "This date has already passed",
+  "expiry_pastDateBody": "Save it anyway?",
+  "expiry_farDateTitle": "Is this year right?",
+  "expiry_farDateBody": "{date} is more than 5 years away.",
+  "@expiry_farDateBody": { "placeholders": { "date": { "type": "String" } } },
+  "expiry_saveAnyway": "Save anyway",
+  "expiry_changeDate": "Change date"
 }

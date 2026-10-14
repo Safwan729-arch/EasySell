@@ -397,5 +397,15 @@
   "voice_stoppingIn": "{seconds} সেকেন্ডে বন্ধ হবে",
   "@voice_stoppingIn": { "placeholders": { "seconds": { "type": "int" } } },
   "voice_speakCloser": "শুনতে পাচ্ছি না — ফোনটি আরও কাছে ধরুন",
-  "voice_levelLabel": "মাইক্রোফোনের মাত্রা"
+  "voice_levelLabel": "মাইক্রোফোনের মাত্রা",
+  "expiry_dateLabel": "মেয়াদ শেষের তারিখ",
+  "expiry_dateOptional": "ঐচ্ছিক",
+  "expiry_dateClear": "তারিখ মুছুন",
+  "expiry_pastDateTitle": "এই তারিখ পার হয়ে গেছে",
+  "expiry_pastDateBody": "তবুও সংরক্ষণ করবেন?",
+  "expiry_farDateTitle": "সালটা কি ঠিক আছে?",
+  "expiry_farDateBody": "{date} পাঁচ বছরেরও বেশি পরে।",
+  "@expiry_farDateBody": { "placeholders": { "date": { "type": "String" } } },
+  "expiry_saveAnyway": "তবুও সংরক্ষণ",
+  "expiry_changeDate": "তারিখ বদলান"
 }

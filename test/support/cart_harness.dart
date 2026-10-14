@@ -99,7 +99,10 @@ class CapturingTransactionRepository implements TransactionRepository {
     required String shopId,
     required String productId,
     required double quantity,
+    required String restockId,
     String source = 'manual',
+    DateTime? expiryDate,
+    DateTime? receivedOn,
   }) async => throw UnimplementedError();
 
   @override

@@ -2251,6 +2251,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Microphone level'**
   String get voice_levelLabel;
+
+  /// No description provided for @expiry_dateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date'**
+  String get expiry_dateLabel;
+
+  /// No description provided for @expiry_dateOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get expiry_dateOptional;
+
+  /// No description provided for @expiry_dateClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove date'**
+  String get expiry_dateClear;
+
+  /// No description provided for @expiry_pastDateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This date has already passed'**
+  String get expiry_pastDateTitle;
+
+  /// No description provided for @expiry_pastDateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Save it anyway?'**
+  String get expiry_pastDateBody;
+
+  /// No description provided for @expiry_farDateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Is this year right?'**
+  String get expiry_farDateTitle;
+
+  /// No description provided for @expiry_farDateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} is more than 5 years away.'**
+  String expiry_farDateBody(String date);
+
+  /// No description provided for @expiry_saveAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway'**
+  String get expiry_saveAnyway;
+
+  /// No description provided for @expiry_changeDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Change date'**
+  String get expiry_changeDate;
 }
 
 class _AppLocalizationsDelegate

@@ -1,11 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../shared/providers/refresh_provider.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../expiry/domain/expiry_dates.dart';
+import '../../expiry/presentation/expiry_providers.dart';
+import '../../expiry/presentation/expiry_reconciler.dart';
+import '../../expiry/presentation/today_provider.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../data/transaction_repository.dart';
 import '../domain/transaction.dart';
@@ -21,6 +27,15 @@ class TransactionController extends AsyncNotifier<void> {
   /// twice.
   bool _inFlight = false;
 
+  /// The restock id of the last restock that did not come back as a success,
+  /// and the exact request it was sent with -- the `CartCheckoutController`
+  /// pattern from 0010. A failure does not prove nothing was saved, so an
+  /// identical retry re-sends the id and the server records it once. Anything
+  /// changed (product, quantity, date) is a different restock and gets a new
+  /// id.
+  String? _pendingRestockId;
+  String? _pendingRestockRequest;
+
   @override
   FutureOr<void> build() {
     _inFlight = false;
@@ -33,20 +48,43 @@ class TransactionController extends AsyncNotifier<void> {
     required String productId,
     required double quantity,
     String source = 'manual',
+    DateTime? expiryDate,
   }) {
+    final request = jsonEncode({
+      'product': productId,
+      'quantity': quantity,
+      'source': source,
+      'expiry': expiryDate == null ? null : ymd(expiryDate),
+    });
+    if (request != _pendingRestockRequest) {
+      _pendingRestockId = const Uuid().v4();
+      _pendingRestockRequest = request;
+    }
+    final restockId = _pendingRestockId!;
+    final receivedOn = dateOnly(ref.read(nowProvider)());
     return _run(
       (shopId) => _repo.recordRestock(
         shopId: shopId,
         productId: productId,
         quantity: quantity,
+        restockId: restockId,
         source: source,
+        expiryDate: expiryDate,
+        receivedOn: receivedOn,
       ),
+      onSuccess: () {
+        _pendingRestockId = null;
+        _pendingRestockRequest = null;
+        if (expiryDate != null) ref.invalidate(batchesStreamProvider);
+        unawaited(ref.read(expiryReconcilerProvider).run());
+      },
     );
   }
 
   Future<bool> _run(
-    Future<Result<Transaction>> Function(String shopId) action,
-  ) async {
+    Future<Result<Transaction>> Function(String shopId) action, {
+    void Function()? onSuccess,
+  }) async {
     if (_inFlight) return false;
 
     final shopId = _shopId;
@@ -69,6 +107,7 @@ class TransactionController extends AsyncNotifier<void> {
     }
     return result.when(
       success: (_) {
+        onSuccess?.call();
         // Refresh inventory immediately so the new stock level shows at once.
         // Realtime normally pushes this products-row update, but invalidating
         // guarantees it even if realtime is unavailable or not yet enabled.

@@ -1294,4 +1294,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voice_levelLabel => 'Microphone level';
+
+  @override
+  String get expiry_dateLabel => 'Expiry date';
+
+  @override
+  String get expiry_dateOptional => 'Optional';
+
+  @override
+  String get expiry_dateClear => 'Remove date';
+
+  @override
+  String get expiry_pastDateTitle => 'This date has already passed';
+
+  @override
+  String get expiry_pastDateBody => 'Save it anyway?';
+
+  @override
+  String get expiry_farDateTitle => 'Is this year right?';
+
+  @override
+  String expiry_farDateBody(String date) {
+    return '$date is more than 5 years away.';
+  }
+
+  @override
+  String get expiry_saveAnyway => 'Save anyway';
+
+  @override
+  String get expiry_changeDate => 'Change date';
 }

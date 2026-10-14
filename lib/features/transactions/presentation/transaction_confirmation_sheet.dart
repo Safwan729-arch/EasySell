@@ -7,6 +7,7 @@ import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../cart/domain/cart_math.dart';
+import '../../expiry/presentation/expiry_date_field.dart';
 import '../../inventory/domain/product.dart';
 import 'transaction_controller.dart';
 
@@ -52,6 +53,7 @@ class _RestockConfirmationSheet extends ConsumerStatefulWidget {
 class _RestockConfirmationSheetState
     extends ConsumerState<_RestockConfirmationSheet> {
   late double _qty;
+  DateTime? _expiry;
   String? _error;
 
   Product get _product => widget.product;
@@ -67,7 +69,6 @@ class _RestockConfirmationSheetState
     _qty = widget.initialQuantity.clamp(_step, double.infinity).toDouble();
   }
 
-
   Future<void> _confirm() async {
     setState(() => _error = null);
     final controller = ref.read(transactionControllerProvider.notifier);
@@ -75,6 +76,7 @@ class _RestockConfirmationSheetState
       productId: _product.id,
       quantity: _qty,
       source: widget.source,
+      expiryDate: _expiry,
     );
     if (ok) {
       AppHaptics.success();
@@ -173,6 +175,12 @@ class _RestockConfirmationSheetState
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          ExpiryDateField(
+            value: _expiry,
+            enabled: !isLoading,
+            onChanged: (d) => setState(() => _expiry = d),
           ),
           const Divider(height: 24),
           _row(
