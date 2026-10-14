@@ -6,6 +6,7 @@ import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../expiry/presentation/expiry_settings_tiles.dart';
 import '../../../shared/providers/locale_provider.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../../../shared/providers/theme_mode_provider.dart';
@@ -30,7 +31,9 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.person_outline),
             title: Text(
-              isGuest ? l10n.settings_guestSession : (user?.email ?? l10n.settings_signedIn),
+              isGuest
+                  ? l10n.settings_guestSession
+                  : (user?.email ?? l10n.settings_signedIn),
             ),
             subtitle: Text(
               isGuest ? l10n.settings_anonymousData : l10n.settings_signedIn,
@@ -99,6 +102,10 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.archivedProducts),
           ),
           const Divider(),
+          _SectionHeader(l10n.settings_sectionExpiry),
+          const ExpiryWarnDaysTile(),
+          const ExpiryReminderTile(),
+          const Divider(),
           Padding(
             padding: const EdgeInsets.all(16),
             child: OutlinedButton.icon(
@@ -159,8 +166,9 @@ class _LanguageSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
-    final selected =
-        locale.languageCode == 'bn' ? const Locale('bn') : const Locale('en');
+    final selected = locale.languageCode == 'bn'
+        ? const Locale('bn')
+        : const Locale('en');
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: SegmentedButton<Locale>(

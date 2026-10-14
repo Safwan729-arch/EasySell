@@ -1486,4 +1486,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminder_channelName => 'Expiry reminders';
+
+  @override
+  String get settings_sectionExpiry => 'Expiry';
+
+  @override
+  String settings_expiryWarnDays(String days) {
+    return 'Warn me up to $days days before';
+  }
+
+  @override
+  String get settings_expiryWarnDaysTitle => 'Warning time';
+
+  @override
+  String settings_expiryDaysOption(String days) {
+    return '$days days';
+  }
+
+  @override
+  String get settings_expiryReminder => 'Daily expiry reminder';
+
+  @override
+  String get settings_expiryReminderSub =>
+      'At 9 AM on days something needs attention';
+
+  @override
+  String get settings_expiryReminderBlocked =>
+      'Blocked — turn on notifications in phone settings';
 }

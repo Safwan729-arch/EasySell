@@ -500,5 +500,14 @@
   "reminder_title": "Expiry check",
   "reminder_more": "+{count} more",
   "@reminder_more": { "placeholders": { "count": { "type": "String" } } },
-  "reminder_channelName": "Expiry reminders"
+  "reminder_channelName": "Expiry reminders",
+  "settings_sectionExpiry": "Expiry",
+  "settings_expiryWarnDays": "Warn me up to {days} days before",
+  "@settings_expiryWarnDays": { "placeholders": { "days": { "type": "String" } } },
+  "settings_expiryWarnDaysTitle": "Warning time",
+  "settings_expiryDaysOption": "{days} days",
+  "@settings_expiryDaysOption": { "placeholders": { "days": { "type": "String" } } },
+  "settings_expiryReminder": "Daily expiry reminder",
+  "settings_expiryReminderSub": "At 9 AM on days something needs attention",
+  "settings_expiryReminderBlocked": "Blocked — turn on notifications in phone settings"
 }

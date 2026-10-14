@@ -2575,6 +2575,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expiry reminders'**
   String get reminder_channelName;
+
+  /// No description provided for @settings_sectionExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry'**
+  String get settings_sectionExpiry;
+
+  /// No description provided for @settings_expiryWarnDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn me up to {days} days before'**
+  String settings_expiryWarnDays(String days);
+
+  /// No description provided for @settings_expiryWarnDaysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning time'**
+  String get settings_expiryWarnDaysTitle;
+
+  /// No description provided for @settings_expiryDaysOption.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String settings_expiryDaysOption(String days);
+
+  /// No description provided for @settings_expiryReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily expiry reminder'**
+  String get settings_expiryReminder;
+
+  /// No description provided for @settings_expiryReminderSub.
+  ///
+  /// In en, this message translates to:
+  /// **'At 9 AM on days something needs attention'**
+  String get settings_expiryReminderSub;
+
+  /// No description provided for @settings_expiryReminderBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked — turn on notifications in phone settings'**
+  String get settings_expiryReminderBlocked;
 }
 
 class _AppLocalizationsDelegate

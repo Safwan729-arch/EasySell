@@ -1480,4 +1480,30 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get reminder_channelName => 'মেয়াদের রিমাইন্ডার';
+
+  @override
+  String get settings_sectionExpiry => 'মেয়াদ';
+
+  @override
+  String settings_expiryWarnDays(String days) {
+    return 'সর্বোচ্চ $days দিন আগে জানাবে';
+  }
+
+  @override
+  String get settings_expiryWarnDaysTitle => 'সতর্কতার সময়';
+
+  @override
+  String settings_expiryDaysOption(String days) {
+    return '$days দিন';
+  }
+
+  @override
+  String get settings_expiryReminder => 'প্রতিদিনের মেয়াদ রিমাইন্ডার';
+
+  @override
+  String get settings_expiryReminderSub => 'কিছু দেখার থাকলে সকাল ৯টায়';
+
+  @override
+  String get settings_expiryReminderBlocked =>
+      'বন্ধ — ফোনের সেটিংসে নোটিফিকেশন চালু করুন';
 }
