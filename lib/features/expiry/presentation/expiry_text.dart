@@ -15,8 +15,9 @@ String alertQtyText(ExpiryAlert a) => a.product.unitType == UnitType.piece
 String expiryAlertText(AppLocalizations l10n, ExpiryAlert a) {
   final qty = alertQtyText(a);
   final name = a.product.name;
-  if (a.kind == ExpiryAlertKind.expired)
+  if (a.kind == ExpiryAlertKind.expired) {
     return l10n.expiry_alertExpired(qty, name);
+  }
   return switch (a.daysLeft) {
     <= 0 => l10n.expiry_alertSoonToday(name, qty),
     1 => l10n.expiry_alertSoonTomorrow(name, qty),
