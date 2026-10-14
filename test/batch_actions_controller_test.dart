@@ -43,11 +43,14 @@ class _Repo implements BatchRepository {
   }
 
   @override
-  Future<Result<void>> removeExpiredStock({
+  Future<Result<void>> removeStock({
     required String shopId,
     required String batchId,
+    double? quantity,
   }) async {
-    log.add('remove $shopId $batchId');
+    log.add(
+      'remove $shopId $batchId${quantity == null ? '' : ' qty=$quantity'}',
+    );
     return _r;
   }
 
@@ -173,11 +176,26 @@ void main() {
     expect(repo.log.take(2), ['reconcile', 'remove s1 b1']);
   });
 
+  test(
+    'a delivery that has not expired is removed by the amount shown',
+    () async {
+      // Thrown away or returned early: the server cannot know how much of an
+      // unexpired delivery is left (it is an estimate), so the app sends it.
+      final repo = _Repo();
+      final c = await _container(repo);
+      final ok = await c
+          .read(batchActionsControllerProvider.notifier)
+          .removeBatch('b2', quantity: 7);
+      expect(ok, isTrue);
+      expect(repo.log, ['remove s1 b2 qty=7.0']);
+    },
+  );
+
   test('a failure is reported and surfaced as an error state', () async {
     final c = await _container(_Repo(fail: true));
     final ok = await c
         .read(batchActionsControllerProvider.notifier)
-        .markNoneLeft('b1');
+        .removeBatch('b1', quantity: 1);
     expect(ok, isFalse);
     expect(c.read(batchActionsControllerProvider).error, isA<NetworkFailure>());
   });

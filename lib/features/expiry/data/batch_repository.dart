@@ -179,16 +179,23 @@ class BatchRepository {
     }
   }
 
-  /// `remove_expired_stock` (0011): lowers stock by the locked expired count,
-  /// records the loss as an `adjustment`, closes the delivery. Safe to retry.
-  Future<Result<void>> removeExpiredStock({
+  /// `remove_batch_stock` (0013): lowers stock by an expired delivery's
+  /// locked count, or by [quantity] (what the app shows as left) for one that
+  /// has not expired, records the loss as an `adjustment`, and closes the
+  /// delivery. Safe to retry: a closed delivery is left alone.
+  Future<Result<void>> removeStock({
     required String shopId,
     required String batchId,
+    double? quantity,
   }) async {
     try {
       await _client.rpc(
-        'remove_expired_stock',
-        params: {'p_shop_id': shopId, 'p_batch_id': batchId},
+        'remove_batch_stock',
+        params: {
+          'p_shop_id': shopId,
+          'p_batch_id': batchId,
+          'p_quantity': ?quantity,
+        },
       );
       return const Result.success(null);
     } catch (e) {

@@ -1370,9 +1370,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expiry_removeFromStock => 'Remove from stock';
 
   @override
-  String get expiry_noneLeft => 'None left';
-
-  @override
   String get expiry_closedHistory => 'Closed';
 
   @override
@@ -1415,7 +1412,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Stock goes down and the loss is recorded. Your sales figures don\'t change.';
 
   @override
-  String get expiry_removed => 'Expired stock removed';
+  String get expiry_removed => 'Removed from stock';
 
   @override
   String expiry_cartOnlyGood(String good, String name, String expired) {

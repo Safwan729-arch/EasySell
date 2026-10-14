@@ -120,9 +120,12 @@ class _DeliveryRow extends ConsumerWidget {
       ),
     );
     if (yes != true) return;
-    final ok = await ref
-        .read(batchActionsControllerProvider.notifier)
-        .removeExpired([estimate.batch.id]);
+    final actions = ref.read(batchActionsControllerProvider.notifier);
+    // Expired: the server removes the locked count. Not expired (thrown away
+    // or returned early): the amount shown here, which only the app knows.
+    final ok = estimate.status == BatchStatus.expired
+        ? await actions.removeExpired([estimate.batch.id])
+        : await actions.removeBatch(estimate.batch.id, quantity: estimate.left);
     if (ok) {
       messenger
         ..hideCurrentSnackBar()
@@ -190,18 +193,17 @@ class _DeliveryRow extends ConsumerWidget {
                     showBatchFormSheet(context, product: product, batch: b);
                     return;
                   }
-                  final messenger = ScaffoldMessenger.of(context);
-                  final ok = await ref
-                      .read(batchActionsControllerProvider.notifier)
-                      .markNoneLeft(b.id);
-                  if (!ok) showBatchActionFailure(messenger, l10n, ref);
+                  await _confirmRemove(context, ref);
                 },
+                // No "None left": a sold-out delivery closes by itself. An
+                // expired one has its own Remove button below.
                 itemBuilder: (_) => [
                   PopupMenuItem(value: 'edit', child: Text(l10n.common_edit)),
-                  PopupMenuItem(
-                    value: 'none',
-                    child: Text(l10n.expiry_noneLeft),
-                  ),
+                  if (estimate.status != BatchStatus.expired)
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Text(l10n.expiry_removeFromStock),
+                    ),
                 ],
               ),
             ],

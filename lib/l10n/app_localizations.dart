@@ -2384,12 +2384,6 @@ abstract class AppLocalizations {
   /// **'Remove from stock'**
   String get expiry_removeFromStock;
 
-  /// No description provided for @expiry_noneLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'None left'**
-  String get expiry_noneLeft;
-
   /// No description provided for @expiry_closedHistory.
   ///
   /// In en, this message translates to:
@@ -2471,7 +2465,7 @@ abstract class AppLocalizations {
   /// No description provided for @expiry_removed.
   ///
   /// In en, this message translates to:
-  /// **'Expired stock removed'**
+  /// **'Removed from stock'**
   String get expiry_removed;
 
   /// No description provided for @expiry_cartOnlyGood.

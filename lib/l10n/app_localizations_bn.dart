@@ -1364,9 +1364,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get expiry_removeFromStock => 'স্টক থেকে বাদ দিন';
 
   @override
-  String get expiry_noneLeft => 'আর নেই';
-
-  @override
   String get expiry_closedHistory => 'বন্ধ';
 
   @override
@@ -1409,7 +1406,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'স্টক কমবে এবং ক্ষতি লেখা থাকবে। বিক্রির হিসাব বদলাবে না।';
 
   @override
-  String get expiry_removed => 'মেয়াদোত্তীর্ণ স্টক বাদ দেওয়া হয়েছে';
+  String get expiry_removed => 'স্টক থেকে বাদ দেওয়া হয়েছে';
 
   @override
   String expiry_cartOnlyGood(String good, String name, String expired) {

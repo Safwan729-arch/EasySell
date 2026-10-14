@@ -25,6 +25,7 @@ import '../support/expiry_fakes.dart';
 class _Repo implements BatchRepository {
   _Repo({this.failRemove = false});
   final bool failRemove;
+  final removed = <String>[];
 
   @override
   Future<Result<List<ProductBatch>>> fetchClosedBatches(
@@ -33,14 +34,18 @@ class _Repo implements BatchRepository {
   }) async => const Result.success([]);
 
   @override
-  Future<Result<void>> removeExpiredStock({
+  Future<Result<void>> removeStock({
     required String shopId,
     required String batchId,
-  }) async => failRemove
-      ? const Result.failure(
-          NetworkFailure('No internet connection. Please try again.'),
-        )
-      : const Result.success(null);
+    double? quantity,
+  }) async {
+    removed.add('$batchId $quantity');
+    return failRemove
+        ? const Result.failure(
+            NetworkFailure('No internet connection. Please try again.'),
+          )
+        : const Result.success(null);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -157,6 +162,36 @@ void main() {
       find.text('No internet connection. Please try again.'),
       findsOneWidget,
     );
-    expect(find.text('Expired stock removed'), findsNothing);
+    expect(find.text('Removed from stock'), findsNothing);
   });
+
+  testWidgets(
+    'a good delivery can be removed from its menu; there is no None left',
+    (tester) async {
+      // A sold-out delivery closes by itself, so the menu has no manual
+      // "None left"; it used to close a delivery without lowering stock,
+      // which left thrown-away units counted as good (2026-10-15).
+      final repo = _Repo();
+      await _pump(tester, repo);
+      await ProviderScope.containerOf(
+        tester.element(find.byType(DeliveriesSection)),
+      ).read(myShopProvider.future);
+
+      await tester.tap(find.byType(PopupMenuButton<String>).last);
+      await tester.pumpAndSettle();
+      expect(find.text('None left'), findsNothing);
+      await tester.tap(find.text('Remove from stock').last);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Remove from stock'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(repo.removed, ['new 10.0']);
+      expect(find.text('Removed from stock'), findsOneWidget);
+    },
+  );
 }

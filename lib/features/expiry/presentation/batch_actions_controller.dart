@@ -74,9 +74,6 @@ class BatchActionsController extends AsyncNotifier<void> {
     );
   }
 
-  Future<bool> markNoneLeft(String batchId) =>
-      _run(() => _repo.closeBatch(batchId, BatchCloseReason.noneLeft));
-
   /// The escape hatch when the estimate is wrong: the expired deliveries are
   /// closed, so their units count as good stock again.
   Future<bool> markNotExpired(List<String> batchIds) => _run(() async {
@@ -104,11 +101,38 @@ class BatchActionsController extends AsyncNotifier<void> {
       // removal then reports the server's answer.
       await ref.read(expiryReconcilerProvider).run();
       for (final id in batchIds) {
-        final r = await _repo.removeExpiredStock(shopId: shopId, batchId: id);
+        final r = await _repo.removeStock(shopId: shopId, batchId: id);
         if (r.isFailure) return r;
       }
       return const Result.success(null);
     });
+  }
+
+  /// Throws away (or returns) what is left of one delivery, expired or not:
+  /// stock goes down by [quantity] -- the amount the product page shows --
+  /// the loss is recorded and the delivery closes. For an expired delivery
+  /// the server removes its locked count instead.
+  ///
+  /// There is no "None left": a delivery whose units were sold closes by
+  /// itself, and closing one WITHOUT lowering stock left thrown-away units
+  /// counted as good, sellable stock with no date.
+  Future<bool> removeBatch(String batchId, {required double quantity}) {
+    final shopId = ref.read(myShopProvider).value?.id;
+    if (shopId == null) {
+      state = AsyncError(
+        const AuthFailure('No shop found for this account.'),
+        StackTrace.current,
+      );
+      return Future.value(false);
+    }
+    return _run(
+      stockChanged: true,
+      () => _repo.removeStock(
+        shopId: shopId,
+        batchId: batchId,
+        quantity: quantity,
+      ),
+    );
   }
 
   Future<bool> _run(

@@ -536,3 +536,34 @@ request, with no separate spec.)
   still on the shelf. The inner join also replaces the product-id filter that
   kept a big shop under the 1000-row cap. The join was checked against the
   live API before shipping.
+
+## 14. "None left" removed; "Remove from stock" on every delivery (2026-10-15, migration `0013_remove_batch_stock.sql`)
+
+**What went wrong on the phone.** The user threw away 7 toothbrushes the day
+before they expired. "Remove from stock" was offered only on expired
+deliveries, so they used **None left**. That closes the delivery but never
+lowers stock (it meant "already sold, the stock number is right"). Stock stayed
+at 23, and the 7 thrown-away units became undated stock that counted as good
+and could be sold.
+
+**Decision (the user's).**
+- A delivery whose units are sold already closes by itself (reconcile
+  `CloseSoldOut`), and §13's checkout picks keep the counts honest. So the
+  manual "None left" is gone. Wrong amounts are fixed with **Edit**.
+- **Remove from stock** is in the ⋮ menu of every delivery that has not expired.
+  An expired delivery keeps its own button.
+
+**How it works.**
+- `remove_batch_stock(shop, batch, quantity)` covers both cases:
+  - **Expired (locked):** removes the locked count, as 0011 did.
+  - **Not expired:** removes `p_quantity`, the "about N left" the app shows.
+    Only the app can estimate that. The server caps it at stock and at the
+    delivery's amount minus picks.
+- Without `p_quantity`, an unlocked delivery is still refused. That keeps the
+  cart's "Remove expired" path honest: it must store locks first.
+- Either way, a positive `adjustment` row records the loss (now with
+  `batch_id`), the delivery closes as `removed`, and a closed delivery is a
+  no-op. That makes a retry safe.
+- `remove_expired_stock` stays for older app builds.
+- **0013 needs 0012** (`picked_qty`, `transactions.batch_id`).
+- Old rows closed as `none_left` still show "Marked none left" in the history.
