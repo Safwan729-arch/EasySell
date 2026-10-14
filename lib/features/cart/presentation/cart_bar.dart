@@ -54,10 +54,7 @@ class CartBar extends ConsumerWidget {
                           child: Text(
                             context.l10n.cart_barSummary(
                               lines.length,
-                              Money.format(
-                                cartTotal(lines),
-                                currencyCode: currency,
-                              ),
+                              Money.format(cartTotal(lines), currencyCode: currency),
                             ),
                             style: theme.textTheme.titleSmall?.copyWith(
                               color: theme.colorScheme.onPrimary,

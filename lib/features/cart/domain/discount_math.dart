@@ -45,7 +45,10 @@ double maxDiscount(List<CartLine> lines) => _floorPaisa(
 /// raises `Discount exceeds total` above it. The entered amount is floored for
 /// the same reason the cap is: `discount_amount` is `numeric(10,2)` and cannot
 /// store a third decimal.
-double clampDiscount({required double entered, required List<CartLine> lines}) {
+double clampDiscount({
+  required double entered,
+  required List<CartLine> lines,
+}) {
   if (entered <= 0) return 0;
   final cap = maxDiscount(lines);
   if (cap <= 0) return 0;
@@ -56,8 +59,10 @@ double clampDiscount({required double entered, required List<CartLine> lines}) {
 /// What the staged cart cost the shop -- buying price x quantity, summed.
 /// Buying prices are already on the [CartLine]'s product, so this needs no
 /// network call and the below-cost warning can be live as the field is typed.
-double cartCost(List<CartLine> lines) =>
-    lines.fold<double>(0, (sum, l) => sum + l.product.buyingPrice * l.quantity);
+double cartCost(List<CartLine> lines) => lines.fold<double>(
+  0,
+  (sum, l) => sum + l.product.buyingPrice * l.quantity,
+);
 
 /// How much money the shop loses if [discount] is applied -- 0 while the sale
 /// still breaks even or profits.
