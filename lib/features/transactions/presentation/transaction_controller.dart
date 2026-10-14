@@ -51,18 +51,22 @@ class TransactionController extends AsyncNotifier<void> {
     String source = 'manual',
     DateTime? expiryDate,
   }) {
+    final receivedOn = dateOnly(ref.read(nowProvider)());
     final request = jsonEncode({
       'product': productId,
       'quantity': quantity,
       'source': source,
       'expiry': expiryDate == null ? null : ymd(expiryDate),
+      // The controller outlives the sheet. Without the day, an identical
+      // restock days after an unanswered one would replay it and be
+      // swallowed; a retry is the same day.
+      'day': ymd(receivedOn),
     });
     if (request != _pendingRestockRequest) {
       _pendingRestockId = const Uuid().v4();
       _pendingRestockRequest = request;
     }
     final restockId = _pendingRestockId!;
-    final receivedOn = dateOnly(ref.read(nowProvider)());
     return _run(
       (shopId) => _repo.recordRestock(
         shopId: shopId,

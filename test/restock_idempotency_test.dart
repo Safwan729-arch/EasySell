@@ -48,7 +48,10 @@ class _FlakyRestockRepo implements TransactionRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Future<ProviderContainer> _container(TransactionRepository repo) async {
+Future<ProviderContainer> _container(
+  TransactionRepository repo, {
+  DateTime Function()? now,
+}) async {
   final c = ProviderContainer(
     overrides: [
       myShopProvider.overrideWith(
@@ -57,7 +60,7 @@ Future<ProviderContainer> _container(TransactionRepository repo) async {
       ),
       transactionRepositoryProvider.overrideWithValue(repo),
       expiryReconcilerProvider.overrideWithValue(NoopReconciler()),
-      nowProvider.overrideWithValue(() => DateTime(2026, 10, 14, 1, 30)),
+      nowProvider.overrideWithValue(now ?? () => DateTime(2026, 10, 14, 1, 30)),
     ],
   );
   addTearDown(c.dispose);
@@ -67,6 +70,22 @@ Future<ProviderContainer> _container(TransactionRepository repo) async {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('an identical restock on a later day is a new restock', () async {
+    // Monday's restock commits but the reply is lost and the sheet is
+    // closed; Tuesday's genuine, identical restock must not be swallowed as
+    // a replay of Monday's (expiry review #6).
+    final repo = _FlakyRestockRepo();
+    var now = DateTime(2026, 10, 13, 18);
+    final c = await _container(repo, now: () => now);
+    final n = c.read(transactionControllerProvider.notifier);
+
+    await n.recordRestock(productId: 'p1', quantity: 24);
+    now = DateTime(2026, 10, 14, 9);
+    await n.recordRestock(productId: 'p1', quantity: 24);
+
+    expect(repo.ids[1], isNot(repo.ids[0]));
+  });
 
   test('a retry of the same restock reuses the restock id', () async {
     final repo = _FlakyRestockRepo();
