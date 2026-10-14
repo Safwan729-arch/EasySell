@@ -64,9 +64,14 @@ class ExpiryReconciler {
       if (batches.isEmpty) return const ReconcileOutcome.ok({});
 
       final List<Product> products;
+      // Only the products that have deliveries: the whole table of a big
+      // shop is cut off at PostgREST's 1000-row cap.
       switch (await _ref
           .read(productRepositoryProvider)
-          .fetchActiveProducts(shopId)) {
+          .fetchActiveProducts(
+            shopId,
+            ids: {for (final b in batches) b.productId},
+          )) {
         case ResultFailure(:final failure):
           return ReconcileOutcome.failed(failure);
         case Success(:final value):

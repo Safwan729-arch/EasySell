@@ -41,10 +41,15 @@ class _FakeProductRepo implements ProductRepository {
   _FakeProductRepo(this.calls, this.products);
   final List<String> calls;
   final List<Product> products;
+  Set<String>? askedIds;
 
   @override
-  Future<Result<List<Product>>> fetchActiveProducts(String shopId) async {
+  Future<Result<List<Product>>> fetchActiveProducts(
+    String shopId, {
+    Iterable<String>? ids,
+  }) async {
     calls.add('products');
+    askedIds = ids?.toSet();
     return Result.success(products);
   }
 
@@ -92,6 +97,20 @@ Future<ProviderContainer> _container(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('reconcile reads only the products that have deliveries', () async {
+    // The whole active product table is capped at 1000 rows by PostgREST; a
+    // big shop would lose products, skip their locks, and checkout would let
+    // their expired units through (expiry review #12).
+    final calls = <String>[];
+    final products = _FakeProductRepo(calls, [_pepsi]);
+    final c = await _container(
+      _FakeBatchRepo(calls, batches: [_old, _new]),
+      products,
+    );
+    await c.read(expiryReconcilerProvider).run();
+    expect(products.askedIds, {'pepsi'});
+  });
 
   test('reconcile reads deliveries before products, then writes', () async {
     final calls = <String>[];
