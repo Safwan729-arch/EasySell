@@ -37,15 +37,32 @@ class _Repo implements RestockRepository {
 
 const _mojo = Product(id: 'mojo', shopId: 's1', name: 'Mojo', quantity: 10);
 
-ProviderContainer _container(_Repo repo) {
+ProviderContainer _container(
+  _Repo repo, {
+  Stream<List<Product>> Function()? products,
+  Future<Shop?> Function()? shop,
+}) {
   final c = ProviderContainer(
+    // myShopProvider keeps Riverpod's default retry in the app (loading while
+    // it retries is true); here a failure is final at once.
+    retry: (_, _) => null,
     overrides: [
       restockRepositoryProvider.overrideWithValue(repo),
       myShopProvider.overrideWith(
-        (ref) async =>
-            const Shop(id: 's1', ownerId: 'o1', name: 'Shop', currency: 'BDT'),
+        (ref) =>
+            shop?.call() ??
+            Future.value(
+              const Shop(
+                id: 's1',
+                ownerId: 'o1',
+                name: 'Shop',
+                currency: 'BDT',
+              ),
+            ),
       ),
-      productsStreamProvider.overrideWith((ref) => Stream.value([_mojo])),
+      productsStreamProvider.overrideWith(
+        (ref) => products?.call() ?? Stream.value([_mojo]),
+      ),
       productExpiryProvider.overrideWithValue(const {}),
       nowProvider.overrideWithValue(() => DateTime(2026, 10, 15, 10)),
     ],
@@ -92,5 +109,62 @@ void main() {
     await _settle();
     expect(repo.calls, 2);
     expect(c.read(restockPlanProvider).value?.buyNow, hasLength(1));
+  });
+
+  RestockSpeed mojoSpeed() => const RestockSpeed(productId: 'mojo', speed: 5);
+
+  test('the shop record reloading with the same id does not refetch', () async {
+    // An auth token refresh reloads myShopProvider; only the shop id matters.
+    final repo = _Repo(Result.success([mojoSpeed()]));
+    final c = _container(repo);
+    await _settle();
+    expect(repo.calls, 1);
+
+    c.invalidate(myShopProvider);
+    await _settle();
+    expect(repo.calls, 1);
+  });
+
+  test('a failed shop lookup is an error, not "nothing to restock"', () async {
+    final repo = _Repo(Result.success([mojoSpeed()]));
+    final c = _container(
+      repo,
+      shop: () => Future.error(const NetworkFailure('offline')),
+    );
+    await _settle();
+    expect(c.read(restockPlanProvider), isA<AsyncError<RestockPlan>>());
+  });
+
+  test('products still loading: loading, not "nothing to restock"', () async {
+    final repo = _Repo(Result.success([mojoSpeed()]));
+    final c = _container(repo, products: () => const Stream.empty());
+    await _settle();
+    expect(c.read(restockPlanProvider), isA<AsyncLoading<RestockPlan>>());
+  });
+
+  test('products failed: an error, not "nothing to restock"', () async {
+    final repo = _Repo(Result.success([mojoSpeed()]));
+    final c = _container(
+      repo,
+      products: () => Stream.error(const NetworkFailure('offline')),
+    );
+    await _settle();
+    expect(c.read(restockPlanProvider), isA<AsyncError<RestockPlan>>());
+  });
+
+  test('Retry shows loading at once, then the result', () async {
+    // invalidate keeps the error and only sets isLoading, so the screen kept
+    // showing the error with no sign that Retry did anything.
+    final repo = _Repo(const Result.failure(NetworkFailure('offline')));
+    final c = _container(repo);
+    await _settle();
+    expect(c.read(restockPlanProvider), isA<AsyncError<RestockPlan>>());
+
+    c.invalidate(restockSpeedsProvider);
+    expect(c.read(restockPlanProvider), isA<AsyncLoading<RestockPlan>>());
+
+    await _settle();
+    expect(repo.calls, 2);
+    expect(c.read(restockPlanProvider), isA<AsyncError<RestockPlan>>());
   });
 }

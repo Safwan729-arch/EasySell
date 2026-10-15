@@ -3,7 +3,8 @@
 -- =============================================================================
 -- Per product: a units-per-day speed over the 28 full LOCAL days ending
 -- yesterday, weeks weighted 0.4/0.3/0.2/0.1, counting only days the product
--- could be sold (start-of-day stock > 0, or a sale that day). Days when the
+-- could be sold (unexpired stock at the start of the day, or a sale that
+-- day; its creation day only if it sold). Days when the
 -- shelf was empty are skipped: counting them made a product that sold out look
 -- slow, which is the exact mistake the planner exists to stop.
 --
@@ -18,7 +19,8 @@
 -- p_today and p_utc_offset_minutes come from the phone: the server's
 -- current_date is UTC, still "yesterday" in Bangladesh until 6 AM.
 --
--- Read-only, not security definer: RLS on products/transactions applies.
+-- Read-only, not security definer: RLS on products, transactions and
+-- product_batches applies.
 -- Run after 0016. Safe to re-run.
 -- =============================================================================
 
@@ -74,6 +76,24 @@ as $$
     where tx.d >= p_today
     group by tx.product_id
   ),
+  -- Expired units still on the shelf at the start of each window day: a
+  -- delivery's locked count (expired_qty) from the day after its expiry date
+  -- until the local day it was removed (still there at that day's start).
+  -- A shelf holding only these cannot sell, so such a day must not count as
+  -- in stock -- it would pull the speed down, the planner's own failure mode.
+  -- A delivery the app has not yet locked (expired_qty null) is missed.
+  expired as (
+    select b.product_id, dy.d, sum(b.expired_qty) as qty
+    from product_batches b
+    cross join days dy
+    where b.shop_id = p_shop_id
+      and b.expired_qty is not null
+      and b.expiry_date < dy.d
+      and (b.closed_at is null
+           or ((b.closed_at at time zone 'UTC')
+                 + make_interval(mins => p_utc_offset_minutes))::date >= dy.d)
+    group by b.product_id, dy.d
+  ),
   -- stock_at_start(d) = quantity - after_window - (net of window days >= d),
   -- as a running sum. A correlated subquery here scanned txn once per product
   -- per day (final review 2026-10-15): seconds for a big shop, on every sale.
@@ -82,6 +102,7 @@ as $$
            dy.d,
            p.created_day,
            coalesce(tx.sold, 0) as sold,
+           coalesce(ex.qty, 0) as expired_qty,
            p.quantity
              - coalesce(aw.net, 0)
              - sum(coalesce(tx.net, 0)) over (
@@ -91,14 +112,20 @@ as $$
     cross join days dy
     left join txn tx on tx.product_id = p.id and tx.d = dy.d
     left join after_window aw on aw.product_id = p.id
+    left join expired ex on ex.product_id = p.id and ex.d = dy.d
   ),
+  -- In stock: sellable (unexpired) stock at the start of the day, or a sale.
+  -- The day a product was created counts only if it sold: a product added at
+  -- 8 PM had no real chance to sell that day, and counting it as a full day
+  -- lowered a new product's speed.
   weekly as (
     select g.product_id,
            (p_today - 1 - g.d) / 7 as w,
            sum(g.sold) as units,
            count(*) filter (
-             where g.d >= g.created_day
-               and (g.start_stock > 0 or g.sold > 0)
+             where (g.d > g.created_day
+                    and g.start_stock - g.expired_qty > 0)
+                or (g.d >= g.created_day and g.sold > 0)
            ) as in_days
     from grid g
     group by g.product_id, (p_today - 1 - g.d) / 7
@@ -119,23 +146,32 @@ as $$
   having sum(r.rate * r.wt) > 0;
 $$;
 -- -----------------------------------------------------------------------------
--- VERIFY (run by hand; replace the email and product name):
+-- VERIFY (run by hand; replace the email and product name). "Today" is the
+-- Bangladesh date, not the server's UTC current_date, which lags until 6 AM.
 --
 -- select * from get_restock_speeds(
 --   (select s.id from shops s join auth.users u on u.id = s.owner_id
---     where u.email = 'safwansaka55555@gmail.com'),
---   current_date, 360);
+--     where u.email = 'you@example.com'),
+--   (now() at time zone 'Asia/Dhaka')::date, 360);
 --
--- Hand check for one product -- each day's sold units and start-of-day stock:
--- with p as (select id, quantity from products where name = 'Pepsi'),
+-- Hand check for one product -- each day's sold units and start-of-day stock.
+-- The product is looked up in YOUR shop only: the SQL editor bypasses RLS, so
+-- a bare name match can hit another shop's Pepsi.
+-- with shop as (select s.id from shops s join auth.users u on u.id = s.owner_id
+--               where u.email = 'you@example.com'),
+-- today as (select (now() at time zone 'Asia/Dhaka')::date as d),
+-- p as (select id, quantity from products
+--       where name = 'Pepsi' and shop_id = (select id from shop)),
 -- t as (select ((created_at at time zone 'UTC') + interval '360 minutes')::date d,
 --              case type when 'restock' then quantity else -quantity end net,
 --              case type when 'sale' then quantity else 0 end sold
 --       from transactions where product_id = (select id from p))
--- select g.d,
---        coalesce((select sum(sold) from t where t.d = g.d), 0) as sold,
+-- select g.d::date as day,
+--        coalesce((select sum(sold) from t where t.d = g.d::date), 0) as sold,
 --        (select quantity from p)
---          - coalesce((select sum(net) from t where t.d >= g.d), 0) as start_stock
--- from generate_series(current_date - 28, current_date - 1, interval '1 day') g(d)
--- order by g.d;
+--          - coalesce((select sum(net) from t where t.d >= g.d::date), 0)
+--          as start_stock
+-- from generate_series((select d from today) - 28, (select d from today) - 1,
+--                      interval '1 day') g(d)
+-- order by 1;
 -- -----------------------------------------------------------------------------

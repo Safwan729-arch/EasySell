@@ -2393,8 +2393,8 @@ abstract class AppLocalizations {
   /// No description provided for @settings_restockEvery.
   ///
   /// In en, this message translates to:
-  /// **'I restock every {days} days'**
-  String settings_restockEvery(String days);
+  /// **'{days, plural, =1{I restock every day} other{I restock every {days} days}}'**
+  String settings_restockEvery(int days);
 
   /// No description provided for @settings_restockEveryTitle.
   ///
@@ -2405,8 +2405,8 @@ abstract class AppLocalizations {
   /// No description provided for @restockPlan_daysShort.
   ///
   /// In en, this message translates to:
-  /// **'{days} days'**
-  String restockPlan_daysShort(String days);
+  /// **'{days, plural, =1{1 day} other{{days} days}}'**
+  String restockPlan_daysShort(int days);
 
   /// No description provided for @restockPlan_title.
   ///
@@ -2435,8 +2435,8 @@ abstract class AppLocalizations {
   /// No description provided for @restockPlan_runsOutIn.
   ///
   /// In en, this message translates to:
-  /// **'Runs out in {days} days'**
-  String restockPlan_runsOutIn(String days);
+  /// **'{days, plural, =1{Runs out in 1 day} other{Runs out in {days} days}}'**
+  String restockPlan_runsOutIn(int days);
 
   /// No description provided for @restockPlan_today.
   ///
@@ -2477,8 +2477,8 @@ abstract class AppLocalizations {
   /// No description provided for @restockPlan_cardSummary.
   ///
   /// In en, this message translates to:
-  /// **'{count} items to restock'**
-  String restockPlan_cardSummary(String count);
+  /// **'{count, plural, =1{1 item to restock} other{{count} items to restock}}'**
+  String restockPlan_cardSummary(int count);
 
   /// No description provided for @restockPlan_cardItem.
   ///

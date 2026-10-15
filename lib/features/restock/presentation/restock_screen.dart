@@ -97,7 +97,7 @@ class _RestockRow extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.extension<AppColors>()!;
     final p = item.product;
-    final urgent = item.daysLeft <= 2;
+    final urgent = item.isUrgent;
     final muted = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );

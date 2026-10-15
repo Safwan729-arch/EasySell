@@ -5,7 +5,6 @@ import '../../auth/data/auth_repository.dart';
 import '../../expiry/domain/expiry_estimate.dart';
 import '../../expiry/presentation/expiry_providers.dart';
 import '../../expiry/presentation/today_provider.dart';
-import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../data/restock_repository.dart';
 import '../domain/restock_plan.dart';
@@ -22,13 +21,18 @@ final restockSpeedsProvider =
       retry: (_, _) => null,
       (ref) async {
         ref.watch(dataRefreshProvider);
-        final shop = ref.watch(myShopProvider).value;
-        if (shop == null) return const {};
         final today = ref.watch(todayProvider);
+        // Only the id: the shop record also reloads on an auth token refresh,
+        // which refetched every speed. A failed lookup throws here, so it
+        // shows as an error rather than as "nothing to restock".
+        final shopId = await ref.watch(
+          myShopProvider.selectAsync((s) => s?.id),
+        );
+        if (shopId == null) return const {};
         final offset = ref.read(nowProvider)().timeZoneOffset.inMinutes;
         final r = await ref
-            .watch(restockRepositoryProvider)
-            .fetchSpeeds(shop.id, today: today, utcOffsetMinutes: offset);
+            .read(restockRepositoryProvider)
+            .fetchSpeeds(shopId, today: today, utcOffsetMinutes: offset);
         return r.when(
           success: (l) => {for (final s in l) s.productId: s},
           failure: (f) => throw f,
@@ -42,14 +46,15 @@ final restockPlanProvider = Provider.autoDispose<AsyncValue<RestockPlan>>((
   ref,
 ) {
   final speeds = ref.watch(restockSpeedsProvider);
-  final products = ref.watch(productsStreamProvider).value ?? const <Product>[];
+  final productsAsync = ref.watch(productsStreamProvider);
   final byProduct = ref.watch(productExpiryProvider);
   final days = ref.watch(restockDaysProvider);
   // Not whenData: it turns a reload's AsyncLoading(previous) into a bare
   // AsyncLoading, so every restock blanked the list and the Home card. Keep
-  // planning from the last speeds while new ones load.
+  // planning from the last values while new ones load.
   final s = speeds.value;
-  if (s != null) {
+  final products = productsAsync.value;
+  if (s != null && products != null) {
     return AsyncData(
       planRestock(
         products: products,
@@ -59,8 +64,18 @@ final restockPlanProvider = Provider.autoDispose<AsyncValue<RestockPlan>>((
       ),
     );
   }
+  // Nothing to plan from yet. Products still loading or failed must not read
+  // as "Nothing to restock yet"; a Retry in flight shows as loading, not as
+  // the old error.
+  if (speeds.isLoading) return const AsyncLoading();
   if (speeds.hasError) {
     return AsyncError(speeds.error!, speeds.stackTrace ?? StackTrace.empty);
+  }
+  if (productsAsync.hasError) {
+    return AsyncError(
+      productsAsync.error!,
+      productsAsync.stackTrace ?? StackTrace.empty,
+    );
   }
   return const AsyncLoading();
 });

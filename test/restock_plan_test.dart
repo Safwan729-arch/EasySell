@@ -113,4 +113,13 @@ void main() {
       4,
     );
   });
+
+  test('urgent (red) follows the whole days the text shows', () {
+    // 2.5 days reads "Runs out in 2 days", so it must be red like 2.0 is.
+    RestockItem at(double qty) =>
+        _plan([_p('A', qty: qty)], {'A': _s('A', 1)}).buyNow.single;
+    expect(at(2.5).isUrgent, isTrue);
+    expect(at(2).isUrgent, isTrue);
+    expect(at(3).isUrgent, isFalse);
+  });
 }

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
-import '../../../shared/extensions/format.dart';
 import 'restock_providers.dart';
 import 'restock_text.dart';
 
@@ -54,7 +53,7 @@ class RestockSoonCard extends ConsumerWidget {
                   ],
                 ),
                 Text(
-                  l10n.restockPlan_cardSummary(Qty.format(buyNow.length)),
+                  l10n.restockPlan_cardSummary(buyNow.length),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 4),
@@ -65,7 +64,7 @@ class RestockSoonCard extends ConsumerWidget {
                       daysLeftShort(l10n, i),
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: i.daysLeft <= 2
+                      color: i.isUrgent
                           ? colors.negative
                           : theme.colorScheme.onSurfaceVariant,
                     ),

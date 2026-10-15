@@ -56,8 +56,10 @@ UTC offset. The server's `current_date` is UTC, which in Bangladesh is still
 
 ### 3.2 In-stock days
 
-A day counts only if the product **could be sold** that day: its stock at the
-start of the day was above zero, **or** it sold something that day.
+A day counts only if the product **could be sold** that day: its
+**unexpired** stock at the start of the day was above zero, **or** it sold
+something that day. The day the product was created counts only if it sold
+(see §9).
 
 - **Why this matters most:** if Pepsi sold out on Wednesday, Thursday to
   Saturday show zero sales because the shelf was empty, not because nobody
@@ -277,22 +279,35 @@ estimate, so they're computed in Dart.
     hundreds of products, re-run after every sale. This fix has no test, for
     the same reason as above.
 
-### Known limitations (left as they are, for now)
+### Review minors, fixed the same day
 
-- **Expired units count as in-stock days.** The SQL works from raw stock, so
-  a shelf holding only expired units that haven't been removed counts as an
-  in-stock day with no sales. That slightly lowers the speed.
-- **A product's creation day counts as a full in-stock day,** even if it was
-  added in the evening.
-- **The red colour and the text can disagree.** Red uses `daysLeft ≤ 2`, but
-  the text rounds down, so 2.5 days reads "2 days" in amber.
-- **English singulars are missing** ("1 days", "1 items"). Bengali is
-  unaffected.
-- **While the product list is loading or has failed,** the Restock list says
-  "Nothing to restock yet" instead of a spinner or the error.
-- **Any change to the shop record refetches the speeds,** including an auth
-  token refresh, because the provider watches the whole shop value.
-- **Retry gives no immediate feedback.** Nothing changes on screen until the
-  result arrives.
-- **The 0017 verify query has two problems.** Its product-name filter isn't
-  limited to one shop, and it uses the server's UTC `current_date`.
+The final review's eight minor findings were all fixed on 2026-10-15. Where
+there's a test it's named; the SQL changes have none, because the repo has no
+Postgres harness.
+
+- **Expired units no longer count as in-stock days.** 0017 subtracts each
+  delivery's locked `expired_qty` from start-of-day stock:
+  - from the day after its expiry date,
+  - until the local day it was removed.
+
+  **Limit:** a delivery the app hasn't locked yet (`expired_qty` is null) is
+  missed.
+- **The creation day counts only if the product sold that day.** A product
+  added at 8 PM had no real chance to sell.
+- **Red follows the whole days the text shows.** `RestockItem.isUrgent` is
+  `daysLeft < 3`, so 2.5 days ("2 days") is red. Tested in
+  `restock_plan_test`.
+- **ICU plurals** for days and item counts: "1 day", "1 item to restock" and
+  "I restock every day". Bengali keeps Bengali digits. Tested in
+  `restock_text_test`.
+- **The speeds provider watches only the shop id**
+  (`myShopProvider.selectAsync`).
+  - A shop-record reload with the same id doesn't refetch.
+  - A failed lookup shows as an error. While Riverpod's default retry on
+    `myShopProvider` is still running, the list shows loading.
+  - Tested in `restock_providers_test`.
+- **Products loading or failed** shows as loading or error, not "Nothing to
+  restock yet". Tested in `restock_providers_test`.
+- **Retry shows loading at once.** Tested in `restock_providers_test`.
+- **The 0017 verify query** looks the product up in the user's own shop and
+  uses the Asia/Dhaka date.

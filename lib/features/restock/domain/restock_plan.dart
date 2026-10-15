@@ -55,6 +55,10 @@ class RestockItem {
   /// Whole units to buy; 0 when there is enough.
   final double suggestion;
   final RestockTrend trend;
+
+  /// Red: runs out within 2 whole days. Whole days because that is what the
+  /// text shows -- 2.5 days reads "Runs out in 2 days" and must be red too.
+  bool get isUrgent => daysLeft < 3;
 }
 
 class RestockPlan {

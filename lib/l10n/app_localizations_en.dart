@@ -1375,16 +1375,38 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String settings_restockEvery(String days) {
-    return 'I restock every $days days';
+  String settings_restockEvery(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'I restock every $daysString days',
+      one: 'I restock every day',
+    );
+    return '$_temp0';
   }
 
   @override
   String get settings_restockEveryTitle => 'How often do you restock?';
 
   @override
-  String restockPlan_daysShort(String days) {
-    return '$days days';
+  String restockPlan_daysShort(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$daysString days',
+      one: '1 day',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1402,8 +1424,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restockPlan_runsOutToday => 'Runs out today';
 
   @override
-  String restockPlan_runsOutIn(String days) {
-    return 'Runs out in $days days';
+  String restockPlan_runsOutIn(int days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Runs out in $daysString days',
+      one: 'Runs out in 1 day',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1430,8 +1463,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restockPlan_cardTitle => 'Restock soon';
 
   @override
-  String restockPlan_cardSummary(String count) {
-    return '$count items to restock';
+  String restockPlan_cardSummary(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString items to restock',
+      one: '1 item to restock',
+    );
+    return '$_temp0';
   }
 
   @override
