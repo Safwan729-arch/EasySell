@@ -115,3 +115,22 @@ class GlassIconButton extends StatelessWidget {
     );
   }
 }
+
+/// Style for a destructive confirm button (Clear, Delete, Remove) in a
+/// dialog: solid danger red at its natural width.
+///
+/// It must switch the brand gradient off: the theme paints that gradient
+/// behind every FilledButton via `backgroundBuilder`, which would otherwise
+/// cover the red and make a delete look like an ordinary primary action. In
+/// dark the danger colour is a light pink, so the label goes dark for contrast.
+ButtonStyle destructiveButtonStyle(BuildContext context) {
+  final colors = Theme.of(context).extension<AppColors>()!;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return FilledButton.styleFrom(
+    minimumSize: const Size(0, 44),
+    backgroundColor: colors.negative,
+    foregroundColor: isDark ? const Color(0xFF3A0A14) : Colors.white,
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    backgroundBuilder: (context, states, child) => child!,
+  );
+}

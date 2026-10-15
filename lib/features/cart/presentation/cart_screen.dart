@@ -7,6 +7,7 @@ import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/failure_text.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/brand_fill.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../../core/widgets/two_option_segment.dart';
 import '../../../shared/extensions/format.dart';
@@ -77,7 +78,6 @@ class CartScreen extends ConsumerWidget {
     final cleared = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        final colors = Theme.of(ctx).extension<AppColors>()!;
         return AlertDialog(
           title: Text(ctx.l10n.cart_clearTitle),
           content: Text(ctx.l10n.cart_clearBody),
@@ -91,12 +91,7 @@ class CartScreen extends ConsumerWidget {
               child: Text(ctx.l10n.cart_keep),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 44),
-                backgroundColor: colors.negative,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
+              style: destructiveButtonStyle(ctx),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: Text(ctx.l10n.common_clear),
             ),

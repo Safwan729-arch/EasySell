@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/brand_fill.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/category_repository.dart';
 import '../domain/category.dart';
@@ -68,7 +68,6 @@ class _ManageCategoriesScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        final colors = Theme.of(ctx).extension<AppColors>()!;
         return AlertDialog(
           title: Text(ctx.l10n.category_deleteTitle),
           content: Text(
@@ -85,12 +84,7 @@ class _ManageCategoriesScreenState
               child: Text(ctx.l10n.common_cancel),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 44),
-                backgroundColor: colors.negative,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
+              style: destructiveButtonStyle(ctx),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(ctx.l10n.common_delete),
             ),

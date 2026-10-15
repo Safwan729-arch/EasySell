@@ -68,26 +68,40 @@ class WelcomeScreen extends ConsumerWidget {
                   onTap: () => _start(context, ref),
                   borderRadius: BorderRadius.circular(40),
                   child: Material(
-                    color: theme.colorScheme.primary,
+                    // Brand fill (gradient in light) when the app theme is
+                    // present; plain primary otherwise.
+                    color: theme.extension<AppColors>() == null
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
                     shape: const StadiumBorder(),
                     clipBehavior: Clip.antiAlias,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 8, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              l10n.welcome_getStarted,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: theme.colorScheme.onPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                    child: Ink(
+                      decoration: theme.extension<AppColors>() == null
+                          ? null
+                          : ShapeDecoration(
+                              shape: const StadiumBorder(),
+                              gradient: theme
+                                  .extension<AppColors>()!
+                                  .brandGradient,
+                            ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 8, 8, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l10n.welcome_getStarted,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                          _ArrowBadge(),
-                        ],
+                            _ArrowBadge(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -131,14 +145,16 @@ class _GradientHero extends StatelessWidget {
       Icons.photo_camera_rounded,
       Icons.insights_rounded,
     ];
-    // Royal-blue gradient hero with white feature tiles.
+    // The hero gradient with white feature tiles.
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.brand, AppTheme.brandDeep],
-        ),
+      decoration: BoxDecoration(
+        gradient:
+            Theme.of(context).extension<AppColors>()?.heroGradient ??
+            const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppTheme.brand, AppTheme.brandDeep],
+            ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),

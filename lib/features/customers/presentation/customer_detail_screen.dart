@@ -8,6 +8,7 @@ import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/customer_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/brand_fill.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../domain/customer.dart';
@@ -151,7 +152,6 @@ class CustomerDetailScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        final colors = Theme.of(ctx).extension<AppColors>()!;
         return AlertDialog(
           title: Text(l10n.customers_deleteConfirmTitle(name)),
           content: Text(l10n.customers_deleteConfirmBody),
@@ -165,12 +165,7 @@ class CustomerDetailScreen extends ConsumerWidget {
               child: Text(l10n.common_cancel),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 44),
-                backgroundColor: colors.negative,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
+              style: destructiveButtonStyle(ctx),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: Text(l10n.common_delete),
             ),

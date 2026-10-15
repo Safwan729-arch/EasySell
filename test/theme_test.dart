@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ai_shopkeeper/core/config/theme.dart';
 import 'package:ai_shopkeeper/core/widgets/app_backdrop.dart';
+import 'package:ai_shopkeeper/core/widgets/brand_fill.dart';
 import 'package:ai_shopkeeper/core/widgets/segment_pills.dart';
 
 void main() {
@@ -97,6 +98,36 @@ void main() {
         ),
       );
       expect(buttonGradient(tester), isNull);
+    });
+
+    // Regression: the theme paints the gradient behind every FilledButton, so a
+    // red Delete/Clear once rendered as a blue primary action.
+    testWidgets('$name: a destructive button stays red, not gradient', (
+      tester,
+    ) async {
+      final theme = themeOf();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => FilledButton(
+                style: destructiveButtonStyle(context),
+                onPressed: () {},
+                child: const Text('Delete'),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(buttonGradient(tester), isNull);
+      final material = tester.widget<Material>(
+        find.descendant(
+          of: find.byType(FilledButton),
+          matching: find.byType(Material),
+        ),
+      );
+      expect(material.color, theme.extension<AppColors>()!.negative);
     });
 
     testWidgets('$name: AppBackdrop paints the canvas behind its child', (

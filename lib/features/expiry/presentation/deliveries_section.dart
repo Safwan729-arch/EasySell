@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/brand_fill.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../inventory/domain/product.dart';
@@ -249,12 +250,7 @@ class _RemoveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FilledButton(
-    style: FilledButton.styleFrom(
-      minimumSize: const Size(0, 44),
-      backgroundColor: Theme.of(context).extension<AppColors>()!.negative,
-      foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-    ),
+    style: destructiveButtonStyle(context),
     onPressed: onPressed,
     child: Text(context.l10n.common_remove),
   );
