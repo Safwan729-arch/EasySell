@@ -18,7 +18,9 @@ class SegmentPills<T> extends StatelessWidget {
   });
 
   final List<T> values;
-  final T selected;
+
+  /// The highlighted value, or null to highlight none (Reports in day-mode).
+  final T? selected;
   final String Function(T) labelOf;
   final ValueChanged<T> onChanged;
 

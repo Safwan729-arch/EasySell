@@ -18,7 +18,7 @@ class DonutChart extends StatelessWidget {
   const DonutChart({
     super.key,
     required this.slices,
-    this.size = 132,
+    this.size = 168,
     this.centerLabel,
     this.centerSub,
   });
@@ -37,6 +37,21 @@ class DonutChart extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // The segments' soft glow: a blurred halo in the leading colour.
+          if (slices.isNotEmpty)
+            Container(
+              width: size * 0.9,
+              height: size * 0.9,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: slices.first.color.withValues(alpha: 0.28),
+                    blurRadius: 26,
+                  ),
+                ],
+              ),
+            ),
           PieChart(
             duration: AppMotion.reduced(context)
                 ? Duration.zero
@@ -44,14 +59,14 @@ class DonutChart extends StatelessWidget {
             curve: AppMotion.easeOut,
             PieChartData(
               sectionsSpace: 2,
-              centerSpaceRadius: size * 0.32,
+              centerSpaceRadius: size * 0.31,
               startDegreeOffset: -90,
               sections: [
                 for (final s in slices)
                   PieChartSectionData(
                     value: s.value,
                     color: s.color,
-                    radius: size * 0.16,
+                    radius: size * 0.18,
                     showTitle: false,
                   ),
               ],
@@ -60,16 +75,19 @@ class DonutChart extends StatelessWidget {
           if (centerLabel != null)
             // Constrain to the open hole so the label never overflows the ring.
             SizedBox(
-              width: size * 0.58,
+              width: size * 0.56,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    centerLabel!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      centerLabel!,
+                      maxLines: 1,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   if (centerSub != null)
@@ -78,7 +96,7 @@ class DonutChart extends StatelessWidget {
                       maxLines: 1,
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
