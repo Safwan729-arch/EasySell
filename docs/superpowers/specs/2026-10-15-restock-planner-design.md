@@ -1,6 +1,6 @@
 # Restock planner — design
 
-Status: approved in conversation 2026-10-15 (rule and screens). Spec awaiting review.
+Status: built 2026-10-15 (migration 0017). Plan: [[2026-10-15-restock-planner|Plan]].
 
 ## 1. Problem
 
@@ -249,3 +249,50 @@ estimate, so they're computed in Dart.
   harness. A verification query, with a hand-built expected answer for one
   product, goes with the migration so the speed can be checked against real
   data.
+
+## 9. Build notes (2026-10-15)
+
+### Decisions made during the build
+
+- **Restock-days picker:** it offers the presets 1, 2, 3, 5, 7, 10, 14 and
+  30, the same style as the expiry warn-days picker, rather than any number
+  from 1 to 30. `set()` clamps any value to 1–30.
+- **0017 has no automated test,** because the repo has no Postgres harness.
+  It's checked by the hand query at the end of the migration. The final
+  reviewer traced it on paper:
+  - sold-out days are skipped,
+  - days before `created_at` are dropped,
+  - 23:30 Bangladesh time stays on the same local day.
+- **Fixed after the final review:**
+  - **No automatic retry on the speeds provider.** Riverpod's default retried
+    for about 40 s and reported "loading" meanwhile, so a missing 0017 or no
+    internet showed a spinner instead of the error.
+  - **The plan keeps the last speeds while new ones load.** `whenData` dropped
+    the previous value on reload, so every restock blanked the list and the
+    Home card.
+  - **0017 rebuilds start-of-day stock as a running sum** (`sum(...) over
+    (partition by product order by day desc)`) and reads only transactions
+    from the last 30 days. The first version ran a correlated subquery per
+    product per day. The reviewer estimated that at seconds for a shop with
+    hundreds of products, re-run after every sale. This fix has no test, for
+    the same reason as above.
+
+### Known limitations (left as they are, for now)
+
+- **Expired units count as in-stock days.** The SQL works from raw stock, so
+  a shelf holding only expired units that haven't been removed counts as an
+  in-stock day with no sales. That slightly lowers the speed.
+- **A product's creation day counts as a full in-stock day,** even if it was
+  added in the evening.
+- **The red colour and the text can disagree.** Red uses `daysLeft ≤ 2`, but
+  the text rounds down, so 2.5 days reads "2 days" in amber.
+- **English singulars are missing** ("1 days", "1 items"). Bengali is
+  unaffected.
+- **While the product list is loading or has failed,** the Restock list says
+  "Nothing to restock yet" instead of a spinner or the error.
+- **Any change to the shop record refetches the speeds,** including an auth
+  token refresh, because the provider watches the whole shop value.
+- **Retry gives no immediate feedback.** Nothing changes on screen until the
+  result arrives.
+- **The 0017 verify query has two problems.** Its product-name filter isn't
+  limited to one shop, and it uses the server's UTC `current_date`.
