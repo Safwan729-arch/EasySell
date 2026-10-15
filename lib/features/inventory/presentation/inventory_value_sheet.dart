@@ -4,6 +4,7 @@ import '../../../core/config/haptics.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/breakdown_row.dart';
+import '../../../core/widgets/sheet_header.dart';
 import '../../../shared/extensions/format.dart';
 import '../domain/inventory_totals.dart';
 
@@ -29,7 +30,6 @@ Future<void> showInventoryValueSheet(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: theme.colorScheme.surface,
     // Five rows exceed the default 9/16-of-screen cap on a short phone, so let
     // the sheet size to its content and scroll only if it outgrows the screen.
     // Matches the dashboard sheet, which had to be fixed for the same reason.
@@ -41,18 +41,9 @@ Future<void> showInventoryValueSheet(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.inventory_valueTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              l10n.inventory_valueExact,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            SheetHeader(
+              title: l10n.inventory_valueTitle,
+              subtitle: l10n.inventory_valueExact,
             ),
             const SizedBox(height: 8),
             // The headline first: this is the number the header had to truncate.

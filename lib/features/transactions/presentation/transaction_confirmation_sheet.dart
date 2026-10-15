@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/haptics.dart';
+import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/sheet_header.dart';
+import '../../../core/widgets/stepper_button.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../cart/domain/cart_math.dart';
@@ -25,7 +28,6 @@ Future<bool?> showRestockSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => _RestockConfirmationSheet(
       product: product,
       initialQuantity: initialQuantity,
@@ -122,9 +124,14 @@ class _RestockConfirmationSheetState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.restock_confirmTitle, style: theme.textTheme.titleLarge),
-          const SizedBox(height: 12),
-          Text(_product.name, style: theme.textTheme.titleMedium),
+          SheetHeader(title: l10n.restock_confirmTitle),
+          const SizedBox(height: 14),
+          Text(
+            _product.name,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (subtitle.isNotEmpty)
             Text(
               subtitle,
@@ -135,8 +142,9 @@ class _RestockConfirmationSheetState
           const SizedBox(height: 4),
           Text(
             l10n.restock_inStock(_product.quantityLabel),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontSize: 15,
+              color: theme.extension<AppColors>()!.link,
             ),
           ),
           const SizedBox(height: 16),
@@ -146,31 +154,35 @@ class _RestockConfirmationSheetState
               Text(l10n.common_quantity, style: theme.textTheme.titleSmall),
               Row(
                 children: [
-                  IconButton.filledTonal(
+                  StepperButton(
                     onPressed: (isLoading || _qty <= _step)
                         ? null
                         : () {
                             AppHaptics.tap();
                             setState(() => _qty -= _step);
                           },
-                    icon: const Icon(Icons.remove),
+                    icon: Icons.remove,
                   ),
                   SizedBox(
-                    width: 88,
+                    width: 112,
                     child: Text(
                       '${Qty.format(_qty)} ${_product.unitLabel}',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge,
+                      maxLines: 1,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  IconButton.filledTonal(
+                  StepperButton(
                     onPressed: isLoading
                         ? null
                         : () {
                             AppHaptics.tap();
                             setState(() => _qty += _step);
                           },
-                    icon: const Icon(Icons.add),
+                    icon: Icons.add,
                   ),
                 ],
               ),

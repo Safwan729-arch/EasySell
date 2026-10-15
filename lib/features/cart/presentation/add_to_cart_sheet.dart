@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/haptics.dart';
+import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/sheet_header.dart';
+import '../../../core/widgets/stepper_button.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../expiry/presentation/expiry_providers.dart';
@@ -22,7 +25,6 @@ Future<bool?> showAddToCartSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => _AddToCartSheet(product: product, readLabel: readLabel),
   );
 }
@@ -149,9 +151,14 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.common_addToCart, style: theme.textTheme.titleLarge),
-          const SizedBox(height: 12),
-          Text(product.name, style: theme.textTheme.titleMedium),
+          SheetHeader(title: l10n.common_addToCart),
+          const SizedBox(height: 14),
+          Text(
+            product.name,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (subtitle.isNotEmpty)
             Text(
               subtitle,
@@ -177,8 +184,9 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
                     Product.trimNum(maxQty),
                     product.unitLabel,
                   ),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontSize: 15,
+              color: theme.extension<AppColors>()!.link,
             ),
           ),
           if (expired > 0)
@@ -198,14 +206,14 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
               Text(l10n.common_quantity, style: theme.textTheme.titleSmall),
               Row(
                 children: [
-                  IconButton.filledTonal(
+                  StepperButton(
                     onPressed: _qty <= _step
                         ? null
                         : () {
                             AppHaptics.tap();
                             _setQty(_qty - _step);
                           },
-                    icon: const Icon(Icons.remove),
+                    icon: Icons.remove,
                   ),
                   SizedBox(
                     width: 96,
@@ -225,18 +233,17 @@ class _AddToCartSheetState extends ConsumerState<_AddToCartSheet> {
                           horizontal: 8,
                           vertical: 8,
                         ),
-                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ),
-                  IconButton.filledTonal(
+                  StepperButton(
                     onPressed: (_qty + _step > maxQty + 1e-9)
                         ? null
                         : () {
                             AppHaptics.tap();
                             _setQty(_qty + _step);
                           },
-                    icon: const Icon(Icons.add),
+                    icon: Icons.add,
                   ),
                 ],
               ),

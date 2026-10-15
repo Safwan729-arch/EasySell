@@ -25,7 +25,6 @@ Future<bool?> showBatchFormSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => _BatchFormSheet(product: product, batch: batch),
   );
 }

@@ -6,6 +6,7 @@ import '../../../core/config/theme.dart';
 import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/breakdown_row.dart';
+import '../../../core/widgets/sheet_header.dart';
 import '../../../shared/extensions/format.dart';
 import '../../analytics/domain/analytics.dart';
 
@@ -36,7 +37,6 @@ Future<void> showSummaryBreakdownSheet(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: theme.colorScheme.surface,
     // Six rows plus a button exceed the default 9/16-of-screen cap on a short
     // phone (measured: 199px of overflow at 600dp tall), so let the sheet size
     // to its content and scroll only if that content is taller than the screen.
@@ -48,18 +48,9 @@ Future<void> showSummaryBreakdownSheet(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.dashboard_breakdown,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              l10n.dashboard_exactFigures(periodLabel(l10n, period)),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            SheetHeader(
+              title: l10n.dashboard_breakdown,
+              subtitle: l10n.dashboard_exactFigures(periodLabel(l10n, period)),
             ),
             const SizedBox(height: 8),
             BreakdownRow(
@@ -85,7 +76,7 @@ Future<void> showSummaryBreakdownSheet(
               value: Money.compactCount(summary.unitsSold),
             ),
             BreakdownRow(label: l10n.dashboard_avgItemPrice, value: avgPrice),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -93,7 +84,7 @@ Future<void> showSummaryBreakdownSheet(
                   Navigator.of(sheetContext).pop();
                   context.go('/analytics');
                 },
-                icon: const Icon(Icons.bar_chart_rounded, size: 18),
+                icon: const Icon(Icons.bar_chart_rounded, size: 22),
                 label: Text(l10n.dashboard_viewFullReport),
               ),
             ),

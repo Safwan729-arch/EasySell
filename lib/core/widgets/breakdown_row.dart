@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// One label/value line in an "exact figures" bottom sheet, divided from the
-/// previous line by a hairline rule.
+import '../config/theme.dart';
+
+/// One label/value line in an "exact figures" bottom sheet: an outlined row
+/// (radius 16, ~60 high) with the label on the left and the figure on the
+/// right.
 ///
 /// Shared so every breakdown sheet reads the same way — the dashboard's period
 /// summary and the inventory value sheet are the same idea reached from two
@@ -18,7 +21,7 @@ class BreakdownRow extends StatelessWidget {
   final String label;
   final String value;
 
-  /// Headline figures (revenue, profit, stock value) get the larger, heavier
+  /// Headline figures (revenue, profit, stock value) get the heavier
   /// treatment so the eye lands on them first.
   final bool emphasize;
   final Color? valueColor;
@@ -26,35 +29,31 @@ class BreakdownRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final valueStyle =
-        (emphasize ? theme.textTheme.titleMedium : theme.textTheme.titleSmall)
-            ?.copyWith(
-              fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
-              color: valueColor ?? theme.colorScheme.onSurface,
-            );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      child: Column(
+    final colors = theme.extension<AppColors>()!;
+    final valueStyle = theme.textTheme.titleMedium?.copyWith(
+      fontSize: emphasize ? 19 : 17,
+      fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+      color: valueColor ?? theme.colorScheme.onSurface,
+    );
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: colors.rowDecoration(),
+      child: Row(
         children: [
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
-          const SizedBox(height: 11),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // A long label (Bengali runs wider than English) must yield to the
-              // figure rather than overflow the row.
-              Flexible(
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+          // A long label (Bengali runs wider than English) must yield to the
+          // figure rather than overflow the row.
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 12),
-              Text(value, style: valueStyle),
-            ],
+            ),
           ),
+          const SizedBox(width: 12),
+          Text(value, style: valueStyle),
         ],
       ),
     );

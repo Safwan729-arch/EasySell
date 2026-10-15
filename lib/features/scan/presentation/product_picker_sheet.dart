@@ -15,7 +15,6 @@ Future<Product?> showProductPickerSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => _ProductPickerSheet(products: products, title: title, readLabel: readLabel),
   );
 }

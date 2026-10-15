@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/sheet_header.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../domain/cart_math.dart';
@@ -26,7 +27,6 @@ Future<void> showDiscountSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => const _DiscountSheet(),
   );
 }
@@ -94,19 +94,24 @@ class _DiscountSheetState extends ConsumerState<_DiscountSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.cart_discountTitle,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          SheetHeader(title: l10n.cart_discountTitle),
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: Text(l10n.common_subtotal)),
+              Expanded(
+                child: Text(
+                  l10n.common_subtotal,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
               Text(
                 Money.format(subtotal, currencyCode: currency),
-                style: theme.textTheme.titleMedium,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -118,10 +123,7 @@ class _DiscountSheetState extends ConsumerState<_DiscountSheet> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
             ],
-            decoration: InputDecoration(
-              labelText: l10n.cart_discountAmount,
-              border: const OutlineInputBorder(),
-            ),
+            decoration: InputDecoration(labelText: l10n.cart_discountAmount),
           ),
           if (_isInvalid) ...[
             const SizedBox(height: 10),

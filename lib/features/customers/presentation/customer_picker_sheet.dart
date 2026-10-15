@@ -18,7 +18,6 @@ Future<Customer?> showCustomerPickerSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (_) => const _CustomerPickerSheet(),
   );
 }

@@ -7,7 +7,8 @@ import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/failure_text.dart';
 import '../../../core/l10n/l10n_ext.dart';
-import '../../../core/widgets/segment_pills.dart';
+import '../../../core/widgets/rounded_icon_tile.dart';
+import '../../../core/widgets/two_option_segment.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../customers/presentation/customer_picker_sheet.dart';
@@ -165,18 +166,18 @@ class CartScreen extends ConsumerWidget {
       body: lines.isEmpty
           ? const _EmptyCart()
           : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
               itemCount: lines.length + 1,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 14),
               itemBuilder: (context, i) {
                 if (i == 0) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 2),
                     child: Text(
                       context.l10n.cart_itemsInCart(lines.length),
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontSize: 16,
                         color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   );
@@ -258,21 +259,28 @@ class _CartLineCard extends ConsumerWidget {
     final canIncrement =
         !isCheckingOut && line.quantity + _step <= maxQty + 1e-9;
 
+    // Still a [Card]: cart tests count Cards to count lines.
     final card = Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _InitialTile(
-                  label: product.name.isNotEmpty
+                // The same solid letter tile as Items (design decision 2).
+                RoundedTextTile(
+                  text: product.name.isNotEmpty
                       ? product.name.characters.first.toUpperCase()
                       : '?',
+                  color: tileColorFor(
+                    product.name,
+                    dark: theme.brightness == Brightness.dark,
+                  ),
+                  size: 52,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,23 +289,24 @@ class _CartLineCard extends ConsumerWidget {
                         product.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       if (subtitle.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 1),
+                          padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             subtitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
                           ),
                         ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
                         context.l10n.cart_pricePerUnit(
                           Money.format(
@@ -306,7 +315,7 @@ class _CartLineCard extends ConsumerWidget {
                           ),
                           product.unitLabel,
                         ),
-                        style: theme.textTheme.bodySmall?.copyWith(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
                       ),
@@ -316,13 +325,14 @@ class _CartLineCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Text(
                   Money.format(line.subtotal, currencyCode: currency),
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
               children: [
                 _QtyStepper(
@@ -346,20 +356,34 @@ class _CartLineCard extends ConsumerWidget {
                         }
                       : null,
                 ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: isCheckingOut ? null : () => _remove(ref),
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.negative,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                const SizedBox(width: 8),
+                // Takes what the stepper leaves and shrinks to fit it: the
+                // 52 dp stepper plus "Remove" can outgrow a 360 dp card.
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: TextButton.icon(
+                        onPressed: isCheckingOut ? null : () => _remove(ref),
+                        style: TextButton.styleFrom(
+                          foregroundColor: colors.negative,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          minimumSize: const Size(0, 44),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          textStyle: theme.textTheme.titleSmall?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        icon: const Icon(Icons.delete_outline, size: 22),
+                        label: Text(context.l10n.common_remove),
+                      ),
                     ),
-                    minimumSize: const Size(0, 36),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: Text(context.l10n.common_remove),
                 ),
               ],
             ),
@@ -391,7 +415,7 @@ class _CartLineCard extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 24),
         decoration: BoxDecoration(
           color: colors.negative,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
         ),
         child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
@@ -659,38 +683,9 @@ class _BatchSheet extends StatelessWidget {
   }
 }
 
-/// Rounded square holding a product's initial — a lightweight stand-in for a
-/// product image (images are optional and often absent for staged items).
-class _InitialTile extends StatelessWidget {
-  const _InitialTile({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.extension<AppColors>()!;
-    return Container(
-      width: 44,
-      height: 44,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: theme.colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-/// Compact −/value/+ pill. Buttons disable (null callback) at the stock ceiling
-/// and the one-step floor, matching the add-to-cart sheet's rules.
+/// The pill stepper (− value +) under a cart line. Buttons disable (null
+/// callback) at the stock ceiling and the one-step floor, matching the
+/// add-to-cart sheet's rules.
 class _QtyStepper extends StatelessWidget {
   const _QtyStepper({
     required this.label,
@@ -705,28 +700,30 @@ class _QtyStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final colors = theme.extension<AppColors>()!;
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.outlineVariant),
+      height: 52,
+      decoration: ShapeDecoration(
+        color: isDark ? colors.field : colors.muted,
+        shape: StadiumBorder(side: BorderSide(color: colors.glowBorder)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _StepButton(icon: Icons.remove, onTap: onDecrement),
           ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 60),
+            constraints: const BoxConstraints(minWidth: 64),
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleSmall?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          _StepButton(icon: Icons.add, onTap: onIncrement),
+          _StepButton(icon: Icons.add, onTap: onIncrement, accent: true),
         ],
       ),
     );
@@ -734,26 +731,34 @@ class _QtyStepper extends StatelessWidget {
 }
 
 class _StepButton extends StatelessWidget {
-  const _StepButton({required this.icon, required this.onTap});
+  const _StepButton({
+    required this.icon,
+    required this.onTap,
+    this.accent = false,
+  });
 
   final IconData icon;
   final VoidCallback? onTap;
 
+  /// "+" is blue, "−" muted, as in the mockup.
+  final bool accent;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final colors = Theme.of(context).extension<AppColors>()!;
     final enabled = onTap != null;
     return InkResponse(
       onTap: onTap,
-      radius: 22,
+      radius: 24,
       child: Padding(
-        padding: const EdgeInsets.all(9),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Icon(
           icon,
-          size: 18,
-          color: enabled
-              ? scheme.primary
-              : scheme.onSurfaceVariant.withValues(alpha: 0.4),
+          size: 24,
+          color: !enabled
+              ? colors.textDim.withValues(alpha: 0.6)
+              : (accent ? colors.link : scheme.onSurfaceVariant),
         ),
       ),
     );
@@ -802,31 +807,49 @@ class _CheckoutBar extends ConsumerWidget {
     final isCredit = selection.method == PaymentMethod.credit;
     final customer = selection.customer;
 
+    final colors = theme.extension<AppColors>()!;
+    final isDark = theme.brightness == Brightness.dark;
+    // The bottom panel: a sheet-like surface with rounded top corners, lifted
+    // by a soft upward shadow (light) or a glowing top edge (dark).
     return Container(
       decoration: BoxDecoration(
-        color: scheme.surface,
-        border: Border(top: BorderSide(color: scheme.outlineVariant)),
+        color: isDark ? colors.sheet : scheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: isDark
+            ? Border(top: BorderSide(color: colors.glowBorder))
+            : null,
+        boxShadow: isDark
+            ? const [BoxShadow(color: Color(0x2E3C6EFF), blurRadius: 18)]
+            : const [
+                BoxShadow(
+                  color: Color(0x144056BE),
+                  blurRadius: 30,
+                  offset: Offset(0, -8),
+                ),
+              ],
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child: SegmentPills<PaymentMethod>(
-                  values: PaymentMethod.values,
-                  selected: selection.method,
-                  labelOf: (m) => m == PaymentMethod.cash
-                      ? l10n.cart_paymentCash
-                      : l10n.cart_paymentCredit,
-                  onChanged: isLoading
-                      ? (_) {}
-                      : (m) => m == PaymentMethod.cash
-                            ? notifier.setCash()
-                            : notifier.setCredit(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 260),
+                  child: TwoOptionSegment<PaymentMethod>(
+                    values: PaymentMethod.values,
+                    selected: selection.method,
+                    enabled: !isLoading,
+                    labelOf: (m) => m == PaymentMethod.cash
+                        ? l10n.cart_paymentCash
+                        : l10n.cart_paymentCredit,
+                    onChanged: (m) => m == PaymentMethod.cash
+                        ? notifier.setCash()
+                        : notifier.setCredit(),
+                  ),
                 ),
               ),
               if (isCredit) ...[
@@ -945,16 +968,27 @@ class _CheckoutBar extends ConsumerWidget {
                       l10n.cart_totalItems(itemCount),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontSize: 16,
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    Money.format(total, currencyCode: currency),
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+                  // Big, but it yields before it overflows on a 360 dp phone.
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        Money.format(total, currencyCode: currency),
+                        maxLines: 1,
+                        style: theme.textTheme.headlineLarge?.copyWith(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
                     ),
                   ),
                 ],

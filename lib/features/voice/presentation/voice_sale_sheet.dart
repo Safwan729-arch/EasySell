@@ -60,7 +60,6 @@ Future<void> showVoiceSaleSheet(BuildContext context, WidgetRef ref) {
     context: host,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Theme.of(host).colorScheme.surface,
     builder: (_) => const VoiceSaleSheet(),
   ).whenComplete(
     () => ref.read(voiceControllerProvider.notifier).releaseSheet(),
