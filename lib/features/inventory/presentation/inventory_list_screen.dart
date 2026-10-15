@@ -27,6 +27,17 @@ import 'category_controller.dart';
 import 'inventory_controller.dart';
 import 'inventory_value_sheet.dart';
 
+/// The header's action buttons: 40 dp with a 20 dp icon, so four fit beside
+/// the title on a 360 dp phone. `fixedSize` alone is not enough: Material 3's
+/// 48 dp tap-target padding would pad the button back out.
+final _headerButton = IconButton.styleFrom(
+  fixedSize: const Size(40, 40),
+  minimumSize: const Size(40, 40),
+  padding: EdgeInsets.zero,
+  iconSize: 20,
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+);
+
 /// Live inventory list with search, category filter, and a low-stock indicator.
 class InventoryListScreen extends ConsumerStatefulWidget {
   const InventoryListScreen({super.key});
@@ -149,20 +160,55 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Only two actions here. With scan and voice too, four
-                  // buttons squeezed the title into "Inven / tory" on a 360 dp
-                  // phone; those two now sit inside the search bar.
+                  // Selling (scan, voice) in one tinted pill, then the stock
+                  // actions in solid blue. All 40 dp: at the default 48 the
+                  // four squeezed the title into "Inven / tory" on a 360 dp
+                  // phone, and inside the search bar the two sell buttons
+                  // looked like ways to search.
+                  if (FeatureFlags.visionScanEnabled ||
+                      FeatureFlags.voiceSaleEnabled) ...[
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (FeatureFlags.visionScanEnabled)
+                            IconButton(
+                              style: _headerButton,
+                              color: theme.colorScheme.onSecondaryContainer,
+                              onPressed: () => context.push('/scan'),
+                              icon: const Icon(Icons.qr_code_scanner),
+                              tooltip: l10n.inventory_scanProduct,
+                            ),
+                          if (FeatureFlags.voiceSaleEnabled)
+                            IconButton(
+                              style: _headerButton,
+                              color: theme.colorScheme.onSecondaryContainer,
+                              onPressed: () => showVoiceSaleSheet(context, ref),
+                              icon: const Icon(Icons.mic_none),
+                              tooltip: l10n.voice_title,
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
                   Badge.count(
                     count: restockCount,
                     isLabelVisible: restockCount > 0,
                     child: IconButton.filled(
+                      style: _headerButton,
                       onPressed: () => context.push(AppRoutes.restock),
                       icon: const Icon(Icons.shopping_basket_outlined),
                       tooltip: l10n.restockPlan_title,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   IconButton.filled(
+                    style: _headerButton,
                     onPressed: () => context.push('/inventory/new'),
                     icon: const Icon(Icons.add),
                     tooltip: l10n.inventory_addProduct,
@@ -178,32 +224,8 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                 decoration: InputDecoration(
                   hintText: l10n.common_searchItems,
                   prefixIcon: const Icon(Icons.search),
-                  // Scan and voice live here, like the camera and mic in a
-                  // phone's search bar, so the title row keeps room for the
-                  // title. While typing, Clear takes their place.
                   suffixIcon: _query.isEmpty
-                      ? (FeatureFlags.visionScanEnabled ||
-                                FeatureFlags.voiceSaleEnabled
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (FeatureFlags.visionScanEnabled)
-                                    IconButton(
-                                      onPressed: () => context.push('/scan'),
-                                      icon: const Icon(Icons.qr_code_scanner),
-                                      tooltip: l10n.inventory_scanProduct,
-                                    ),
-                                  if (FeatureFlags.voiceSaleEnabled)
-                                    IconButton(
-                                      onPressed: () =>
-                                          showVoiceSaleSheet(context, ref),
-                                      icon: const Icon(Icons.mic_none),
-                                      tooltip: l10n.voice_title,
-                                    ),
-                                  const SizedBox(width: 4),
-                                ],
-                              )
-                            : null)
+                      ? null
                       : IconButton(
                           icon: const Icon(Icons.clear),
                           onPressed: () {

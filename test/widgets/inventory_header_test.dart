@@ -18,9 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// The Inventory header (2026-10-15, S22 screenshot): with scan, voice,
-/// restock and add all in the title row, "Inventory" broke into
-/// "Inven / tory". Run this file with the release flags on too:
+/// The Inventory header (2026-10-15, S22 screenshots): with four full-size
+/// buttons in the title row, "Inventory" broke into "Inven / tory"; moving
+/// scan and voice into the search bar made them look like search tools. Now
+/// all four sit top right at 40 dp. Run this file with the release flags on
+/// too, since that is when the title has the least room:
 ///   flutter test test/widgets/inventory_header_test.dart \
 ///     --dart-define=VISION_SCAN_ENABLED=true --dart-define=VOICE_SALE_ENABLED=true
 
@@ -87,16 +89,40 @@ void main() {
     });
   }
 
-  testWidgets('scan and voice sit inside the search bar', (tester) async {
+  // 2026-10-15: inside the search bar they read as "search by camera / by
+  // voice", but they SELL. They sit in the header, apart from search.
+  testWidgets('the search bar holds no scan or voice button', (tester) async {
     await _pump(tester, RestockPlan.empty, const Locale('en'));
-    final inSearch = find.descendant(
-      of: find.byType(TextField),
+    expect(
+      find.descendant(
+        of: find.byType(TextField),
+        matching: find.byType(IconButton),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('scan and voice sit in the header, top right', (tester) async {
+    await _pump(tester, RestockPlan.empty, const Locale('en'));
+    final addTop = tester.getTopLeft(find.byIcon(Icons.add)).dy;
+    for (final (on, icon) in [
+      (FeatureFlags.visionScanEnabled, Icons.qr_code_scanner),
+      (FeatureFlags.voiceSaleEnabled, Icons.mic_none),
+    ]) {
+      expect(find.byIcon(icon), on ? findsOneWidget : findsNothing);
+      if (on) {
+        expect(tester.getTopLeft(find.byIcon(icon)).dy, addTop);
+      }
+    }
+  });
+
+  testWidgets('header buttons are compact (40 dp)', (tester) async {
+    await _pump(tester, RestockPlan.empty, const Locale('en'));
+    final buttons = find.ancestor(
+      of: find.byIcon(Icons.add),
       matching: find.byType(IconButton),
     );
-    final expected =
-        (FeatureFlags.visionScanEnabled ? 1 : 0) +
-        (FeatureFlags.voiceSaleEnabled ? 1 : 0);
-    expect(inSearch, findsNWidgets(expected));
+    expect(tester.getSize(buttons), const Size(40, 40));
   });
 
   testWidgets('the restock button shows how many items to restock', (

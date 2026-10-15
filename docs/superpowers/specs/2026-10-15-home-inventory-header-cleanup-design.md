@@ -40,6 +40,31 @@ unreadable.
 - **A second row of labelled buttons.** It costs a full row of vertical space
   on a screen whose job is the list.
 
+## 2a. Revised the same day: scan and voice back in the header, at 40 dp
+
+**Why.** In the search bar, the user found scan and voice misleading. They
+look like "search by camera / by voice", but both of them **sell**. A
+shopkeeper would tap them to find an item and land in a sale.
+
+**Now.**
+- **Top right, all four buttons are 40 dp with a 20 dp icon** (`_headerButton`).
+- **Scan and voice share one tinted pill** (`secondaryContainer`). They read as
+  one group of selling tools, apart from the solid blue stock actions, Restock
+  and Add.
+- **The search bar holds only search.** Clear appears while typing.
+
+**This overturns §2's "ruled out: smaller buttons".** That reasoning was wrong.
+The extra space came from Material 3's 48 dp **tap-target padding**, and
+`tapTargetSize: MaterialTapTargetSize.shrinkWrap` removes it. `fixedSize`
+alone does not. The cluster is now 80 + 6 + 40 + 6 + 40 = 172 dp, against
+about 220 before. On the S22, "পণ্যতালিকা" and its value line both fit on one
+line.
+
+**Tests** (`inventory_header_test.dart`):
+- the search bar has no IconButton;
+- scan and voice are level with Add;
+- the Add button measures 40 × 40.
+
 ## 3. Restock badge
 
 The basket button shows the number of **Buy now** items
@@ -54,7 +79,7 @@ zero.
   the guarantee hold on any font. Test: `test/widgets/inventory_header_test.dart`.
   Run it with `--dart-define=VISION_SCAN_ENABLED=true
   --dart-define=VOICE_SALE_ENABLED=true` too, because the release flags add
-  the search-bar icons.
+  the scan/voice pill and leave the title the least room.
 - **Other Inventory tests must stub the restock plan.** The Inventory screen
   now reads the restock plan, which reaches `todayProvider`'s midnight timer.
   Tests that pump the screen therefore override `restockPlanProvider`, or
