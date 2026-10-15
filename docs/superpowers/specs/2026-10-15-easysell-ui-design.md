@@ -115,7 +115,65 @@ full `flutter test` suite green.
 9. Everything else: customers, restock list, expiry, onboarding, welcome,
    login, insights, trends, categories, archived.
 
-## 5. Risks
+## 5. Build notes (2026-10-15)
+
+All nine steps were built and committed on `feat/easysell-ui`. The full suite
+passes (652 tests: 639 before plus 13 new) and `flutter analyze` is clean.
+Home was checked on the S22 in dark mode and in Bangla. The other screens were
+checked by tests only, because the phone disconnected mid-build.
+
+**Bugs the tests caught, and the rule each one leaves:**
+- **A pill animating between gradient and solid asserted.** `ShapeDecoration`
+  can't hold a colour and a gradient at once, and a tween from one to the other
+  does exactly that mid-way. Idle fills are therefore expressed as a *flat
+  gradient* (`idleFillDecoration`, the `TwoOptionSegment` idle state). Keep any
+  decoration that animates against the brand fill in gradient form.
+  Regression test: `theme_test.dart`.
+- **Destructive buttons turned blue.** The gradient that the theme's
+  `backgroundBuilder` paints covers *any* `backgroundColor` a call site sets. So
+  red Delete / Clear / Remove buttons looked like primary actions. Use
+  `destructiveButtonStyle()`, which switches the builder off. Any future
+  filled button with its own colour needs the same. Regression test:
+  `theme_test.dart`.
+- **Cart: the 52 dp stepper plus "Remove" overflowed a 360 dp card by 47 px.**
+  "Remove" now takes the leftover width and scales down.
+- **Ten widget tests pump screens without `AppTheme`.** Among them: scan,
+  expiry settings tiles, onboarding, discount and sale-detail discount. A
+  widget those tests cover must read `extension<AppColors>()` as **nullable**
+  and fall back. `SettingsIconTile`, the scan viewfinder, the voice sheet and
+  welcome all do. Before adding `!` to a widget, run
+  `grep -L AppTheme test/widgets/*.dart` to see which tests pump without it.
+
+**Found on the phone:**
+- **Letter-spacing breaks Bangla shaping.** On the spaced-caps labels,
+  "বিক্রেতা" rendered as "বিক্রে৽তা". `Eyebrow` drops the tracking for any text
+  with Bengali-script characters (`hasBangla`). The same applies to any future
+  tracked text.
+- The wave lines first read as too strong: 13 lines at up to 55% alpha over
+  220 dp. They are now 40% over 190 dp.
+
+**Decisions made during the build:**
+- **Items header buttons stay 40 dp, not the mockup's 52.** Four buttons and the
+  title must fit on 360 dp (see `2026-10-15-home-inventory-header-cleanup`).
+  `inventory_header_test` pins this.
+- **Period pills share the row equally** (`SegmentPills(expand: true)`). Three
+  natural-width pills plus the calendar overflow 360 dp. Filter chips still
+  scroll, because their count is open-ended.
+- **Cart lines stay `Card` widgets.** `cart_screen_test` counts Cards to count
+  lines.
+- **"View all" on Top performer goes to Reports** (Biggest wins). The mockup
+  shows the link but no destination.
+- There is no crown icon in Material Icons, so `workspace_premium` stands in
+  on the MVP and "best day" chips.
+
+**Not done:**
+- The product form, customers, restock list, expiry alerts, insights, trends,
+  categories, archived and login screens got no per-screen pass. They inherit
+  the theme (cards, inputs, buttons, sheets, backdrop) but keep their old
+  layouts and type sizes.
+- Light mode has not been checked on a device.
+
+## 6. Risks
 
 - **Overflow on narrow phones.** The S22 is 360 dp, the mockups 390. Bigger
   radii and padding eat width. The existing `inventory_header_test` and
