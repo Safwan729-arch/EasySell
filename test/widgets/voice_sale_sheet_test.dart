@@ -13,6 +13,8 @@ import 'package:ai_shopkeeper/features/voice/data/voice_sale_repository.dart';
 import 'package:ai_shopkeeper/features/voice/domain/voice_parse_result.dart';
 import 'package:ai_shopkeeper/features/voice/presentation/voice_controller.dart';
 import 'package:ai_shopkeeper/features/voice/presentation/voice_sale_sheet.dart';
+import 'package:ai_shopkeeper/features/restock/domain/restock_plan.dart';
+import 'package:ai_shopkeeper/features/restock/presentation/restock_providers.dart';
 import 'package:ai_shopkeeper/l10n/app_localizations.dart';
 import 'package:ai_shopkeeper/shared/providers/locale_provider.dart';
 import 'package:flutter/material.dart';
@@ -280,29 +282,30 @@ void main() {
     // action entirely absent. A manual check that the flag flips the button
     // on is recorded in task-12-report.md (`flutter test
     // --dart-define=VOICE_SALE_ENABLED=true`).
-    testWidgets(
-      'with the flag at its default (off), the inventory screen builds '
-      'without a mic action',
-      (tester) async {
-        final container = ProviderContainer(
-          overrides: [
-            myShopProvider.overrideWith((ref) async => null),
-            productsStreamProvider.overrideWith(
-              (ref) => Stream.value(const <Product>[]),
-            ),
-            usedCategoriesProvider.overrideWith((ref) => const <Category>[]),
-          ],
-        );
-        addTearDown(container.dispose);
+    testWidgets('with the flag at its default (off), the inventory screen builds '
+        'without a mic action', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          myShopProvider.overrideWith((ref) async => null),
+          productsStreamProvider.overrideWith(
+            (ref) => Stream.value(const <Product>[]),
+          ),
+          usedCategoriesProvider.overrideWith((ref) => const <Category>[]),
+          // The header's restock count; unstubbed it starts the real date timer.
+          restockPlanProvider.overrideWithValue(
+            const AsyncValue.data(RestockPlan.empty),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
 
-        await tester.pumpWidget(
-          _harness(container, child: const InventoryListScreen()),
-        );
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _harness(container, child: const InventoryListScreen()),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.byIcon(Icons.mic_none), findsNothing);
-        expect(find.byTooltip('Speak a sale'), findsNothing);
-      },
-    );
+      expect(find.byIcon(Icons.mic_none), findsNothing);
+      expect(find.byTooltip('Speak a sale'), findsNothing);
+    });
   });
 }

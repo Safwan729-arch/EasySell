@@ -20,7 +20,6 @@ import '../../analytics/domain/analytics.dart';
 import '../../analytics/presentation/analytics_controller.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../expiry/presentation/expiry_alerts_card.dart';
-import '../../expiry/presentation/expiry_providers.dart';
 import '../../restock/presentation/restock_card.dart';
 import '../../transactions/presentation/sales_providers.dart';
 import 'receivables_card.dart';
@@ -60,7 +59,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ? ref.watch(daySummaryProvider(selectedDay))
         : ref.watch(summaryProvider(_period));
     final seriesAsync = ref.watch(seriesProvider(ChartBucket.daily));
-    final alertCount = ref.watch(expiryAlertsProvider).length;
 
     return Scaffold(
       floatingActionButton: _SellFab(
@@ -115,21 +113,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ],
                       ),
                     ),
-                    // Expiry alerts (expiry spec §5). // MEMBER C: other
-                    // notification kinds (sales, low stock) can join this
-                    // screen later.
-                    Badge.count(
-                      count: alertCount,
-                      isLabelVisible: alertCount > 0,
-                      child: _HeaderIcon(
-                        icon: Icons.notifications_none_rounded,
-                        onTap: () {
-                          AppHaptics.tap();
-                          context.push(AppRoutes.alerts);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
+                    // No bell: every alert it opened is already a card further
+                    // down this page (Restock soon, Expiring & expired, each
+                    // with View all). The alerts screen stays for reminder
+                    // taps. // MEMBER C: push notifications open it directly.
                     // Permanent door to the customer credit (khata) ledger. The
                     // receivables card below is hidden when nobody owes money, so
                     // this header icon is the always-present entry point.

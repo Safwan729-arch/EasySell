@@ -9,6 +9,7 @@ import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
+import '../../restock/presentation/restock_providers.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
@@ -110,6 +111,8 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
     // Whole-inventory figures, not the filtered view: the header describes the
     // shop, and the value must not change when a category pill is tapped.
     final totals = InventoryTotals.of(products, expiry: expiry);
+    final restockCount =
+        ref.watch(restockPlanProvider).value?.buyNow.length ?? 0;
 
     return Scaffold(
       body: SafeArea(
@@ -127,10 +130,17 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          l10n.inventory_title,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
+                        // One line always: shrinks a little on a narrow phone
+                        // or a long translation instead of wrapping or cutting.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            l10n.inventory_title,
+                            maxLines: 1,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -139,26 +149,17 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  if (FeatureFlags.visionScanEnabled) ...[
-                    IconButton.filled(
-                      onPressed: () => context.push('/scan'),
-                      icon: const Icon(Icons.qr_code_scanner),
-                      tooltip: l10n.inventory_scanProduct,
+                  // Only two actions here. With scan and voice too, four
+                  // buttons squeezed the title into "Inven / tory" on a 360 dp
+                  // phone; those two now sit inside the search bar.
+                  Badge.count(
+                    count: restockCount,
+                    isLabelVisible: restockCount > 0,
+                    child: IconButton.filled(
+                      onPressed: () => context.push(AppRoutes.restock),
+                      icon: const Icon(Icons.shopping_basket_outlined),
+                      tooltip: l10n.restockPlan_title,
                     ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (FeatureFlags.voiceSaleEnabled) ...[
-                    IconButton.filled(
-                      onPressed: () => showVoiceSaleSheet(context, ref),
-                      icon: const Icon(Icons.mic_none),
-                      tooltip: l10n.voice_title,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  IconButton.filled(
-                    onPressed: () => context.push(AppRoutes.restock),
-                    icon: const Icon(Icons.shopping_basket_outlined),
-                    tooltip: l10n.restockPlan_title,
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
@@ -177,8 +178,32 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                 decoration: InputDecoration(
                   hintText: l10n.common_searchItems,
                   prefixIcon: const Icon(Icons.search),
+                  // Scan and voice live here, like the camera and mic in a
+                  // phone's search bar, so the title row keeps room for the
+                  // title. While typing, Clear takes their place.
                   suffixIcon: _query.isEmpty
-                      ? null
+                      ? (FeatureFlags.visionScanEnabled ||
+                                FeatureFlags.voiceSaleEnabled
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (FeatureFlags.visionScanEnabled)
+                                    IconButton(
+                                      onPressed: () => context.push('/scan'),
+                                      icon: const Icon(Icons.qr_code_scanner),
+                                      tooltip: l10n.inventory_scanProduct,
+                                    ),
+                                  if (FeatureFlags.voiceSaleEnabled)
+                                    IconButton(
+                                      onPressed: () =>
+                                          showVoiceSaleSheet(context, ref),
+                                      icon: const Icon(Icons.mic_none),
+                                      tooltip: l10n.voice_title,
+                                    ),
+                                  const SizedBox(width: 4),
+                                ],
+                              )
+                            : null)
                       : IconButton(
                           icon: const Icon(Icons.clear),
                           onPressed: () {

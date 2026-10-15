@@ -6,6 +6,8 @@ import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/category_controller.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/inventory_controller.dart';
 import 'package:ai_shopkeeper/features/inventory/presentation/inventory_list_screen.dart';
+import 'package:ai_shopkeeper/features/restock/domain/restock_plan.dart';
+import 'package:ai_shopkeeper/features/restock/presentation/restock_providers.dart';
 import 'package:ai_shopkeeper/l10n/app_localizations.dart';
 import 'package:ai_shopkeeper/shared/providers/locale_provider.dart';
 import 'package:flutter/material.dart';
@@ -61,6 +63,10 @@ ProviderContainer _container() {
       ),
       productsStreamProvider.overrideWith((ref) => Stream.value(_products)),
       usedCategoriesProvider.overrideWith((ref) => const <Category>[]),
+      // The header's restock count; unstubbed it starts the real date timer.
+      restockPlanProvider.overrideWithValue(
+        const AsyncValue.data(RestockPlan.empty),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -119,6 +125,10 @@ void main() {
           (ref) => Stream.value(const <Product>[]),
         ),
         usedCategoriesProvider.overrideWith((ref) => const <Category>[]),
+        // The header's restock count; unstubbed it starts the real date timer.
+        restockPlanProvider.overrideWithValue(
+          const AsyncValue.data(RestockPlan.empty),
+        ),
       ],
     );
     addTearDown(container.dispose);
