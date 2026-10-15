@@ -32,20 +32,16 @@ class BatchActionsController extends AsyncNotifier<void> {
     required DateTime expiryDate,
     required DateTime receivedOn,
   }) async {
-    final ok = await _run(() async {
-      final r = await _repo.addBatch(
+    final ok = await _run(
+      () => _repo.addBatch(
         shopId: product.shopId,
         productId: product.id,
         quantity: quantity,
         buyingPrice: product.buyingPrice,
         receivedOn: receivedOn,
         expiryDate: expiryDate,
-      );
-      return r.when(
-        success: (_) => const Result<void>.success(null),
-        failure: (f) => Result<void>.failure(f),
-      );
-    });
+      ),
+    );
     if (ok) {
       unawaited(ref.read(expiryPrefsProvider.notifier).askPermissionOnce());
     }

@@ -681,3 +681,50 @@ It is hidden when nothing has been removed.
   provider and the five `expiry_closed*` strings were removed.
 - A shop-wide loss total (for example "lost to expiry this month") can be
   built on the same rows later. It is out of scope here.
+
+## 19. Identical deliveries merge into one (2026-10-15, migration 0016)
+
+Two Pepsi restocks on the same day with the same expiry date made two
+deliveries that looked identical (1 pc and 15 pcs). §17 makes the batch
+choice mandatory when there are several, so every Pepsi sale asked a question
+with no real answer.
+
+**Rule:** a new delivery joins an open delivery of the same product when the
+**expiry date, date added and buying price** all match, and the existing one
+has no locked expired count.
+- **Expiry date** is what the seller chooses by.
+- **Date added** is the estimate's order (newest received sells first).
+  Merging across different days would change which units the estimate counts
+  as sold.
+- **Buying price** is frozen per delivery and values the §18 loss. Two prices
+  merged into one row would misstate it.
+- **A locked delivery is never joined**, because its units are already
+  reserved as expired.
+
+**Why a database trigger, not an RPC change.** Deliveries are created in two
+places: `record_restock` (0011) and the app's direct insert ("Add expiry
+date", and a new product's first stock). A `BEFORE INSERT` trigger covers
+both with no change to either.
+- It adds the quantity to the matching row and returns `NULL`, so nothing is
+  inserted.
+- It locks the product row first, so two inserts at once cannot both miss
+  the match. `record_restock` already holds that lock.
+
+**The one app change:** `addBatch` returns `Result<void>` and no longer
+selects the inserted row. A merged insert returns no row, so `.single()`
+would have failed.
+- Nothing used the returned row.
+- An app build from before 0016 keeps working against the new database, and
+  this build works before 0016 is run (it just doesn't merge).
+
+**Existing duplicates:** 0016 merges them once.
+- The oldest row is kept.
+- Sales and removals pointing at the other rows (`transactions.batch_id`)
+  are moved to it first.
+- Quantities and `picked_qty` are summed into it.
+
+**Merging doesn't change the estimate.** Two rows with the same dates fill
+exactly as one row with the summed capacity.
+
+**Not tested automatically:** the repo has no Postgres test harness. The
+rule lives only in SQL.

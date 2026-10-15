@@ -3,7 +3,6 @@ import 'package:ai_shopkeeper/core/error/result.dart';
 import 'package:ai_shopkeeper/features/auth/data/auth_repository.dart';
 import 'package:ai_shopkeeper/features/auth/domain/shop.dart';
 import 'package:ai_shopkeeper/features/expiry/data/batch_repository.dart';
-import 'package:ai_shopkeeper/features/expiry/domain/product_batch.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/today_provider.dart';
 import 'package:ai_shopkeeper/features/inventory/data/product_repository.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
@@ -31,7 +30,7 @@ class _BatchRepo implements BatchRepository {
   final added = <Map<String, Object>>[];
 
   @override
-  Future<Result<ProductBatch>> addBatch({
+  Future<Result<void>> addBatch({
     required String shopId,
     required String productId,
     required double quantity,
@@ -47,16 +46,7 @@ class _BatchRepo implements BatchRepository {
       'expiryDate': expiryDate,
     });
     if (fail) return const Result.failure(NetworkFailure('offline'));
-    return Result.success(
-      ProductBatch(
-        id: 'b1',
-        shopId: shopId,
-        productId: productId,
-        quantity: quantity,
-        receivedOn: receivedOn,
-        expiryDate: expiryDate,
-      ),
-    );
+    return const Result.success(null);
   }
 
   @override

@@ -91,7 +91,10 @@ class BatchRepository {
     }
   }
 
-  Future<Result<ProductBatch>> addBatch({
+  /// Adds a delivery. Returns no row: when an open delivery with the same
+  /// dates and buying price exists, the database adds to it and inserts
+  /// nothing (0016), so asking for the new row back would fail.
+  Future<Result<void>> addBatch({
     required String shopId,
     required String productId,
     required double quantity,
@@ -100,19 +103,15 @@ class BatchRepository {
     required DateTime expiryDate,
   }) async {
     try {
-      final row = await _client
-          .from(_table)
-          .insert({
-            'shop_id': shopId,
-            'product_id': productId,
-            'quantity': quantity,
-            'buying_price': buyingPrice,
-            'received_on': ymd(receivedOn),
-            'expiry_date': ymd(expiryDate),
-          })
-          .select()
-          .single();
-      return Result.success(ProductBatch.fromJson(row));
+      await _client.from(_table).insert({
+        'shop_id': shopId,
+        'product_id': productId,
+        'quantity': quantity,
+        'buying_price': buyingPrice,
+        'received_on': ymd(receivedOn),
+        'expiry_date': ymd(expiryDate),
+      });
+      return const Result.success(null);
     } catch (e) {
       return Result.failure(_map(e));
     }
