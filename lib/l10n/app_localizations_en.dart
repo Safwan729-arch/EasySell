@@ -1375,6 +1375,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String settings_restockEvery(String days) {
+    return 'I restock every $days days';
+  }
+
+  @override
+  String get settings_restockEveryTitle => 'How often do you restock?';
+
+  @override
+  String restockPlan_daysShort(String days) {
+    return '$days days';
+  }
+
+  @override
   String get expiry_formAddTitle => 'Add expiry date';
 
   @override

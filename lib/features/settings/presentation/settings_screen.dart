@@ -7,6 +7,7 @@ import '../../../core/router/app_router.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../expiry/presentation/expiry_settings_tiles.dart';
+import '../../restock/presentation/restock_settings_tile.dart';
 import '../../../shared/providers/locale_provider.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../../../shared/providers/theme_mode_provider.dart';
@@ -101,6 +102,7 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.archivedProducts),
           ),
+          const RestockDaysTile(),
           const Divider(),
           _SectionHeader(l10n.settings_sectionExpiry),
           const ExpiryWarnDaysTile(),

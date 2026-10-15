@@ -8,6 +8,7 @@ import 'app.dart';
 import 'core/config/supabase_config.dart';
 import 'features/expiry/data/reminder_service.dart';
 import 'features/expiry/presentation/expiry_prefs.dart';
+import 'features/restock/presentation/restock_prefs.dart';
 import 'shared/providers/locale_provider.dart';
 import 'shared/providers/onboarding_provider.dart';
 import 'shared/providers/theme_mode_provider.dart';
@@ -37,6 +38,7 @@ Future<void> main() async {
   await initializeDateFormatting();
   final locale = await loadLocale();
   final expiryPrefs = await loadExpiryPrefs();
+  final restockDays = await loadRestockDays();
   // The plugin can fail on an odd device or emulator; reminders are a nicety,
   // so fall back to no reminders rather than failing to start.
   ReminderService reminders = const NoopReminderService();
@@ -53,6 +55,7 @@ Future<void> main() async {
         initialThemeModeProvider.overrideWithValue(themeMode),
         initialLocaleProvider.overrideWithValue(locale),
         initialExpiryPrefsProvider.overrideWithValue(expiryPrefs),
+        initialRestockDaysProvider.overrideWithValue(restockDays),
         reminderServiceProvider.overrideWithValue(reminders),
       ],
       child: const App(),

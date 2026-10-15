@@ -1369,6 +1369,19 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String settings_restockEvery(String days) {
+    return 'আমি প্রতি $days দিনে রিস্টক করি';
+  }
+
+  @override
+  String get settings_restockEveryTitle => 'কত দিন পরপর রিস্টক করেন?';
+
+  @override
+  String restockPlan_daysShort(String days) {
+    return '$days দিন';
+  }
+
+  @override
   String get expiry_formAddTitle => 'মেয়াদের তারিখ যোগ করুন';
 
   @override

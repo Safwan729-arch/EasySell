@@ -2390,6 +2390,24 @@ abstract class AppLocalizations {
   /// **'Thrown away: {qty} {unit} · {amount} lost'**
   String expiry_thrownAway(String qty, String unit, String amount);
 
+  /// No description provided for @settings_restockEvery.
+  ///
+  /// In en, this message translates to:
+  /// **'I restock every {days} days'**
+  String settings_restockEvery(String days);
+
+  /// No description provided for @settings_restockEveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How often do you restock?'**
+  String get settings_restockEveryTitle;
+
+  /// No description provided for @restockPlan_daysShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String restockPlan_daysShort(String days);
+
   /// No description provided for @expiry_formAddTitle.
   ///
   /// In en, this message translates to:
