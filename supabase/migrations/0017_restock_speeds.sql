@@ -59,22 +59,38 @@ as $$
              case t.type when 'sale' then t.quantity else 0 end as sold
       from transactions t
       where t.shop_id = p_shop_id
+        -- A day of margin either side of any UTC offset; the exact local-day
+        -- cut is the x.d filter below. Keeps the read to recent rows instead
+        -- of the shop's whole history.
+        and t.created_at >= (p_today - 30)::timestamptz
     ) x
     where x.d >= p_today - 28
     group by x.product_id, x.d
   ),
+  -- Net change on today and later: subtracted from every window day.
+  after_window as (
+    select tx.product_id, sum(tx.net) as net
+    from txn tx
+    where tx.d >= p_today
+    group by tx.product_id
+  ),
+  -- stock_at_start(d) = quantity - after_window - (net of window days >= d),
+  -- as a running sum. A correlated subquery here scanned txn once per product
+  -- per day (final review 2026-10-15): seconds for a big shop, on every sale.
   grid as (
     select p.id as product_id,
            dy.d,
            p.created_day,
            coalesce(tx.sold, 0) as sold,
-           p.quantity - coalesce((
-             select sum(t2.net) from txn t2
-             where t2.product_id = p.id and t2.d >= dy.d
-           ), 0) as start_stock
+           p.quantity
+             - coalesce(aw.net, 0)
+             - sum(coalesce(tx.net, 0)) over (
+                 partition by p.id order by dy.d desc
+               ) as start_stock
     from prod p
     cross join days dy
     left join txn tx on tx.product_id = p.id and tx.d = dy.d
+    left join after_window aw on aw.product_id = p.id
   ),
   weekly as (
     select g.product_id,

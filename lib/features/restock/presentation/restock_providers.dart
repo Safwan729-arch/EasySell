@@ -13,21 +13,28 @@ import 'restock_prefs.dart';
 
 /// Speeds by product id. Refetches after a sale or restock
 /// ([dataRefreshProvider]) and when the local date changes.
+///
+/// No automatic retry: Riverpod's default retries ~10 times over ~40 s and
+/// reports loading meanwhile, so a missing 0017 or no internet showed a
+/// spinner instead of the error with its Retry button.
 final restockSpeedsProvider =
-    FutureProvider.autoDispose<Map<String, RestockSpeed>>((ref) async {
-      ref.watch(dataRefreshProvider);
-      final shop = ref.watch(myShopProvider).value;
-      if (shop == null) return const {};
-      final today = ref.watch(todayProvider);
-      final offset = ref.read(nowProvider)().timeZoneOffset.inMinutes;
-      final r = await ref
-          .watch(restockRepositoryProvider)
-          .fetchSpeeds(shop.id, today: today, utcOffsetMinutes: offset);
-      return r.when(
-        success: (l) => {for (final s in l) s.productId: s},
-        failure: (f) => throw f,
-      );
-    });
+    FutureProvider.autoDispose<Map<String, RestockSpeed>>(
+      retry: (_, _) => null,
+      (ref) async {
+        ref.watch(dataRefreshProvider);
+        final shop = ref.watch(myShopProvider).value;
+        if (shop == null) return const {};
+        final today = ref.watch(todayProvider);
+        final offset = ref.read(nowProvider)().timeZoneOffset.inMinutes;
+        final r = await ref
+            .watch(restockRepositoryProvider)
+            .fetchSpeeds(shop.id, today: today, utcOffsetMinutes: offset);
+        return r.when(
+          success: (l) => {for (final s in l) s.productId: s},
+          failure: (f) => throw f,
+        );
+      },
+    );
 
 /// The Restock list. Days left and the suggestion use GOOD stock -- the app's
 /// own expiry estimate -- so they are computed here, not in SQL (spec §5).
@@ -38,12 +45,22 @@ final restockPlanProvider = Provider.autoDispose<AsyncValue<RestockPlan>>((
   final products = ref.watch(productsStreamProvider).value ?? const <Product>[];
   final byProduct = ref.watch(productExpiryProvider);
   final days = ref.watch(restockDaysProvider);
-  return speeds.whenData(
-    (s) => planRestock(
-      products: products,
-      speeds: s,
-      goodStock: (p) => goodStockOf(p, byProduct),
-      restockDays: days,
-    ),
-  );
+  // Not whenData: it turns a reload's AsyncLoading(previous) into a bare
+  // AsyncLoading, so every restock blanked the list and the Home card. Keep
+  // planning from the last speeds while new ones load.
+  final s = speeds.value;
+  if (s != null) {
+    return AsyncData(
+      planRestock(
+        products: products,
+        speeds: s,
+        goodStock: (p) => goodStockOf(p, byProduct),
+        restockDays: days,
+      ),
+    );
+  }
+  if (speeds.hasError) {
+    return AsyncError(speeds.error!, speeds.stackTrace ?? StackTrace.empty);
+  }
+  return const AsyncLoading();
 });
