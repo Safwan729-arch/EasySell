@@ -136,28 +136,80 @@ class _RoundIconButton extends StatelessWidget {
   const _RoundIconButton({
     required this.icon,
     required this.onPressed,
-    required this.color,
+    this.stop = false,
   });
 
   final IconData icon;
   final VoidCallback onPressed;
-  final Color color;
+
+  /// The salmon stop button (dark square) rather than the blue mic.
+  final bool stop;
 
   @override
   Widget build(BuildContext context) {
-    final onColor = Theme.of(context).colorScheme.onPrimary;
-    return SizedBox(
-      width: 96,
-      height: 96,
-      child: IconButton.filled(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 40),
-        style: IconButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: onColor,
-          shape: const CircleBorder(),
+    final colors = Theme.of(context).extension<AppColors>();
+    final size = stop ? 100.0 : 120.0;
+    final decoration = stop
+        ? BoxDecoration(
+            shape: BoxShape.circle,
+            color: colors?.stop ?? Theme.of(context).colorScheme.error,
+            boxShadow: [
+              BoxShadow(
+                color: (colors?.stop ?? Colors.red).withValues(alpha: 0.35),
+                blurRadius: 24,
+              ),
+            ],
+          )
+        : _micDecoration(context);
+    final button = DecoratedBox(
+      decoration: decoration,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: IconButton(
+          onPressed: onPressed,
+          icon: Icon(icon, size: stop ? 44 : 48),
+          style: IconButton.styleFrom(
+            foregroundColor: stop
+                ? const Color(0xFF14161F)
+                : const Color(0xFF06102A),
+            shape: const CircleBorder(),
+          ),
         ),
       ),
+    );
+    return stop ? button : _MicHalo(child: button);
+  }
+}
+
+/// The big mic's fill: a light-blue gradient with a soft blue glow.
+BoxDecoration _micDecoration(BuildContext context) => const BoxDecoration(
+  shape: BoxShape.circle,
+  gradient: LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF6FAEFF), Color(0xFF3D82F5)],
+  ),
+  boxShadow: [BoxShadow(color: Color(0x734D92FE), blurRadius: 26)],
+);
+
+/// The soft halo ring around the big mic.
+class _MicHalo extends StatelessWidget {
+  const _MicHalo({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: primary.withValues(alpha: 0.10),
+        border: Border.all(color: primary.withValues(alpha: 0.14)),
+      ),
+      child: child,
     );
   }
 }
@@ -175,16 +227,12 @@ class _IdlePane extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _RoundIconButton(
-            icon: Icons.mic,
-            onPressed: onStart,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(height: 20),
+          _RoundIconButton(icon: Icons.mic, onPressed: onStart),
+          const SizedBox(height: 24),
           Text(
             l10n.voice_hintIdle,
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium,
+            style: theme.textTheme.titleMedium?.copyWith(fontSize: 18),
           ),
         ],
       ),
@@ -210,14 +258,15 @@ class _ListeningPane extends StatelessWidget {
         children: [
           const _MicLevelMeter(),
           const SizedBox(height: 20),
-          Text(l10n.voice_recording, style: theme.textTheme.titleMedium),
-          // Fixed height so the pane does not jump when the countdown appears.
-          SizedBox(height: 24, child: _AutoStopCountdown(deadline: deadline)),
-          _RoundIconButton(
-            icon: Icons.stop,
-            onPressed: onStop,
-            color: theme.colorScheme.error,
+          Text(
+            l10n.voice_recording,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
           ),
+          // Fixed height so the pane does not jump when the countdown appears.
+          SizedBox(height: 28, child: _AutoStopCountdown(deadline: deadline)),
+          _RoundIconButton(icon: Icons.stop, onPressed: onStop, stop: true),
         ],
       ),
     );
@@ -284,15 +333,14 @@ class _MicLevelMeterState extends ConsumerState<_MicLevelMeter> {
     if (level > _peak) _peak = level;
 
     final scheme = theme.colorScheme;
-    final core = SizedBox(
-      width: 96,
-      height: 96,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: scheme.primary,
+    final core = _MicHalo(
+      child: SizedBox(
+        width: 120,
+        height: 120,
+        child: DecoratedBox(
+          decoration: _micDecoration(context),
+          child: const Icon(Icons.mic, size: 48, color: Color(0xFF06102A)),
         ),
-        child: Icon(Icons.mic, size: 40, color: scheme.onPrimary),
       ),
     );
 
@@ -338,13 +386,16 @@ class _LevelBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final idle =
+        Theme.of(context).extension<AppColors>()?.barIdle ??
+        scheme.surfaceContainerHighest;
     return Container(
-      width: 6,
-      height: 20,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
+      width: 9,
+      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 2.5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
-        color: lit ? scheme.primary : scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(5),
+        color: lit ? scheme.primary : idle,
       ),
     );
   }

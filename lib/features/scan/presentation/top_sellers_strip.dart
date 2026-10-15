@@ -40,10 +40,10 @@ class TopSellersStrip extends ConsumerWidget {
 
     final theme = Theme.of(context);
     return SizedBox(
-      height: 48,
+      height: 60,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
         itemCount: shortcuts.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
@@ -51,7 +51,7 @@ class TopSellersStrip extends ConsumerWidget {
           return ActionChip(
             avatar: Icon(
               Icons.bolt,
-              size: 16,
+              size: 20,
               color: theme.colorScheme.primary,
             ),
             label: Text(p.name),

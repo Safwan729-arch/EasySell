@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/haptics.dart';
+import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../inventory/domain/product.dart';
@@ -221,6 +222,8 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
     final items = ref.watch(scanSessionProvider);
     final pending = items.where((i) => i.isPending).length;
     final addable = items.where((i) => i.isAddable).length;
+    // Nullable: this screen's tests pump it without the app theme.
+    final colors = Theme.of(context).extension<AppColors>();
 
     return PopScope(
       canPop: false,
@@ -232,14 +235,34 @@ class _ScanSessionScreenState extends ConsumerState<ScanSessionScreen>
         appBar: AppBar(title: Text(l10n.inventory_scanProduct)),
         body: Column(
           children: [
-            Expanded(child: _viewfinder(l10n)),
+            // The viewfinder card: black, radius 22, glowing outline. Black
+            // only while the camera runs, so the permission / error states
+            // (dark text) stay readable on the light theme's card.
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                child: Container(
+                  clipBehavior: colors == null ? Clip.none : Clip.antiAlias,
+                  decoration: colors == null
+                      ? null
+                      : _ready && !_denied && !_unavailable && !_error
+                      ? BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: colors.glowBorder),
+                          boxShadow: colors.cardShadow,
+                        )
+                      : colors.card(context),
+                  child: _viewfinder(l10n),
+                ),
+              ),
+            ),
             const TopSellersStrip(),
-            const Divider(height: 1),
             ScanTray(onPick: _pick),
             SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                 child: FilledButton(
                   key: const Key('scan-add-all'),
                   onPressed: (pending > 0 || addable == 0) ? null : _addAll,
