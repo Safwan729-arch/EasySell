@@ -10,6 +10,11 @@ import '../../expiry/domain/expiry_dates.dart';
 import '../domain/transaction.dart';
 import 'day_range.dart';
 
+/// Every sale column plus the expiry date of the delivery it came from, so the
+/// sale detail can show it without a second request. `batch` is the embed name
+/// [Transaction.batchExpiry] reads; transactions has one FK to product_batches.
+const saleSelect = '*, batch:product_batches(expiry_date)';
+
 /// Records stock movements via the atomic Postgres RPCs. NEVER does client-side
 /// stock math — `record_sale`/`record_restock` lock the row, check/adjust stock,
 /// and insert the transaction with frozen prices in a single transaction.
@@ -108,7 +113,7 @@ class TransactionRepository {
     try {
       var query = _client
           .from('transactions')
-          .select()
+          .select(saleSelect)
           .eq('shop_id', shopId)
           .eq('type', 'sale');
       if (since != null) {
@@ -137,7 +142,7 @@ class TransactionRepository {
       final range = dayRangeUtc(day);
       final rows = await _client
           .from('transactions')
-          .select()
+          .select(saleSelect)
           .eq('shop_id', shopId)
           .eq('type', 'sale')
           .gte('created_at', range.startUtc.toIso8601String())

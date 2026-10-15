@@ -24,7 +24,11 @@ const _product = Product(
   quantity: 12,
 );
 
-Transaction _sale({double buying = 700, double selling = 850}) => Transaction(
+Transaction _sale({
+  double buying = 700,
+  double selling = 850,
+  DateTime? batchExpiry,
+}) => Transaction(
   id: 't1',
   shopId: 's',
   productId: 'p1',
@@ -34,35 +38,39 @@ Transaction _sale({double buying = 700, double selling = 850}) => Transaction(
   sellingPrice: selling,
   source: 'manual',
   createdAt: DateTime(2026, 7, 21, 20, 44),
+  batchExpiry: batchExpiry,
 );
 
-Widget _harness(Transaction? sale, {List<Product> products = const [_product]}) =>
-    ProviderScope(
-      overrides: [
-        myShopProvider.overrideWith(
-          (ref) => const Shop(id: 's', ownerId: 'o', name: 'Shop', currency: 'USD'),
-        ),
-        productsStreamProvider.overrideWith((ref) => Stream.value(products)),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.light,
-        locale: const Locale('en'),
-        supportedLocales: supportedAppLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        home: SaleDetailScreen(sale: sale),
-      ),
-    );
+Widget _harness(
+  Transaction? sale, {
+  List<Product> products = const [_product],
+}) => ProviderScope(
+  overrides: [
+    myShopProvider.overrideWith(
+      (ref) => const Shop(id: 's', ownerId: 'o', name: 'Shop', currency: 'USD'),
+    ),
+    productsStreamProvider.overrideWith((ref) => Stream.value(products)),
+  ],
+  child: MaterialApp(
+    theme: AppTheme.light,
+    locale: const Locale('en'),
+    supportedLocales: supportedAppLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    home: SaleDetailScreen(sale: sale),
+  ),
+);
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  testWidgets('renders the sale story: name, qty+unit, total, profit, source',
-      (tester) async {
+  testWidgets('renders the sale story: name, qty+unit, total, profit, source', (
+    tester,
+  ) async {
     await tester.pumpWidget(_harness(_sale()));
     await tester.pumpAndSettle();
 
@@ -74,13 +82,33 @@ void main() {
     expect(find.text('Manual'), findsOneWidget);
   });
 
-  testWidgets('deleted product falls back to "Sale" and a plain quantity',
-      (tester) async {
+  testWidgets('deleted product falls back to "Sale" and a plain quantity', (
+    tester,
+  ) async {
     await tester.pumpWidget(_harness(_sale(), products: const []));
     await tester.pumpAndSettle();
 
     expect(find.text('Sale'), findsWidgets);
     expect(find.text('0.5'), findsOneWidget); // no unit label
+  });
+
+  testWidgets('shows the expiry date of the delivery it was sold from', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(_sale(batchExpiry: DateTime(2026, 11, 20))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Expiry date'), findsOneWidget);
+    expect(find.text('Nov 20, 2026'), findsOneWidget);
+  });
+
+  testWidgets('no expiry row for a sale from undated stock', (tester) async {
+    await tester.pumpWidget(_harness(_sale()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Expiry date'), findsNothing);
   });
 
   testWidgets('null sale shows the not-found state', (tester) async {

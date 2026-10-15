@@ -18,6 +18,7 @@ abstract class Transaction with _$Transaction {
     required double quantity, // decimal: 12 pcs OR 2.5 kg
     @Default(0) double buyingPrice,
     @Default(0) double sellingPrice,
+
     /// This line's share of a cart-level discount, allocated by
     /// `record_sale_cart`. Summing it over a `saleGroupId` reproduces the
     /// discount the shopkeeper typed, exactly -- the split floors and then
@@ -26,6 +27,15 @@ abstract class Transaction with _$Transaction {
     @Default(0) double discountAmount,
     String? source, // 'voice' | 'image' | 'manual'
     String? saleGroupId, // shared by every line from one cart checkout
+    /// The delivery this sale line was taken from (0012). Null for undated
+    /// stock and for sales made before deliveries were tracked.
+    String? batchId,
+
+    /// That delivery's expiry date, read from the embedded
+    /// `batch:product_batches(expiry_date)` History selects. Display only:
+    /// never written back, since it is not a column of `transactions`.
+    @JsonKey(readValue: _readBatchExpiry, includeToJson: false)
+    DateTime? batchExpiry,
     DateTime? createdAt,
   }) = _Transaction;
 
@@ -36,3 +46,6 @@ abstract class Transaction with _$Transaction {
   double get cost => buyingPrice * quantity;
   double get profit => revenue - cost;
 }
+
+Object? _readBatchExpiry(Map<dynamic, dynamic> json, String _) =>
+    (json['batch'] as Map?)?['expiry_date'];

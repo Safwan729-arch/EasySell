@@ -7,6 +7,7 @@ import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../expiry/presentation/expiry_date_field.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../domain/transaction.dart';
@@ -94,7 +95,17 @@ class SaleDetailScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           const Divider(),
           _DetailRow(label: l10n.saleDetail_quantity, value: qtyLabel),
-          _DetailRow(label: l10n.saleDetail_priceEach, value: money(t.sellingPrice)),
+          // The delivery the units came from. Hidden for undated stock and
+          // older sales, which never recorded a delivery.
+          if (t.batchExpiry case final expiry?)
+            _DetailRow(
+              label: l10n.expiry_dateLabel,
+              value: formatExpiryDate(context, expiry),
+            ),
+          _DetailRow(
+            label: l10n.saleDetail_priceEach,
+            value: money(t.sellingPrice),
+          ),
           if (t.discountAmount > 0) ...[
             _DetailRow(
               label: l10n.common_subtotal,
@@ -203,14 +214,15 @@ class _DetailRow extends StatelessWidget {
           ),
           Text(
             value,
-            style: (emphasize
-                    ? theme.textTheme.titleMedium
-                    : theme.textTheme.bodyLarge)
-                ?.copyWith(
-              fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
-              color: valueColor,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+            style:
+                (emphasize
+                        ? theme.textTheme.titleMedium
+                        : theme.textTheme.bodyLarge)
+                    ?.copyWith(
+                      fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+                      color: valueColor,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
           ),
         ],
       ),

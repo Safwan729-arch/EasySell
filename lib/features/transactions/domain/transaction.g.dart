@@ -17,6 +17,10 @@ _Transaction _$TransactionFromJson(Map<String, dynamic> json) => _Transaction(
   discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0,
   source: json['source'] as String?,
   saleGroupId: json['sale_group_id'] as String?,
+  batchId: json['batch_id'] as String?,
+  batchExpiry: _readBatchExpiry(json, 'batch_expiry') == null
+      ? null
+      : DateTime.parse(_readBatchExpiry(json, 'batch_expiry') as String),
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
@@ -34,5 +38,6 @@ Map<String, dynamic> _$TransactionToJson(_Transaction instance) =>
       'discount_amount': instance.discountAmount,
       'source': instance.source,
       'sale_group_id': instance.saleGroupId,
+      'batch_id': instance.batchId,
       'created_at': instance.createdAt?.toIso8601String(),
     };

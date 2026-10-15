@@ -55,6 +55,7 @@ reasoning.
 ## History (transactions)
 - [[2026-07-21-history-sale-detail-design|Design]] / [[2026-07-21-history-sale-detail|Plan]] — tap a past sale to see its line-item detail
 - [[2026-07-03-history-calendar-day-filter-design|Design]] / [[2026-07-03-history-calendar-day-filter|Plan]] — calendar day filter + shop-lifetime floor date
+- [[2026-10-15-sale-detail-expiry-design|Design]] (no plan) — sale detail shows the expiry date of the delivery the sale came from, via a PostgREST embed on the History queries; hidden (not "—") when the sale named no delivery
 
 ## Restock planner
 - [[2026-10-15-restock-planner-design|Design]] / [[2026-10-15-restock-planner|Plan]] (built 2026-10-15, migration 0017) — "what to restock and how much" from a 4-week weighted sales speed (0.4/0.3/0.2/0.1) that skips out-of-stock days, so one spike week doesn't drive the buy; why not Gemini or a threshold-only alert; speed in Postgres, days-left/suggestion in Dart. §10: Home "Low stock" card merged into "Restock soon" (reorder level now feeds the planner) after the two contradicted each other.
