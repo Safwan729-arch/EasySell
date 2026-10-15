@@ -1364,19 +1364,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get expiry_removeFromStock => 'স্টক থেকে বাদ দিন';
 
   @override
-  String get expiry_closedHistory => 'বন্ধ';
-
-  @override
-  String get expiry_closedSoldOut => 'বিক্রি শেষ';
-
-  @override
-  String get expiry_closedRemoved => 'বাদ দেওয়া হয়েছে (মেয়াদোত্তীর্ণ)';
-
-  @override
-  String get expiry_closedNoneLeft => 'আর নেই হিসেবে চিহ্নিত';
-
-  @override
-  String get expiry_closedNotExpired => 'মেয়াদ শেষ নয় হিসেবে চিহ্নিত';
+  String expiry_thrownAway(String qty, String unit, String amount) {
+    return 'ফেলে দেওয়া: $qty $unit · $amount ক্ষতি';
+  }
 
   @override
   String get expiry_formAddTitle => 'মেয়াদের তারিখ যোগ করুন';

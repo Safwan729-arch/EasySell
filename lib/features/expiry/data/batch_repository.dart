@@ -10,6 +10,7 @@ import '../../inventory/domain/product.dart';
 import '../domain/expiry_dates.dart';
 import '../domain/expiry_estimate.dart';
 import '../domain/product_batch.dart';
+import '../domain/removal_loss.dart';
 
 /// Open deliveries and the products they belong to, read together.
 typedef ExpirySnapshot = ({List<ProductBatch> batches, List<Product> products});
@@ -74,19 +75,17 @@ class BatchRepository {
     }
   }
 
-  Future<Result<List<ProductBatch>>> fetchClosedBatches(
-    String productId, {
-    int limit = 10,
-  }) async {
+  /// Everything ever removed from [productId]'s stock, in units and money.
+  Future<Result<RemovalLoss>> fetchRemovalLoss(String productId) async {
     try {
       final rows = await _client
-          .from(_table)
-          .select()
+          .from('transactions')
+          .select('quantity, buying_price')
           .eq('product_id', productId)
-          .not('closed_at', 'is', null)
-          .order('closed_at', ascending: false)
-          .limit(limit);
-      return Result.success(_parse(rows));
+          .eq('type', 'adjustment');
+      return Result.success(
+        RemovalLoss.fromRows(List<Map<String, dynamic>>.from(rows)),
+      );
     } catch (e) {
       return Result.failure(_map(e));
     }

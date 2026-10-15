@@ -1370,19 +1370,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expiry_removeFromStock => 'Remove from stock';
 
   @override
-  String get expiry_closedHistory => 'Closed';
-
-  @override
-  String get expiry_closedSoldOut => 'Sold out';
-
-  @override
-  String get expiry_closedRemoved => 'Removed (expired)';
-
-  @override
-  String get expiry_closedNoneLeft => 'Marked none left';
-
-  @override
-  String get expiry_closedNotExpired => 'Marked not expired';
+  String expiry_thrownAway(String qty, String unit, String amount) {
+    return 'Thrown away: $qty $unit · $amount lost';
+  }
 
   @override
   String get expiry_formAddTitle => 'Add expiry date';

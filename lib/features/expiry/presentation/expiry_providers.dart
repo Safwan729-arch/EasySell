@@ -12,6 +12,7 @@ import '../domain/cart_expiry.dart';
 import '../domain/expiry_alerts.dart';
 import '../domain/expiry_estimate.dart';
 import '../domain/product_batch.dart';
+import '../domain/removal_loss.dart';
 import 'expiry_prefs.dart';
 import 'expiry_reconciler.dart';
 import 'today_provider.dart';
@@ -62,12 +63,13 @@ final expiryAlertsProvider = Provider.autoDispose<List<ExpiryAlert>>((ref) {
   );
 });
 
-final closedBatchesProvider = FutureProvider.autoDispose
-    .family<List<ProductBatch>, String>((ref, productId) async {
+/// A product's stock lost to removals, for the Deliveries "Thrown away" line.
+final removalLossProvider = FutureProvider.autoDispose
+    .family<RemovalLoss, String>((ref, productId) async {
       final r = await ref
           .watch(batchRepositoryProvider)
-          .fetchClosedBatches(productId);
-      return r.valueOrNull ?? const <ProductBatch>[];
+          .fetchRemovalLoss(productId);
+      return r.valueOrNull ?? RemovalLoss.none;
     });
 
 final latestRestockDateProvider = FutureProvider.autoDispose

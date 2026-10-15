@@ -202,7 +202,7 @@ class BatchActionsController extends AsyncNotifier<void> {
         return false;
       case Success():
         ref.invalidate(batchesStreamProvider);
-        ref.invalidate(closedBatchesProvider);
+        ref.invalidate(removalLossProvider);
         if (stockChanged) {
           ref.invalidate(productsStreamProvider);
           ref.read(dataRefreshProvider.notifier).bump();

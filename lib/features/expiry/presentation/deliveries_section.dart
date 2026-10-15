@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../shared/extensions/format.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../inventory/domain/product.dart';
 import '../domain/expiry_estimate.dart';
-import '../domain/product_batch.dart';
+import '../domain/removal_loss.dart';
 import 'batch_actions_controller.dart';
 import 'batch_action_feedback.dart';
 import 'batch_form_sheet.dart';
@@ -15,7 +16,7 @@ import 'expiry_date_field.dart';
 import 'expiry_providers.dart';
 
 /// The product page's Deliveries list (spec §5): each open delivery with its
-/// dates, estimated amount left and status, plus a short closed history.
+/// dates, estimated amount left and status, plus what removals have cost.
 class DeliveriesSection extends ConsumerWidget {
   const DeliveriesSection({super.key, required this.product});
 
@@ -26,9 +27,9 @@ class DeliveriesSection extends ConsumerWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final expiry = ref.watch(productExpiryProvider)[product.id];
-    final closed =
-        ref.watch(closedBatchesProvider(product.id)).value ??
-        const <ProductBatch>[];
+    final loss =
+        ref.watch(removalLossProvider(product.id)).value ?? RemovalLoss.none;
+    final currency = ref.watch(myShopProvider).value?.currency ?? 'USD';
     final open = expiry?.batches ?? const <BatchEstimate>[];
 
     return Padding(
@@ -57,44 +58,37 @@ class DeliveriesSection extends ConsumerWidget {
                 label: Text(l10n.expiry_addDate),
               ),
             ),
-          if (closed.isNotEmpty)
-            Theme(
-              data: theme.copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text(
-                  l10n.expiry_closedHistory,
-                  style: theme.textTheme.bodyMedium,
-                ),
+          // One line of what removals cost, in place of a Closed list that
+          // said "Removed (expired)" with no amount or money.
+          if (!loss.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
                 children: [
-                  for (final b in closed)
-                    ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(_closedLabel(context, b.closedReason)),
-                      subtitle: Text(
-                        l10n.expiry_rowDates(
-                          formatExpiryDate(context, b.receivedOn),
-                          formatExpiryDate(context, b.expiryDate),
-                        ),
+                  Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: theme.extension<AppColors>()!.negative,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.expiry_thrownAway(
+                        Qty.format(loss.units),
+                        product.unitLabel,
+                        Money.format(loss.cost, currencyCode: currency),
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
         ],
       ),
     );
-  }
-
-  String _closedLabel(BuildContext context, String? reason) {
-    final l10n = context.l10n;
-    return switch (reason) {
-      BatchCloseReason.removed => l10n.expiry_closedRemoved,
-      BatchCloseReason.noneLeft => l10n.expiry_closedNoneLeft,
-      BatchCloseReason.notExpired => l10n.expiry_closedNotExpired,
-      _ => l10n.expiry_closedSoldOut,
-    };
   }
 }
 

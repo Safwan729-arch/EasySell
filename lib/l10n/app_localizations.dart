@@ -2384,35 +2384,11 @@ abstract class AppLocalizations {
   /// **'Remove from stock'**
   String get expiry_removeFromStock;
 
-  /// No description provided for @expiry_closedHistory.
+  /// No description provided for @expiry_thrownAway.
   ///
   /// In en, this message translates to:
-  /// **'Closed'**
-  String get expiry_closedHistory;
-
-  /// No description provided for @expiry_closedSoldOut.
-  ///
-  /// In en, this message translates to:
-  /// **'Sold out'**
-  String get expiry_closedSoldOut;
-
-  /// No description provided for @expiry_closedRemoved.
-  ///
-  /// In en, this message translates to:
-  /// **'Removed (expired)'**
-  String get expiry_closedRemoved;
-
-  /// No description provided for @expiry_closedNoneLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Marked none left'**
-  String get expiry_closedNoneLeft;
-
-  /// No description provided for @expiry_closedNotExpired.
-  ///
-  /// In en, this message translates to:
-  /// **'Marked not expired'**
-  String get expiry_closedNotExpired;
+  /// **'Thrown away: {qty} {unit} · {amount} lost'**
+  String expiry_thrownAway(String qty, String unit, String amount);
 
   /// No description provided for @expiry_formAddTitle.
   ///

@@ -658,3 +658,26 @@ option (`mixBatches`) appears in the list **only when no single batch holds
 the line** (`offersMix`). It is still an explicit tap, so the choice stays
 mandatory. The rejected alternative was one cart line per (product, batch),
 which reworks the cart's merging, steppers and notices for a rare case.
+
+## 18. "Thrown away" line replaces the Closed list (2026-10-15, no migration)
+
+The product page kept a collapsible **Closed** list of finished deliveries.
+Each row said only "Removed (expired)" or "Sold out" with the dates, and no
+amount or money, so the shopkeeper asked what it was for. It told them
+nothing they could act on.
+
+**Now:** one line under Deliveries reads "Thrown away: 10 pcs · ৳200 lost".
+It is hidden when nothing has been removed.
+
+- The figure is the sum of the product's `adjustment` transactions:
+  `quantity × buying_price`. Only the removal RPCs write that type (0011,
+  0013, 0014 and 0015), so it covers full, partial and undated removals.
+  It does not need closed deliveries at all.
+- **Cost is the buying price frozen on the row**, the delivery's price
+  (or the product's, for undated stock). It is never today's price, which
+  follows the frozen-price rule for transactions.
+- **Closed delivery rows stay in the database.** Sales and removals point at
+  them through `batch_id`. Only the list is gone: `fetchClosedBatches`, its
+  provider and the five `expiry_closed*` strings were removed.
+- A shop-wide loss total (for example "lost to expiry this month") can be
+  built on the same rows later. It is out of scope here.

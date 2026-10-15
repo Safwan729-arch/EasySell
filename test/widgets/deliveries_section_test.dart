@@ -6,12 +6,14 @@ import 'package:ai_shopkeeper/features/auth/domain/shop.dart';
 import 'package:ai_shopkeeper/features/expiry/data/batch_repository.dart';
 import 'package:ai_shopkeeper/features/expiry/domain/expiry_estimate.dart';
 import 'package:ai_shopkeeper/features/expiry/domain/product_batch.dart';
+import 'package:ai_shopkeeper/features/expiry/domain/removal_loss.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/deliveries_section.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/expiry_providers.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/expiry_reconciler.dart';
 import 'package:ai_shopkeeper/features/expiry/presentation/today_provider.dart';
 import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/l10n/app_localizations.dart';
+import 'package:ai_shopkeeper/shared/extensions/format.dart';
 import 'package:ai_shopkeeper/shared/providers/locale_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -23,8 +25,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import '../support/expiry_fakes.dart';
 
 class _Repo implements BatchRepository {
-  _Repo({this.failRemove = false});
+  _Repo({this.failRemove = false, this.loss = RemovalLoss.none});
   final bool failRemove;
+  final RemovalLoss loss;
   final removed = <String>[];
   final undated = <String>[];
 
@@ -40,10 +43,8 @@ class _Repo implements BatchRepository {
   }
 
   @override
-  Future<Result<List<ProductBatch>>> fetchClosedBatches(
-    String productId, {
-    int limit = 10,
-  }) async => const Result.success([]);
+  Future<Result<RemovalLoss>> fetchRemovalLoss(String productId) async =>
+      Result.success(loss);
 
   @override
   Future<Result<void>> removeStock({
@@ -336,5 +337,25 @@ void main() {
     expect(tester.widget<FilledButton>(dialogRemove()).onPressed, isNull);
     expect(find.text('Only 10 pcs left in this batch'), findsOneWidget);
     expect(repo.removed, isEmpty);
+  });
+
+  testWidgets('what was thrown away shows as one line with the money lost', (
+    tester,
+  ) async {
+    // Replaces the Closed list, which only said "Removed (expired)": no
+    // amount, no money, nothing to decide with (2026-10-15).
+    await _pump(tester, _Repo(loss: const RemovalLoss(units: 10, cost: 200)));
+    expect(
+      find.text(
+        'Thrown away: 10 pcs · ${Money.format(200, currencyCode: 'BDT')} lost',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Closed'), findsNothing);
+  });
+
+  testWidgets('nothing thrown away, no line', (tester) async {
+    await _pump(tester, _Repo());
+    expect(find.textContaining('Thrown away'), findsNothing);
   });
 }
