@@ -153,3 +153,36 @@ class AlertCard extends StatelessWidget {
     );
   }
 }
+
+/// The soft icon tile that leads a Settings row: a 48 dp rounded square in
+/// the `muted` tint with a blue outline icon.
+class SettingsIconTile extends StatelessWidget {
+  const SettingsIconTile(this.icon, {super.key});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    // Tolerates a theme without [AppColors]: feature tiles embed this and are
+    // pumped under a bare MaterialApp in their tests.
+    final theme = Theme.of(context);
+    final colors = theme.extension<AppColors>();
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: colors?.muted ?? theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(14),
+        border: isDark && colors != null
+            ? Border.all(color: colors.glowBorder)
+            : null,
+      ),
+      child: Icon(
+        icon,
+        size: 24,
+        color: colors?.link ?? theme.colorScheme.primary,
+      ),
+    );
+  }
+}

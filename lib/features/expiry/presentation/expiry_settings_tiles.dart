@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/section_bits.dart';
 import '../../../shared/extensions/format.dart';
 import '../data/reminder_service.dart';
 import 'expiry_prefs.dart';
@@ -20,7 +21,7 @@ class ExpiryWarnDaysTile extends ConsumerWidget {
     final l10n = context.l10n;
     final days = ref.watch(expiryPrefsProvider.select((p) => p.warnDays));
     return ListTile(
-      leading: const Icon(Icons.event_note_outlined),
+      leading: const SettingsIconTile(Icons.event_note_outlined),
       title: Text(l10n.settings_expiryWarnDays(Qty.format(days))),
       onTap: () async {
         final picked = await showDialog<int>(
@@ -62,7 +63,7 @@ class ExpiryReminderTile extends ConsumerWidget {
     final on = ref.watch(expiryPrefsProvider.select((p) => p.remindersOn));
     final allowed = ref.watch(reminderPermissionProvider).value ?? true;
     return SwitchListTile(
-      secondary: const Icon(Icons.notifications_active_outlined),
+      secondary: const SettingsIconTile(Icons.notifications_active_outlined),
       title: Text(l10n.settings_expiryReminder),
       subtitle: Text(
         on && !allowed

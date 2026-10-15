@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/section_bits.dart';
 import 'restock_prefs.dart';
 
 /// Settings: how often the shopkeeper restocks, which sets how many days the
@@ -14,7 +15,7 @@ class RestockDaysTile extends ConsumerWidget {
     final l10n = context.l10n;
     final days = ref.watch(restockDaysProvider);
     return ListTile(
-      leading: const Icon(Icons.shopping_basket_outlined),
+      leading: const SettingsIconTile(Icons.shopping_basket_outlined),
       title: Text(l10n.settings_restockEvery(days)),
       onTap: () async {
         final picked = await showDialog<int>(
