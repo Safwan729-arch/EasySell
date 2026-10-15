@@ -311,3 +311,32 @@ Postgres harness.
 - **Retry shows loading at once.** Tested in `restock_providers_test`.
 - **The 0017 verify query** looks the product up in the user's own shop and
   uses the Asia/Dhaka date.
+
+## 10. Low stock merged into "Restock soon" (2026-10-15)
+
+**Problem.** Home showed "4 items to restock" directly above "You're fully
+stocked — nothing needs reordering". The two cards used different rules:
+- **Restock soon** used the sales speed.
+- **Low stock** only used the reorder threshold typed into each product by
+  hand. The demo products had none set, so it said everything was fine.
+
+Two cards that can contradict each other are worse than one.
+
+**Now** there's one list. `planRestock` also lists every product **at or
+below its reorder level**, judged on good stock as the old card was, and it
+lists them even with no sales:
+- **Suggestion:** `max(speed amount, level − good stock + 1)`, which is at
+  least enough to get back above the level.
+- **With no sales speed,** the row reads "At your reorder level" (on the Home
+  card, "low stock"). Days left is infinite, and these rows sort after the
+  speed-based ones.
+- **A product above its level with no sales** is still not listed.
+
+**Removed:** the Home Low stock card and its three strings.
+
+**Kept:** the Inventory "Low stock" filter and the product-page badge. These
+answer a different question ("show me what is low") and don't compete for
+Home.
+
+**Ruled out:** keeping both cards and hiding Low stock when empty. They would
+still overlap, and one product could appear in both.

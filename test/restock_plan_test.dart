@@ -2,8 +2,19 @@ import 'package:ai_shopkeeper/features/inventory/domain/product.dart';
 import 'package:ai_shopkeeper/features/restock/domain/restock_plan.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Product _p(String id, {double qty = 0, UnitType unit = UnitType.piece}) =>
-    Product(id: id, shopId: 's', name: id, quantity: qty, unitType: unit);
+Product _p(
+  String id, {
+  double qty = 0,
+  UnitType unit = UnitType.piece,
+  double reorderAt = 0,
+}) => Product(
+  id: id,
+  shopId: 's',
+  name: id,
+  quantity: qty,
+  unitType: unit,
+  reorderThreshold: reorderAt,
+);
 
 RestockPlan _plan(
   List<Product> products,
@@ -112,6 +123,73 @@ void main() {
       }).week0Rate,
       4,
     );
+  });
+
+  group('reorder level (the old Low stock card, merged 2026-10-15)', () {
+    // Home showed "4 items to restock" above "You're fully stocked": the two
+    // cards used different rules. One list now covers both.
+    test('at or below its level with no sales: Buy now, back above it', () {
+      final item = _plan([_p('Soap', qty: 3, reorderAt: 5)], {}).buyNow.single;
+      expect(item.belowReorder, isTrue);
+      expect(item.speed, 0);
+      expect(item.daysLeft, double.infinity);
+      expect(item.suggestion, 3); // 5 − 3 + 1 → 6 on the shelf
+      expect(item.isUrgent, isFalse);
+    });
+
+    test('exactly at the level counts, like the old card', () {
+      expect(_plan([_p('A', qty: 5, reorderAt: 5)], {}).buyNow, hasLength(1));
+    });
+
+    test('above the level, or no level set, and no sales: not listed', () {
+      final plan = _plan([
+        _p('Above', qty: 6, reorderAt: 5),
+        _p('NoLevel', qty: 0),
+      ], {});
+      expect(plan.isEmpty, isTrue);
+    });
+
+    test(
+      'selling but the speed says enough: the level still forces Buy now',
+      () {
+        // 0.1/day × 9 = 0.9 − 8 → 0 by speed; level 10 wants 3.
+        final item = _plan(
+          [_p('A', qty: 8, reorderAt: 10)],
+          {'A': _s('A', 0.1)},
+        ).buyNow.single;
+        expect(item.suggestion, 3);
+        expect(item.belowReorder, isTrue);
+      },
+    );
+
+    test('the speed amount wins when it is bigger', () {
+      final item = _plan(
+        [_p('A', qty: 4, reorderAt: 5)],
+        {'A': _s('A', 5)},
+      ).buyNow.single;
+      expect(item.suggestion, 41); // 5 × 9 − 4, not 5 − 4 + 1
+    });
+
+    test(
+      'judged on GOOD stock: expired units do not keep it above the level',
+      () {
+        final plan = planRestock(
+          products: [_p('A', qty: 20, reorderAt: 5)],
+          speeds: const {},
+          goodStock: (_) => 2, // 18 of the 20 are expired
+          restockDays: 7,
+        );
+        expect(plan.buyNow.single.suggestion, 4);
+      },
+    );
+
+    test('level-only items come after the ones with a sales speed', () {
+      final plan = _plan(
+        [_p('Level', qty: 0, reorderAt: 5), _p('Speedy', qty: 50)],
+        {'Speedy': _s('Speedy', 10)},
+      );
+      expect(plan.buyNow.map((i) => i.product.id), ['Speedy', 'Level']);
+    });
   });
 
   test('urgent (red) follows the whole days the text shows', () {

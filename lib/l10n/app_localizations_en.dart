@@ -141,19 +141,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dashboard_lowStock => 'Low stock';
-
-  @override
   String get dashboard_viewAll => 'View all';
-
-  @override
-  String get dashboard_fullyStocked =>
-      'You\'re fully stocked — nothing needs reordering.';
-
-  @override
-  String dashboard_leftReorder(String qty) {
-    return '$qty left · reorder';
-  }
 
   @override
   String get dashboard_couldNotLoadSummary => 'Could not load summary.';
@@ -1441,6 +1429,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restockPlan_today => 'today';
+
+  @override
+  String get restockPlan_atReorderLevel => 'At your reorder level';
+
+  @override
+  String get restockPlan_lowShort => 'low stock';
 
   @override
   String restockPlan_buyAbout(String qty, String unit) {

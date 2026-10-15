@@ -138,18 +138,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get dashboard_lowStock => 'কম স্টক';
-
-  @override
   String get dashboard_viewAll => 'সব দেখুন';
-
-  @override
-  String get dashboard_fullyStocked => 'স্টক ভরা — কিছু রিঅর্ডার করতে হবে না।';
-
-  @override
-  String dashboard_leftReorder(String qty) {
-    return '$qty বাকি · রিঅর্ডার';
-  }
 
   @override
   String get dashboard_couldNotLoadSummary => 'সারসংক্ষেপ লোড করা যায়নি।';
@@ -1435,6 +1424,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get restockPlan_today => 'আজ';
+
+  @override
+  String get restockPlan_atReorderLevel => 'রিঅর্ডার লেভেলে পৌঁছেছে';
+
+  @override
+  String get restockPlan_lowShort => 'কম স্টক';
 
   @override
   String restockPlan_buyAbout(String qty, String unit) {

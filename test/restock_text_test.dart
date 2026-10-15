@@ -31,6 +31,21 @@ void main() {
     expect(en.restockPlan_cardSummary(3), '3 items to restock');
   });
 
+  test('no sales speed, below the reorder level: says so', () {
+    final item = RestockItem(
+      product: const Product(id: 'a', shopId: 's', name: 'A'),
+      speed: 0,
+      goodStock: 3,
+      daysLeft: double.infinity,
+      suggestion: 3,
+      trend: RestockTrend.flat,
+      belowReorder: true,
+    );
+    expect(runsOutText(en, item), 'At your reorder level');
+    expect(daysLeftShort(en, item), 'low stock');
+    expect(runsOutText(bn, item), isNot(contains('Infinity')));
+  });
+
   test('Bengali keeps Bengali digits', () {
     expect(runsOutText(bn, _at(3)), '৩ দিনে শেষ হবে');
     expect(bn.restockPlan_cardSummary(3), '৩টি পণ্য রিস্টক করতে হবে');

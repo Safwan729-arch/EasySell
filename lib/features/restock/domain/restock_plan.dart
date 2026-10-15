@@ -45,16 +45,24 @@ class RestockItem {
     required this.daysLeft,
     required this.suggestion,
     required this.trend,
+    this.belowReorder = false,
   });
 
   final Product product;
+
+  /// Units per day; 0 for a product listed only by its reorder level.
   final double speed;
   final double goodStock;
+
+  /// Infinite when [speed] is 0: no sales to run out by.
   final double daysLeft;
 
   /// Whole units to buy; 0 when there is enough.
   final double suggestion;
   final RestockTrend trend;
+
+  /// At or below the reorder level the shopkeeper set on the product.
+  final bool belowReorder;
 
   /// Red: runs out within 2 whole days. Whole days because that is what the
   /// text shows -- 2.5 days reads "Runs out in 2 days" and must be red too.
@@ -72,8 +80,11 @@ class RestockPlan {
   bool get isEmpty => buyNow.isEmpty && enough.isEmpty;
 }
 
-/// Spec §3.4–3.5. Products without a speed above zero are left out: with no
-/// sales in four weeks there is nothing to plan from.
+/// Spec §3.4–3.5, plus the reorder level the old Home "Low stock" card used
+/// (merged 2026-10-15, spec §10): a product at or below its level is always
+/// Buy now, with at least enough to get back above it -- even with no sales,
+/// so "keep 5 on the shelf" items are not lost. Anything else without a speed
+/// above zero is left out: there is nothing to plan from.
 RestockPlan planRestock({
   required List<Product> products,
   required Map<String, RestockSpeed> speeds,
@@ -82,28 +93,34 @@ RestockPlan planRestock({
 }) {
   final items = <RestockItem>[];
   for (final p in products) {
-    final s = speeds[p.id];
-    if (s == null || s.speed <= 0) continue;
+    final speed = math.max(0.0, speeds[p.id]?.speed ?? 0);
     final good = math.max(0.0, goodStock(p));
-    final raw = s.speed * (restockDays + restockBufferDays) - good;
+    final low = p.isLowStockAt(good);
+    if (speed <= 0 && !low) continue;
+    final raw = speed * (restockDays + restockBufferDays) - good;
     // 1e-9: 5 × 9 − 10 can come out a hair over 35 and must not become 36.
-    final suggestion = math.max(0, (raw - 1e-9).ceil()).toDouble();
-    final w0 = s.week0Rate;
-    final trend = w0 == null
+    var suggestion = math.max(0, (raw - 1e-9).ceil()).toDouble();
+    if (low) {
+      final backAbove = (p.reorderThreshold - good - 1e-9).ceil() + 1;
+      suggestion = math.max(suggestion, backAbove.toDouble());
+    }
+    final w0 = speeds[p.id]?.week0Rate;
+    final trend = speed <= 0 || w0 == null
         ? RestockTrend.flat
-        : w0 > 1.2 * s.speed
+        : w0 > 1.2 * speed
         ? RestockTrend.up
-        : w0 < 0.8 * s.speed
+        : w0 < 0.8 * speed
         ? RestockTrend.down
         : RestockTrend.flat;
     items.add(
       RestockItem(
         product: p,
-        speed: s.speed,
+        speed: speed,
         goodStock: good,
-        daysLeft: good / s.speed,
+        daysLeft: speed > 0 ? good / speed : double.infinity,
         suggestion: suggestion,
         trend: trend,
+        belowReorder: low,
       ),
     );
   }

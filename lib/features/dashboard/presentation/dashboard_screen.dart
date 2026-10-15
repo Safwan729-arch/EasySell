@@ -19,14 +19,10 @@ import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../analytics/domain/analytics.dart';
 import '../../analytics/presentation/analytics_controller.dart';
 import '../../auth/data/auth_repository.dart';
-import '../../expiry/domain/expiry_estimate.dart';
 import '../../expiry/presentation/expiry_alerts_card.dart';
 import '../../expiry/presentation/expiry_providers.dart';
 import '../../restock/presentation/restock_card.dart';
-import '../../inventory/domain/product.dart';
-import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/presentation/sales_providers.dart';
-import '../../transactions/presentation/transaction_confirmation_sheet.dart';
 import 'receivables_card.dart';
 import 'revenue_hero.dart';
 import 'summary_breakdown_sheet.dart';
@@ -64,12 +60,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ? ref.watch(daySummaryProvider(selectedDay))
         : ref.watch(summaryProvider(_period));
     final seriesAsync = ref.watch(seriesProvider(ChartBucket.daily));
-    // Low stock judges GOOD stock: 5 expired + 1 good is low (expiry spec §5).
-    final expiry = ref.watch(productExpiryProvider);
-    final lowStock =
-        (ref.watch(productsStreamProvider).value ?? const <Product>[])
-            .where((p) => p.isLowStockAt(goodStockOf(p, expiry)))
-            .toList();
     final alertCount = ref.watch(expiryAlertsProvider).length;
 
     return Scaffold(
@@ -249,12 +239,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(height: 20),
               Entrance(index: 5, child: _TopPerformer(currency: currency)),
               const SizedBox(height: 16),
+              // Restock soon also covers products at their reorder level: the
+              // separate Low stock card said "fully stocked" right under
+              // "4 items to restock" (merged 2026-10-15, restock spec §10).
               const Entrance(index: 6, child: RestockSoonCard()),
               const Entrance(index: 7, child: ExpiryAlertsCard()),
-              Entrance(
-                index: 8,
-                child: _LowStockCard(products: lowStock, currency: currency),
-              ),
             ],
           ),
         ),
@@ -538,117 +527,6 @@ class _TopPerformer extends ConsumerWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _LowStockCard extends StatelessWidget {
-  const _LowStockCard({required this.products, required this.currency});
-
-  final List<Product> products;
-  final String currency;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.extension<AppColors>()!;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                  size: 18,
-                  color: colors.warning,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  context.l10n.dashboard_lowStock,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => context.go('/inventory'),
-                  child: Text(context.l10n.dashboard_viewAll),
-                ),
-              ],
-            ),
-            if (products.isEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 4, 0, 12),
-                child: Text(
-                  context.l10n.dashboard_fullyStocked,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              )
-            else
-              for (final p in products.take(4))
-                _LowStockRow(product: p, currency: currency),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LowStockRow extends StatelessWidget {
-  const _LowStockRow({required this.product, required this.currency});
-
-  final Product product;
-  final String currency;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.extension<AppColors>()!;
-    final qty = Qty.format(product.quantity);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          RoundedTextTile(
-            text: product.name.isNotEmpty ? product.name[0].toUpperCase() : '?',
-            size: 40,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  context.l10n.dashboard_leftReorder(qty),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.negative,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          OutlinedButton(
-            onPressed: () => showRestockSheet(context, product: product),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 38),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-            ),
-            child: Text(context.l10n.common_restock),
-          ),
-        ],
-      ),
     );
   }
 }

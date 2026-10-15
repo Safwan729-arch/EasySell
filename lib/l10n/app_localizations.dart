@@ -344,29 +344,11 @@ abstract class AppLocalizations {
   /// **'{units} sold · {revenue} revenue'**
   String dashboard_soldRevenue(String units, String revenue);
 
-  /// No description provided for @dashboard_lowStock.
-  ///
-  /// In en, this message translates to:
-  /// **'Low stock'**
-  String get dashboard_lowStock;
-
   /// No description provided for @dashboard_viewAll.
   ///
   /// In en, this message translates to:
   /// **'View all'**
   String get dashboard_viewAll;
-
-  /// No description provided for @dashboard_fullyStocked.
-  ///
-  /// In en, this message translates to:
-  /// **'You\'re fully stocked — nothing needs reordering.'**
-  String get dashboard_fullyStocked;
-
-  /// No description provided for @dashboard_leftReorder.
-  ///
-  /// In en, this message translates to:
-  /// **'{qty} left · reorder'**
-  String dashboard_leftReorder(String qty);
 
   /// No description provided for @dashboard_couldNotLoadSummary.
   ///
@@ -2443,6 +2425,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'today'**
   String get restockPlan_today;
+
+  /// No description provided for @restockPlan_atReorderLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'At your reorder level'**
+  String get restockPlan_atReorderLevel;
+
+  /// No description provided for @restockPlan_lowShort.
+  ///
+  /// In en, this message translates to:
+  /// **'low stock'**
+  String get restockPlan_lowShort;
 
   /// No description provided for @restockPlan_buyAbout.
   ///
