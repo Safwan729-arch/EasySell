@@ -5,8 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/haptics.dart';
+import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/brand_fill.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../cart/presentation/add_to_cart_sheet.dart';
@@ -201,26 +204,30 @@ class _DetailView extends ConsumerWidget {
     // Low stock judges GOOD stock: 5 expired + 1 good is low (spec §5).
     final isLow = product.isLowStockAt(ref.watch(goodStockProvider(product)));
 
+    final theme = Theme.of(context);
+    final colors = theme.extension<AppColors>()!;
     return Scaffold(
       appBar: AppBar(
         title: Text(product.name),
         actions: [
-          IconButton(
+          _BarAction(
             tooltip: l10n.common_edit,
-            icon: const Icon(Icons.edit_outlined),
+            icon: Icons.edit_outlined,
             onPressed: () =>
                 context.push('/inventory/${product.id}/edit', extra: product),
           ),
-          IconButton(
+          const SizedBox(width: 8),
+          _BarAction(
             tooltip: l10n.common_delete,
-            icon: const Icon(Icons.delete_outline),
+            icon: Icons.delete_outline,
             onPressed: () => _confirmDelete(context, ref),
           ),
+          const SizedBox(width: 12),
         ],
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
           child: Row(
             children: [
               Expanded(
@@ -245,59 +252,114 @@ class _DetailView extends ConsumerWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         children: [
           if (subtitle.isNotEmpty)
-            Text(subtitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontSize: 15,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           if (categoryName != null)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Chip(label: Text(categoryName)),
-            ),
-          const SizedBox(height: 16),
-          // The gap lives inside the conditional so it collapses with the card
-          // when stock is healthy, instead of doubling the space above the
-          // first stat row. Without it the card's border touches that row.
-          if (isLow) ...[
-            Card(
-              color: Theme.of(context).colorScheme.errorContainer,
-              child: ListTile(
-                leading: const Icon(Icons.warning_amber_rounded),
-                title: Text(l10n.inventory_lowStock),
-                subtitle: Text(
-                  l10n.inventory_reorderThresholdNote(product.reorderLabel),
+              padding: const EdgeInsets.only(top: 10),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 10,
+                  ),
+                  decoration: idleFillDecoration(context),
+                  child: Text(
+                    categoryName,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontSize: 15,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+          const SizedBox(height: 20),
+          // The gap lives inside the conditional so it collapses with the card
+          // when stock is healthy, instead of doubling the space above the
+          // stats card.
+          if (isLow) ...[
+            AppCard(
+              color: colors.warningBg,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: colors.warning),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.inventory_lowStock,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          l10n.inventory_reorderThresholdNote(
+                            product.reorderLabel,
+                          ),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
           ],
-          _statTile(context, l10n.inventory_statInStock, product.quantityLabel),
-          _statTile(
-            context,
-            l10n.inventory_statBuyingPrice,
-            Money.format(product.buyingPrice, currencyCode: currency),
-          ),
-          _statTile(
-            context,
-            l10n.inventory_statSellingPrice,
-            Money.format(product.sellingPrice, currencyCode: currency),
-          ),
-          _statTile(
-            context,
-            l10n.inventory_statMarginPerUnit,
-            Money.format(product.marginPerUnit, currencyCode: currency),
-          ),
-          _statTile(
-            context,
-            l10n.inventory_statInventoryValue,
-            Money.format(product.inventoryValue, currencyCode: currency),
-          ),
-          _statTile(
-            context,
-            l10n.inventory_statReorderThreshold,
-            product.reorderThreshold <= 0
-                ? l10n.common_off
-                : product.reorderLabel,
+          AppCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                _statRow(
+                  context,
+                  l10n.inventory_statInStock,
+                  product.quantityLabel,
+                ),
+                _statRow(
+                  context,
+                  l10n.inventory_statBuyingPrice,
+                  Money.format(product.buyingPrice, currencyCode: currency),
+                ),
+                _statRow(
+                  context,
+                  l10n.inventory_statSellingPrice,
+                  Money.format(product.sellingPrice, currencyCode: currency),
+                ),
+                _statRow(
+                  context,
+                  l10n.inventory_statMarginPerUnit,
+                  Money.format(product.marginPerUnit, currencyCode: currency),
+                ),
+                _statRow(
+                  context,
+                  l10n.inventory_statInventoryValue,
+                  Money.format(product.inventoryValue, currencyCode: currency),
+                ),
+                _statRow(
+                  context,
+                  l10n.inventory_statReorderThreshold,
+                  product.reorderThreshold <= 0
+                      ? l10n.common_off
+                      : product.reorderLabel,
+                  last: true,
+                ),
+              ],
+            ),
           ),
           DeliveriesSection(product: product),
         ],
@@ -305,11 +367,80 @@ class _DetailView extends ConsumerWidget {
     );
   }
 
-  Widget _statTile(BuildContext context, String label, String value) {
-    return ListTile(
-      dense: true,
-      title: Text(label),
-      trailing: Text(value, style: Theme.of(context).textTheme.titleMedium),
+  /// One outlined label/value row inside the stats card (design §8, Product
+  /// detail): ~60 high, radius 16.
+  Widget _statRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool last = false,
+  }) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<AppColors>()!;
+    return Container(
+      margin: EdgeInsets.only(bottom: last ? 0 : 10),
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: colors.rowDecoration(),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// An AppBar action as a rounded-square glass button (edit, delete).
+class _BarAction extends StatelessWidget {
+  const _BarAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return DecoratedBox(
+      decoration: idleFillDecoration(
+        context,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        color: isDark ? colors.iconButton : null,
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        icon: Icon(icon),
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          fixedSize: const Size(44, 44),
+          minimumSize: const Size(44, 44),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
     );
   }
 }

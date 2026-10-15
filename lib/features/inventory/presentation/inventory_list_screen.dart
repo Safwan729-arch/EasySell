@@ -10,6 +10,8 @@ import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
 import '../../restock/presentation/restock_providers.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/brand_fill.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
@@ -125,6 +127,8 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
     final restockCount =
         ref.watch(restockPlanProvider).value?.buyNow.length ?? 0;
 
+    final colors = theme.extension<AppColors>()!;
+    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -133,7 +137,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
           children: [
             // Title + subtitle and a blue "Add" button.
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -149,8 +153,10 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                           child: Text(
                             l10n.inventory_title,
                             maxLines: 1,
-                            style: theme.textTheme.headlineSmall?.copyWith(
+                            style: theme.textTheme.headlineLarge?.copyWith(
+                              fontSize: 30,
                               fontWeight: FontWeight.w800,
+                              letterSpacing: -0.8,
                             ),
                           ),
                         ),
@@ -169,8 +175,13 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                       FeatureFlags.voiceSaleEnabled) ...[
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
+                        color: isDark
+                            ? colors.iconButton
+                            : theme.colorScheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(20),
+                        border: isDark
+                            ? Border.all(color: colors.glowBorder)
+                            : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -199,25 +210,23 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                   Badge.count(
                     count: restockCount,
                     isLabelVisible: restockCount > 0,
-                    child: IconButton.filled(
-                      style: _headerButton,
+                    child: _StockAction(
                       onPressed: () => context.push(AppRoutes.restock),
-                      icon: const Icon(Icons.shopping_basket_outlined),
+                      icon: Icons.shopping_basket_outlined,
                       tooltip: l10n.restockPlan_title,
                     ),
                   ),
                   const SizedBox(width: 6),
-                  IconButton.filled(
-                    style: _headerButton,
+                  _StockAction(
                     onPressed: () => context.push('/inventory/new'),
-                    icon: const Icon(Icons.add),
+                    icon: Icons.add,
                     tooltip: l10n.inventory_addProduct,
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
               child: TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
@@ -238,7 +247,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
               child: SegmentPills<_InvFilter>(
                 values: filters,
                 selected: activeFilter,
@@ -284,7 +293,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                     controller: ref.watch(branchScrollControllerProvider(1)),
                     // Bottom padding clears the floating bottom nav so the last
                     // tile is never trapped behind it.
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
                     itemCount: filtered.length,
                     itemBuilder: (context, i) => Entrance(
                       // Clamp so tiles scrolled far down don't inherit a long
@@ -426,41 +435,111 @@ class _ProductTile extends StatelessWidget {
           if (product.brand?.isNotEmpty ?? false) product.brand!,
           if (product.variant?.isNotEmpty ?? false) product.variant!,
         ].join(' · ');
-    return PressableScale(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
-          ),
-          leading: RoundedTextTile(
-            text: product.name.isNotEmpty ? product.name[0].toUpperCase() : '?',
-          ),
-          title: Text(
-            product.name,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: subtitle.isEmpty ? null : Text(subtitle),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: PressableScale(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: AppCard(
+          padding: const EdgeInsets.fromLTRB(16, 16, 18, 16),
+          child: Row(
             children: [
-              Text(
-                Money.format(product.sellingPrice, currencyCode: currency),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+              RoundedTextTile(
+                text: product.name.isNotEmpty
+                    ? product.name[0].toUpperCase()
+                    : '?',
+                // Keyed by the full name, matching Home's Top performer.
+                color: tileColorFor(
+                  product.name,
+                  dark: theme.brightness == Brightness.dark,
+                ),
+                size: 56,
+              ),
+              const SizedBox(width: 14),
+              // The name wraps rather than truncating (design §4: never
+              // truncated on Items).
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                      ),
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontSize: 15,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              _StockText(product: product),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    Money.format(product.sellingPrice, currencyCode: currency),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _StockText(product: product),
+                ],
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A 40 dp stock action in the header (Restock, Add): brand fill in light,
+/// outlined glass in dark, as the mockups' "+" button. Still an [IconButton]
+/// with the shrink-wrapped tap target, so four buttons fit beside the title on
+/// a 360 dp phone (see `_headerButton`).
+class _StockAction extends StatelessWidget {
+  const _StockAction({
+    required this.onPressed,
+    required this.icon,
+    required this.tooltip,
+  });
+
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<AppColors>()!;
+    final isDark = theme.brightness == Brightness.dark;
+    return DecoratedBox(
+      decoration: isDark
+          ? idleFillDecoration(
+              context,
+              shape: const CircleBorder(),
+              color: colors.iconButton,
+            )
+          : brandFillDecoration(context, shape: const CircleBorder()),
+      child: IconButton(
+        style: _headerButton,
+        color: isDark ? colors.link : theme.colorScheme.onPrimary,
+        onPressed: onPressed,
+        icon: Icon(icon),
+        tooltip: tooltip,
       ),
     );
   }
@@ -481,9 +560,10 @@ class _StockText extends ConsumerWidget {
     final color = isLow ? colors.warning : colors.positive;
     return Text(
       context.l10n.inventory_inStock(product.quantityLabel),
-      style: theme.textTheme.labelMedium?.copyWith(
+      style: theme.textTheme.bodyLarge?.copyWith(
+        fontSize: 15,
         color: color,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
       ),
     );
   }
@@ -497,11 +577,11 @@ class _ListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
       itemCount: 7,
       itemBuilder: (context, _) => const Padding(
         padding: EdgeInsets.only(bottom: 12),
-        child: Skeleton.card(height: 76),
+        child: Skeleton.card(height: 88),
       ),
     );
   }
@@ -515,14 +595,24 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 56, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 56, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontSize: 15, color: muted),
+            ),
+          ],
+        ),
       ),
     );
   }
