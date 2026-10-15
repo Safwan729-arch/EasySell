@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../config/haptics.dart';
+import 'brand_fill.dart';
 
 /// Circular calendar affordance beside a period selector. Opens a date picker
 /// bounded to the past year through today; a picked day is reported via [onPick].
-/// Fills with the brand color while a day is active. Shared by the Home dashboard
+/// Wears the brand fill while a day is active. Shared by the Home dashboard
 /// and the Reports tab so both drill into a single past day the same way.
 class CalendarDayButton extends StatelessWidget {
   const CalendarDayButton({
@@ -12,7 +13,7 @@ class CalendarDayButton extends StatelessWidget {
     required this.selectedDay,
     required this.onPick,
     this.firstDate,
-    this.size = 40,
+    this.size = 46,
   });
 
   final DateTime? selectedDay;
@@ -49,15 +50,9 @@ class CalendarDayButton extends StatelessWidget {
       child: Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          color: active ? theme.colorScheme.primary : theme.colorScheme.surface,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: active
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outlineVariant,
-          ),
-        ),
+        decoration: active
+            ? brandFillDecoration(context, shape: const CircleBorder())
+            : idleFillDecoration(context, shape: const CircleBorder()),
         child: Icon(
           Icons.calendar_today_outlined,
           size: size * 0.45,

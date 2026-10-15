@@ -81,22 +81,31 @@ class App extends ConsumerWidget {
                 final voiceWaiting = ref.watch(
                   voiceControllerProvider.select((s) => s.hasBackgroundSale),
                 );
-                return Column(
-                  children: [
-                    const OfflineBanner(),
-                    // Sits with the offline banner rather than inside any one
-                    // screen: a backgrounded voice sale must still be
-                    // reachable after the shopkeeper has navigated away from
-                    // wherever they started it.
-                    const VoiceReadyBanner(),
-                    Expanded(
-                      child: MediaQuery.removePadding(
-                        context: context,
-                        removeTop: !isOnline || voiceWaiting,
-                        child: child!,
+                // Solid canvas behind the navigator. Every route paints its
+                // own AppBackdrop, so this only shows if a route misses the
+                // wrap, and then as plain background rather than black.
+                final canvas = Theme.of(
+                  context,
+                ).extension<AppColors>()!.background;
+                return ColoredBox(
+                  color: canvas,
+                  child: Column(
+                    children: [
+                      const OfflineBanner(),
+                      // Sits with the offline banner rather than inside any
+                      // one screen: a backgrounded voice sale must still be
+                      // reachable after the shopkeeper has navigated away from
+                      // wherever they started it.
+                      const VoiceReadyBanner(),
+                      Expanded(
+                        child: MediaQuery.removePadding(
+                          context: context,
+                          removeTop: !isOnline || voiceWaiting,
+                          child: child!,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),

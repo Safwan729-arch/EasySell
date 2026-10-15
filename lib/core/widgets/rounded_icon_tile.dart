@@ -1,28 +1,34 @@
 import 'package:flutter/material.dart';
 
-/// Bright solid palette for product/category letter tiles. A product is mapped
-/// to a stable color via [tileColorFor] so the same name always gets the same
-/// hue across screens (dashboard, inventory, sell).
+/// Solid palette for product letter tiles (EasySell §3.3): green, purple, red,
+/// orange. A product is mapped to a stable colour via [tileColorFor] so the same
+/// name always gets the same hue across screens. The colour follows the
+/// product, not its category: categories are user-made and unbounded.
 const List<Color> kTilePalette = [
-  Color(0xFF16A34A), // green
-  Color(0xFFEA580C), // orange
-  Color(0xFFDC2626), // red
-  Color(0xFF7C3AED), // purple
-  Color(0xFF0D9488), // teal
-  Color(0xFFDB2777), // pink
-  Color(0xFF2563EB), // blue
-  Color(0xFF65A30D), // olive
+  Color(0xFF18A24A), // green
+  Color(0xFF7934F1), // purple
+  Color(0xFFDE2625), // red
+  Color(0xFFF4680A), // orange
+];
+
+/// The same four hues, a step brighter for the dark theme.
+const List<Color> kTilePaletteDark = [
+  Color(0xFF3DB86A),
+  Color(0xFF8B5CF6),
+  Color(0xFFE5484D),
+  Color(0xFFF97316),
 ];
 
 /// Deterministic color for a tile keyed by [seed] (e.g. a product name) so the
-/// hue is stable run-to-run and across screens.
-Color tileColorFor(String seed) {
-  if (seed.isEmpty) return kTilePalette.first;
+/// hue is stable run-to-run and across screens. [dark] picks the dark shade.
+Color tileColorFor(String seed, {bool dark = false}) {
+  final palette = dark ? kTilePaletteDark : kTilePalette;
+  if (seed.isEmpty) return palette.first;
   var hash = 0;
   for (final c in seed.codeUnits) {
     hash = (hash * 31 + c) & 0x7fffffff;
   }
-  return kTilePalette[hash % kTilePalette.length];
+  return palette[hash % palette.length];
 }
 
 /// Rounded-square icon container used as the leading element of list rows. By
@@ -80,7 +86,8 @@ class RoundedTextTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = color ?? tileColorFor(text);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final accent = color ?? tileColorFor(text, dark: dark);
     return Container(
       width: size,
       height: size,

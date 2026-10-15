@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/haptics.dart';
 import '../../../core/config/motion.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/app_backdrop.dart';
 import '../../../core/widgets/app_bottom_nav.dart';
 import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../cart/presentation/cart_bar.dart';
@@ -81,7 +82,11 @@ class _MainShellState extends ConsumerState<MainShell>
     // branchIndex maps to the StatefulShellRoute branch order in app_router.dart:
     // 0 Home · 1 Items · 2 Reports · 3 History.
     final items = [
-      AppNavItem(icon: Icons.home_rounded, label: l10n.nav_home, branchIndex: 0),
+      AppNavItem(
+        icon: Icons.home_rounded,
+        label: l10n.nav_home,
+        branchIndex: 0,
+      ),
       AppNavItem(
         icon: Icons.inventory_2_outlined,
         label: l10n.nav_items,
@@ -99,26 +104,29 @@ class _MainShellState extends ConsumerState<MainShell>
       ),
     ];
     final shell = widget.navigationShell;
-    return Scaffold(
-      body: AppMotion.reduced(context)
-          ? shell
-          : FadeTransition(
-              opacity: _curve,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.98, end: 1.0).animate(_curve),
-                child: shell,
+    // One backdrop for all four tabs; their own scaffolds are transparent.
+    return AppBackdrop(
+      child: Scaffold(
+        body: AppMotion.reduced(context)
+            ? shell
+            : FadeTransition(
+                opacity: _curve,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.98, end: 1.0).animate(_curve),
+                  child: shell,
+                ),
               ),
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CartBar(),
+            AppBottomNav(
+              items: items,
+              currentIndex: widget.navigationShell.currentIndex,
+              onTap: _onTap,
             ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CartBar(),
-          AppBottomNav(
-            items: items,
-            currentIndex: widget.navigationShell.currentIndex,
-            onTap: _onTap,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

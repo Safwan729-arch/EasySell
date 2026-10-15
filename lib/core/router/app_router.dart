@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../config/motion.dart';
+import '../widgets/app_backdrop.dart';
 
 import '../../features/analytics/presentation/analytics_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
@@ -69,7 +70,8 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 /// just crossfade rather than imply spatial depth.
 CustomTransitionPage<void> _transitionPage(Widget child, {bool slide = true}) {
   return CustomTransitionPage<void>(
-    child: child,
+    // Inside the transition, so each page carries its own opaque backdrop.
+    child: AppBackdrop(child: child),
     transitionDuration: AppMotion.page,
     reverseTransitionDuration: AppMotion.exit,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -211,7 +213,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/scan',
-        builder: (context, state) => const ScanSessionScreen(),
+        builder: (context, state) =>
+            const AppBackdrop(child: ScanSessionScreen()),
       ),
       GoRoute(
         path: '/inventory/:id',

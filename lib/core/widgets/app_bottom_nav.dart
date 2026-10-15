@@ -16,9 +16,12 @@ class AppNavItem {
   final int branchIndex;
 }
 
-/// Full-width light bottom navigation bar: evenly-spaced labelled destinations
-/// (icon + caption always visible). The active destination is tinted with the
-/// brand color.
+/// Bottom navigation with evenly spaced, always-labelled destinations.
+///
+/// Light: a floating white bar, all corners rounded, inset from the screen
+/// edges. The active tab gets a pale blue highlight behind the icon, a blue
+/// label and a small dot. Dark: a docked bar with only the top corners rounded
+/// and a glowing top edge. The active tab is simply blue.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -39,38 +42,57 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.navBar,
-        border: Border(top: BorderSide(color: scheme.outlineVariant)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
+    final row = SizedBox(
+      height: 68,
+      child: Row(
+        children: [
+          for (final item in items)
+            Expanded(
+              child: _NavButton(
+                item: item,
+                selected: item.branchIndex == currentIndex,
+                activeColor: colors.link,
+                inactiveColor: colors.onNavBar,
+                highlight: isDark ? null : colors.chipBlue,
+                onTap: () => onTap(item.branchIndex),
+              ),
+            ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: [
-              for (final item in items)
-                Expanded(
-                  child: _NavButton(
-                    item: item,
-                    selected: item.branchIndex == currentIndex,
-                    activeColor: scheme.primary,
-                    inactiveColor: colors.onNavBar,
-                    onTap: () => onTap(item.branchIndex),
-                  ),
-                ),
-            ],
+    );
+
+    if (isDark) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.navBar,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: colors.glowBorder)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x2E3C6EFF),
+              blurRadius: 18,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(top: false, child: row),
+      );
+    }
+
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.navBar,
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: colors.cardShadow,
           ),
+          child: row,
         ),
       ),
     );
@@ -83,6 +105,7 @@ class _NavButton extends StatelessWidget {
     required this.selected,
     required this.activeColor,
     required this.inactiveColor,
+    required this.highlight,
     required this.onTap,
   });
 
@@ -90,11 +113,17 @@ class _NavButton extends StatelessWidget {
   final bool selected;
   final Color activeColor;
   final Color inactiveColor;
+
+  /// Pale pill behind the active icon (light only); null hides it and the dot.
+  final Color? highlight;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = selected ? activeColor : inactiveColor;
+    final duration = AppMotion.reduced(context)
+        ? Duration.zero
+        : AppMotion.fast;
     return Semantics(
       button: true,
       selected: selected,
@@ -105,26 +134,51 @@ class _NavButton extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ease the icon tint between active/inactive so it tracks the body
-            // fade-through rather than snapping a frame ahead of it.
-            TweenAnimationBuilder<Color?>(
-              duration: AppMotion.fast,
+            AnimatedContainer(
+              duration: duration,
               curve: AppMotion.easeOut,
-              tween: ColorTween(end: color),
-              builder: (context, value, _) =>
-                  Icon(item.icon, color: value, size: 22),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+              decoration: BoxDecoration(
+                color: selected && highlight != null
+                    ? highlight
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              // Ease the icon tint between active/inactive so it tracks the
+              // body fade-through rather than snapping a frame ahead of it.
+              child: TweenAnimationBuilder<Color?>(
+                duration: duration,
+                curve: AppMotion.easeOut,
+                tween: ColorTween(end: color),
+                builder: (context, value, _) =>
+                    Icon(item.icon, color: value, size: 24),
+              ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             AnimatedDefaultTextStyle(
-              duration: AppMotion.fast,
+              duration: duration,
               curve: AppMotion.easeOut,
               style: TextStyle(
                 color: color,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 11,
+                fontSize: 12,
               ),
-              child: Text(item.label),
+              child: Text(item.label, maxLines: 1),
             ),
+            if (highlight != null)
+              AnimatedOpacity(
+                duration: duration,
+                opacity: selected ? 1 : 0,
+                child: Container(
+                  margin: const EdgeInsets.only(top: 3),
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: activeColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

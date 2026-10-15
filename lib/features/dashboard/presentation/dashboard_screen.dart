@@ -139,6 +139,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   children: [
                     Expanded(
                       child: SegmentPills<AnalyticsPeriod>(
+                        expand: true,
                         values: _periods,
                         selected: _period,
                         labelOf: (p) => periodLabel(l10n, p),

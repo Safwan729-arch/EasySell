@@ -7,7 +7,7 @@ import 'package:ai_shopkeeper/core/widgets/metric_card.dart';
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  testWidgets('filled MetricCard renders with royal-blue background', (
+  testWidgets('filled MetricCard renders on the primary colour', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -19,7 +19,7 @@ void main() {
       ),
     );
     final card = tester.widget<Card>(find.byType(Card));
-    expect(card.color, const Color(0xFF2563EB));
+    expect(card.color, AppTheme.light.colorScheme.primary);
     expect(find.text(r'$5,230'), findsOneWidget);
   });
 }
