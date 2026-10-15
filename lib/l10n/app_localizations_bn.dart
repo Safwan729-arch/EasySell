@@ -1421,6 +1421,19 @@ class AppLocalizationsBn extends AppLocalizations {
   String get restockPlan_loadError => 'রিস্টক তালিকা লোড করা যায়নি।';
 
   @override
+  String get restockPlan_cardTitle => 'শীঘ্রই রিস্টক করুন';
+
+  @override
+  String restockPlan_cardSummary(String count) {
+    return '$countটি পণ্য রিস্টক করতে হবে';
+  }
+
+  @override
+  String restockPlan_cardItem(String name, String days) {
+    return '$name · $days';
+  }
+
+  @override
   String get expiry_formAddTitle => 'মেয়াদের তারিখ যোগ করুন';
 
   @override

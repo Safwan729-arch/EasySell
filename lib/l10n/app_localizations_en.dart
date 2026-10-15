@@ -1427,6 +1427,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restockPlan_loadError => 'Could not load the restock list.';
 
   @override
+  String get restockPlan_cardTitle => 'Restock soon';
+
+  @override
+  String restockPlan_cardSummary(String count) {
+    return '$count items to restock';
+  }
+
+  @override
+  String restockPlan_cardItem(String name, String days) {
+    return '$name · $days';
+  }
+
+  @override
   String get expiry_formAddTitle => 'Add expiry date';
 
   @override

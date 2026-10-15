@@ -2468,6 +2468,24 @@ abstract class AppLocalizations {
   /// **'Could not load the restock list.'**
   String get restockPlan_loadError;
 
+  /// No description provided for @restockPlan_cardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock soon'**
+  String get restockPlan_cardTitle;
+
+  /// No description provided for @restockPlan_cardSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items to restock'**
+  String restockPlan_cardSummary(String count);
+
+  /// No description provided for @restockPlan_cardItem.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {days}'**
+  String restockPlan_cardItem(String name, String days);
+
   /// No description provided for @expiry_formAddTitle.
   ///
   /// In en, this message translates to:

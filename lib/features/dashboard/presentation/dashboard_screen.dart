@@ -22,6 +22,7 @@ import '../../auth/data/auth_repository.dart';
 import '../../expiry/domain/expiry_estimate.dart';
 import '../../expiry/presentation/expiry_alerts_card.dart';
 import '../../expiry/presentation/expiry_providers.dart';
+import '../../restock/presentation/restock_card.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/inventory_controller.dart';
 import '../../transactions/presentation/sales_providers.dart';
@@ -248,9 +249,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(height: 20),
               Entrance(index: 5, child: _TopPerformer(currency: currency)),
               const SizedBox(height: 16),
-              const Entrance(index: 6, child: ExpiryAlertsCard()),
+              const Entrance(index: 6, child: RestockSoonCard()),
+              const Entrance(index: 7, child: ExpiryAlertsCard()),
               Entrance(
-                index: 7,
+                index: 8,
                 child: _LowStockCard(products: lowStock, currency: currency),
               ),
             ],
