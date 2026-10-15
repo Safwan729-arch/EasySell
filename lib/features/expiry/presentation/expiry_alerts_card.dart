@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/section_bits.dart';
 import '../domain/expiry_alerts.dart';
 import 'expiry_providers.dart';
 import 'expiry_text.dart';
@@ -23,50 +24,32 @@ class ExpiryAlertsCard extends ConsumerWidget {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.event_busy_outlined,
-                    size: 18,
-                    color: colors.negative,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    l10n.expiry_cardTitle,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => context.push(AppRoutes.alerts),
-                    child: Text(l10n.dashboard_viewAll),
-                  ),
-                ],
-              ),
-              for (final a in alerts.take(4))
-                ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    a.kind == ExpiryAlertKind.expired
-                        ? Icons.error_outline
-                        : Icons.schedule,
-                    color: a.kind == ExpiryAlertKind.expired
-                        ? colors.negative
-                        : colors.warning,
-                  ),
-                  title: Text(expiryAlertText(l10n, a)),
-                  onTap: () => context.push('/inventory/${a.product.id}'),
+      child: AlertCard(
+        icon: Icons.event_busy_outlined,
+        iconColor: colors.negative,
+        title: l10n.expiry_cardTitle,
+        onViewAll: () => context.push(AppRoutes.alerts),
+        child: Column(
+          children: [
+            for (final a in alerts.take(4))
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  a.kind == ExpiryAlertKind.expired
+                      ? Icons.error_outline
+                      : Icons.schedule,
+                  color: a.kind == ExpiryAlertKind.expired
+                      ? colors.negative
+                      : colors.warning,
                 ),
-            ],
-          ),
+                title: Text(
+                  expiryAlertText(l10n, a),
+                  style: theme.textTheme.bodyMedium,
+                ),
+                onTap: () => context.push('/inventory/${a.product.id}'),
+              ),
+          ],
         ),
       ),
     );

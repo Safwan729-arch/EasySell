@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/section_bits.dart';
 import 'restock_providers.dart';
 import 'restock_text.dart';
 
@@ -21,57 +22,38 @@ class RestockSoonCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final colors = theme.extension<AppColors>()!;
     final l10n = context.l10n;
+    void open() => context.push(AppRoutes.restock);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
-        child: InkWell(
-          onTap: () => context.push(AppRoutes.restock),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.shopping_basket_outlined,
-                      size: 18,
-                      color: colors.warning,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      l10n.restockPlan_cardTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => context.push(AppRoutes.restock),
-                      child: Text(l10n.dashboard_viewAll),
-                    ),
-                  ],
-                ),
-                Text(
-                  l10n.restockPlan_cardSummary(buyNow.length),
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 4),
-                for (final i in buyNow.take(2))
-                  Text(
-                    l10n.restockPlan_cardItem(
-                      i.product.name,
-                      daysLeftShort(l10n, i),
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: i.isUrgent
-                          ? colors.negative
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-              ],
+      // The mockups' peach "Low stock" card; Restock soon replaced it.
+      child: AlertCard(
+        tinted: true,
+        icon: Icons.warning_amber_rounded,
+        iconColor: colors.warning,
+        title: l10n.restockPlan_cardTitle,
+        onViewAll: open,
+        onTap: open,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.restockPlan_cardSummary(buyNow.length),
+              style: theme.textTheme.bodyLarge?.copyWith(fontSize: 15),
             ),
-          ),
+            const SizedBox(height: 4),
+            for (final i in buyNow.take(2))
+              Text(
+                l10n.restockPlan_cardItem(
+                  i.product.name,
+                  daysLeftShort(l10n, i),
+                ),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: i.isUrgent
+                      ? colors.negative
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -79,7 +79,7 @@ class _BackdropPainter extends CustomPainter {
       _glow(canvas, Offset(0, size.height), r, const Color(0x1F7B4DFA));
       _WavePainter.paintWaves(
         canvas,
-        Size(size.width, math.min(220.0, size.height)),
+        Size(size.width, math.min(190.0, size.height)),
       );
     } else {
       _glow(canvas, Offset(size.width, 0), r, const Color(0x38A78BFA));
@@ -117,7 +117,7 @@ class _WavePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.centerRight,
         end: Alignment.centerLeft,
-        colors: [Color(0x8C5B8CFF), Color(0x595B8CFF), Color(0x005B8CFF)],
+        colors: [Color(0x665B8CFF), Color(0x385B8CFF), Color(0x005B8CFF)],
         stops: [0, 0.55, 1],
       ).createShader(bounds);
 

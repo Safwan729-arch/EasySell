@@ -8,10 +8,13 @@ import '../../../core/config/theme.dart';
 import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/brand_fill.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/gradient_bars.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
+import '../../../core/widgets/section_bits.dart';
 import '../../../core/widgets/segment_pills.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../shared/extensions/format.dart';
@@ -84,7 +87,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             // on top of the last card's trailing action once scrolled to the
             // end. 96 matches the reserve used by History and Customers, the
             // other screens with something floating over their list.
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 112),
             children: [
               // Greeting header
               Entrance(
@@ -99,14 +102,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             shop?.name ?? l10n.dashboard_yourShop,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontSize: 28,
                               fontWeight: FontWeight.w800,
+                              letterSpacing: -0.6,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             dateLabel,
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontSize: 15,
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
@@ -120,14 +126,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     // Permanent door to the customer credit (khata) ledger. The
                     // receivables card below is hidden when nobody owes money, so
                     // this header icon is the always-present entry point.
-                    _HeaderIcon(
+                    GlassIconButton(
                       icon: Icons.people_alt_outlined,
-                      onTap: () => context.push(AppRoutes.customers),
+                      onPressed: () => context.push(AppRoutes.customers),
                     ),
-                    const SizedBox(width: 8),
-                    _HeaderIcon(
+                    const SizedBox(width: 10),
+                    GlassIconButton(
                       icon: Icons.settings_outlined,
-                      onTap: () => context.push('/settings'),
+                      onPressed: () => context.push('/settings'),
                     ),
                   ],
                 ),
@@ -250,9 +256,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
-/// Compact "Sell" action pill. Deliberately lighter-weight than a stock
-/// [FloatingActionButton.extended] (which read as oversized against the cards),
-/// while keeping the brand fill and the +/label affordance for discoverability.
+/// The floating "+ Sell" pill: 56 high, brand fill with its glow.
 class _SellFab extends StatelessWidget {
   const _SellFab({required this.onTap});
 
@@ -261,62 +265,37 @@ class _SellFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.primary,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 3,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.35),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.add_rounded,
-                size: 18,
-                color: theme.colorScheme.onPrimary,
+    final onPrimary = theme.colorScheme.onPrimary;
+    return DecoratedBox(
+      decoration: brandFillDecoration(context),
+      child: Material(
+        type: MaterialType.transparency,
+        shape: const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 56,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, size: 26, color: onPrimary),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.l10n.common_sell,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontSize: 18,
+                      color: onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              Text(
-                context.l10n.common_sell,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Small circular header button with a hairline border (theme/notification).
-class _HeaderIcon extends StatelessWidget {
-  const _HeaderIcon({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkResponse(
-      onTap: onTap,
-      radius: 24,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Icon(icon, size: 20, color: theme.colorScheme.onSurface),
       ),
     );
   }
@@ -331,92 +310,113 @@ class _WeeklySalesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.extension<AppColors>()!;
+    final isDark = theme.brightness == Brightness.dark;
     final locale = Localizations.localeOf(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: seriesAsync.when(
-          loading: () => const SizedBox(
-            height: 180,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (_, _) => SizedBox(
-            height: 180,
-            child: Center(
-              child: Text(context.l10n.dashboard_couldNotLoadSales),
-            ),
-          ),
-          data: (points) {
-            final values = [for (final p in points) p.revenue];
-            final total = values.fold<double>(0, (a, b) => a + b);
-            final peak = values.isEmpty
-                ? -1
-                : values.indexOf(values.reduce((a, b) => a > b ? a : b));
-            final peakLabel = (peak >= 0 && values[peak] > 0)
-                ? DateFormat('E').format(points[peak].bucket)
-                : null;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            context.l10n.dashboard_salesLast7,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+      child: seriesAsync.when(
+        loading: () => const SizedBox(
+          height: 180,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (_, _) => SizedBox(
+          height: 180,
+          child: Center(child: Text(context.l10n.dashboard_couldNotLoadSales)),
+        ),
+        data: (points) {
+          final values = [for (final p in points) p.revenue];
+          final total = values.fold<double>(0, (a, b) => a + b);
+          final peak = values.isEmpty
+              ? -1
+              : values.indexOf(values.reduce((a, b) => a > b ? a : b));
+          final peakLabel = (peak >= 0 && values[peak] > 0)
+              ? DateFormat('E').format(points[peak].bucket)
+              : null;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.dashboard_salesLast7,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontSize: 15,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            Money.format(total, currencyCode: currency),
+                            maxLines: 1,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (peakLabel != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.successBg,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Dark mode adds the crown (design §8, 7-day card).
+                          if (isDark) ...[
+                            Icon(
+                              Icons.workspace_premium_rounded,
+                              size: 16,
+                              color: colors.positive,
+                            ),
+                            const SizedBox(width: 4),
+                          ],
                           Text(
-                            Money.format(total, currencyCode: currency),
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
+                            context.l10n.dashboard_bestDay(peakLabel),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontSize: 14,
+                              // Light: the darker green keeps the chip at
+                              // ~3.9:1 on its pale fill (design §11).
+                              color: isDark
+                                  ? colors.positive
+                                  : const Color(0xFF0E8A35),
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    if (peakLabel != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme
-                              .extension<AppColors>()!
-                              .positive
-                              .withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          context.l10n.dashboard_bestDay(peakLabel),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.extension<AppColors>()!.positive,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                GradientBars(
-                  values: values,
-                  labels: [
-                    for (final p in points) weekdayBarLabel(locale, p.bucket),
-                  ],
-                  highlight: peak >= 0 ? peak : null,
-                  height: 150,
-                ),
-              ],
-            );
-          },
-        ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              GradientBars(
+                values: values,
+                labels: [
+                  for (final p in points) weekdayBarLabel(locale, p.bucket),
+                ],
+                highlight: peak >= 0 ? peak : null,
+                height: 170,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -435,83 +435,99 @@ class _TopPerformer extends ConsumerWidget {
         ? best.first
         : null;
 
+    final colors = theme.extension<AppColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          context.l10n.dashboard_topPerformer,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
+        Row(
+          children: [
+            Expanded(child: Eyebrow(context.l10n.dashboard_topPerformer)),
+            // The ranked list lives on Reports ("Biggest wins").
+            ViewAllLink(onPressed: () => context.go(AppRoutes.analytics)),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         if (top == null)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                context.l10n.dashboard_noSalesYet,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+          AppCard(
+            child: Text(
+              context.l10n.dashboard_noSalesYet,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontSize: 15,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           )
         else
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  RoundedTextTile(
-                    text: top.name.isNotEmpty ? top.name[0].toUpperCase() : '?',
-                    size: 44,
+          AppCard(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Keyed by the full name so the colour matches this product's
+                // tile on Items, not every product sharing its first letter.
+                RoundedTextTile(
+                  text: top.name.isNotEmpty ? top.name[0].toUpperCase() : '?',
+                  color: tileColorFor(
+                    top.name,
+                    dark: theme.brightness == Brightness.dark,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          top.name,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                  size: 56,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        top.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          context.l10n.dashboard_soldRevenue(
-                            Qty.format(top.units),
-                            Money.format(top.revenue, currencyCode: currency),
-                          ),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      context.l10n.dashboard_mvpBadge,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
                       ),
-                    ),
+                      const SizedBox(height: 2),
+                      Text(
+                        context.l10n.dashboard_soldRevenue(
+                          Qty.format(top.units),
+                          Money.format(top.revenue, currencyCode: currency),
+                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.chipBlue,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.workspace_premium_rounded,
+                        size: 16,
+                        color: colors.link,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        context.l10n.dashboard_mvpBadge,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colors.link,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
       ],
@@ -526,7 +542,7 @@ class _SummarySkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Skeleton(height: 150, radius: 18);
+    return const Skeleton(height: 210, radius: 24);
   }
 }
 
