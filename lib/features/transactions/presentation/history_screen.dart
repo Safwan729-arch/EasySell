@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/skeleton.dart';
+import '../../../core/widgets/two_option_segment.dart';
 import '../../../shared/extensions/format.dart';
 import '../../../shared/providers/branch_scroll_provider.dart';
 import '../../../shared/providers/refresh_provider.dart';
@@ -168,7 +170,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         ),
         _SortKey.item => a.sortName.compareTo(b.sortName),
         _SortKey.qty => a.qtyValue.compareTo(b.qtyValue),
-        _SortKey.amount => a.receipt.totalRevenue.compareTo(b.receipt.totalRevenue),
+        _SortKey.amount => a.receipt.totalRevenue.compareTo(
+          b.receipt.totalRevenue,
+        ),
       };
       return _ascending ? cmp : -cmp;
     });
@@ -213,16 +217,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
                   child: Text(
                     l10n.history_title,
-                    style: theme.textTheme.headlineSmall?.copyWith(
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontSize: 30,
                       fontWeight: FontWeight.w800,
+                      letterSpacing: -0.8,
                     ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                   child: TextField(
                     controller: _searchController,
                     onChanged: _onSearchChanged,
@@ -243,7 +249,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -364,8 +370,8 @@ class _ReceiptRow {
   }
 }
 
-/// Today / Week connected segmented control. When [dayActive] is true a specific
-/// calendar day is selected, so neither segment is highlighted.
+/// Today / Week two-option segment. When [dayActive] is true a specific
+/// calendar day is selected, so neither option is highlighted.
 class _ScopeSelector extends StatelessWidget {
   const _ScopeSelector({
     required this.scope,
@@ -379,69 +385,15 @@ class _ScopeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color ?? scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          for (final s in _Scope.values)
-            Expanded(
-              child: _ScopeTab(
-                label: switch (s) {
-                  _Scope.today => context.l10n.common_period_today,
-                  _Scope.week => context.l10n.common_period_week,
-                },
-                selected: !dayActive && s == scope,
-                onTap: () => onChanged(s),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ScopeTab extends StatelessWidget {
-  const _ScopeTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? scheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+    return TwoOptionSegment<_Scope>(
+      values: _Scope.values,
+      selected: dayActive ? null : scope,
+      height: 56,
+      labelOf: (s) => switch (s) {
+        _Scope.today => context.l10n.common_period_today,
+        _Scope.week => context.l10n.common_period_week,
+      },
+      onChanged: onChanged,
     );
   }
 }
@@ -471,22 +423,16 @@ class _SalesTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final colors = theme.extension<AppColors>()!;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      // One large card holding the table (design §8, Sales history).
       child: Container(
         clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: theme.cardTheme.color ?? scheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
+        decoration: colors.card(context),
         child: Column(
           children: [
-            _HeaderRow(
-              sortKey: sortKey,
-              ascending: ascending,
-              onSort: onSort,
-            ),
+            _HeaderRow(sortKey: sortKey, ascending: ascending, onSort: onSort),
             Divider(height: 1, color: scheme.outlineVariant),
             Expanded(
               child: rows.isEmpty
@@ -604,7 +550,7 @@ class _HeaderCell extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final color = accent || active
-        ? scheme.primary
+        ? theme.extension<AppColors>()!.link
         : scheme.onSurfaceVariant;
     final isRight = align == TextAlign.right;
     final isCenter = align == TextAlign.center;
@@ -613,7 +559,7 @@ class _HeaderCell extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
         child: Row(
           mainAxisAlignment: isRight
               ? MainAxisAlignment.end
@@ -626,17 +572,17 @@ class _HeaderCell extends StatelessWidget {
                 label,
                 textAlign: align,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontSize: 15,
                   color: color,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             if (active)
               Icon(
                 ascending ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 13,
+                size: 16,
                 color: color,
               ),
           ],
@@ -644,7 +590,9 @@ class _HeaderCell extends StatelessWidget {
       ),
     );
 
-    return width == null ? Expanded(child: cell) : SizedBox(width: width, child: cell);
+    return width == null
+        ? Expanded(child: cell)
+        : SizedBox(width: width, child: cell);
   }
 }
 
@@ -696,16 +644,22 @@ class _ReceiptTileState extends State<_ReceiptTile> {
               ? () => setState(() => _expanded = !_expanded)
               : () => _openDetail(widget.row.receipt.lines.single),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
             child: Row(
               children: [
                 SizedBox(
                   width: _timeW,
-                  child: Text(
-                    _time(row.receipt.createdAt),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontFeatures: tnum,
+                  // Scales down rather than clipping: the column is 54 dp.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _time(row.receipt.createdAt),
+                      maxLines: 1,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontFeatures: tnum,
+                      ),
                     ),
                   ),
                 ),
@@ -719,8 +673,9 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             text: TextSpan(
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
                                 color: scheme.onSurface,
                               ),
                               children: [
@@ -766,12 +721,21 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                 ),
                 SizedBox(
                   width: _amtW,
-                  child: Text(
-                    Money.compact(row.receipt.totalRevenue, currencyCode: widget.currency),
-                    textAlign: TextAlign.right,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontFeatures: tnum,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      Money.compact(
+                        row.receipt.totalRevenue,
+                        currencyCode: widget.currency,
+                      ),
+                      maxLines: 1,
+                      textAlign: TextAlign.right,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: tnum,
+                      ),
                     ),
                   ),
                 ),
@@ -836,7 +800,10 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                           SizedBox(
                             width: _amtW,
                             child: Text(
-                              Money.compact(line.revenue, currencyCode: widget.currency),
+                              Money.compact(
+                                line.revenue,
+                                currencyCode: widget.currency,
+                              ),
                               textAlign: TextAlign.right,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,
@@ -904,11 +871,7 @@ class _NoMatch extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.search_off,
-              size: 40,
-              color: theme.colorScheme.outline,
-            ),
+            Icon(Icons.search_off, size: 40, color: theme.colorScheme.outline),
             const SizedBox(height: 10),
             Text(
               context.l10n.history_noMatch,

@@ -20,7 +20,9 @@ class TwoOptionSegment<T> extends StatelessWidget {
   });
 
   final List<T> values;
-  final T selected;
+
+  /// The highlighted option, or null for none (History while a day is picked).
+  final T? selected;
   final String Function(T) labelOf;
   final IconData Function(T)? iconOf;
   final ValueChanged<T> onChanged;

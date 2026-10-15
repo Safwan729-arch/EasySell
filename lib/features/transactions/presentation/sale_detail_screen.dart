@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/rounded_icon_tile.dart';
 import '../../../shared/extensions/format.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../expiry/presentation/expiry_date_field.dart';
@@ -67,12 +69,19 @@ class SaleDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.saleDetail_title)),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           Row(
             children: [
-              _Avatar(letter: name.isNotEmpty ? name[0].toUpperCase() : '?'),
-              const SizedBox(width: 12),
+              RoundedTextTile(
+                text: name.isNotEmpty ? name[0].toUpperCase() : '?',
+                color: tileColorFor(
+                  name,
+                  dark: theme.brightness == Brightness.dark,
+                ),
+                size: 56,
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   name,
@@ -92,48 +101,53 @@ class SaleDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 2),
           Text(soldOn, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 12),
-          const Divider(),
-          _DetailRow(label: l10n.saleDetail_quantity, value: qtyLabel),
-          // The delivery the units came from. Hidden for undated stock and
-          // older sales, which never recorded a delivery.
-          if (t.batchExpiry case final expiry?)
-            _DetailRow(
-              label: l10n.expiry_dateLabel,
-              value: formatExpiryDate(context, expiry),
+          const SizedBox(height: 16),
+          AppCard(
+            padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
+            child: Column(
+              children: [
+                _DetailRow(label: l10n.saleDetail_quantity, value: qtyLabel),
+                // The delivery the units came from. Hidden for undated stock and
+                // older sales, which never recorded a delivery.
+                if (t.batchExpiry case final expiry?)
+                  _DetailRow(
+                    label: l10n.expiry_dateLabel,
+                    value: formatExpiryDate(context, expiry),
+                  ),
+                _DetailRow(
+                  label: l10n.saleDetail_priceEach,
+                  value: money(t.sellingPrice),
+                ),
+                if (t.discountAmount > 0) ...[
+                  _DetailRow(
+                    label: l10n.common_subtotal,
+                    value: money(t.sellingPrice * t.quantity),
+                  ),
+                  _DetailRow(
+                    label: l10n.saleDetail_discount,
+                    value: '−${money(t.discountAmount)}',
+                  ),
+                ],
+                _DetailRow(
+                  label: l10n.saleDetail_total,
+                  value: money(t.revenue),
+                  emphasize: true,
+                ),
+                _DetailRow(label: l10n.saleDetail_cost, value: money(t.cost)),
+                _DetailRow(
+                  label: l10n.saleDetail_profit,
+                  value: money(t.profit),
+                  valueColor: profitColor,
+                  emphasize: true,
+                ),
+                _DetailRow(
+                  label: l10n.saleDetail_enteredBy,
+                  value: saleSourceLabel(l10n, t.source),
+                ),
+              ],
             ),
-          _DetailRow(
-            label: l10n.saleDetail_priceEach,
-            value: money(t.sellingPrice),
           ),
-          if (t.discountAmount > 0) ...[
-            _DetailRow(
-              label: l10n.common_subtotal,
-              value: money(t.sellingPrice * t.quantity),
-            ),
-            _DetailRow(
-              label: l10n.saleDetail_discount,
-              value: '−${money(t.discountAmount)}',
-            ),
-          ],
-          _DetailRow(
-            label: l10n.saleDetail_total,
-            value: money(t.revenue),
-            emphasize: true,
-          ),
-          _DetailRow(label: l10n.saleDetail_cost, value: money(t.cost)),
-          _DetailRow(
-            label: l10n.saleDetail_profit,
-            value: money(t.profit),
-            valueColor: profitColor,
-            emphasize: true,
-          ),
-          _DetailRow(
-            label: l10n.saleDetail_enteredBy,
-            value: saleSourceLabel(l10n, t.source),
-          ),
-          const Divider(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -154,32 +168,6 @@ class SaleDetailScreen extends ConsumerWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.letter});
-  final String letter;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: 48,
-      height: 48,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        letter,
-        style: theme.textTheme.titleMedium?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w800,
-        ),
       ),
     );
   }
