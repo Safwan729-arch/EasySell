@@ -1382,6 +1382,45 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get restockPlan_title => 'রিস্টক তালিকা';
+
+  @override
+  String get restockPlan_buyNow => 'এখন কিনুন';
+
+  @override
+  String restockPlan_enough(String count) {
+    return 'আপাতত যথেষ্ট ($count)';
+  }
+
+  @override
+  String get restockPlan_runsOutToday => 'আজই শেষ হবে';
+
+  @override
+  String restockPlan_runsOutIn(String days) {
+    return '$days দিনে শেষ হবে';
+  }
+
+  @override
+  String get restockPlan_today => 'আজ';
+
+  @override
+  String restockPlan_buyAbout(String qty, String unit) {
+    return 'প্রায় $qty $unit কিনুন';
+  }
+
+  @override
+  String restockPlan_inStock(String qty, String unit) {
+    return 'স্টকে $qty $unit';
+  }
+
+  @override
+  String get restockPlan_empty =>
+      'এখনো রিস্টক করার কিছু নেই। কয়েক দিনের বিক্রির পর পরামর্শ দেখা যাবে।';
+
+  @override
+  String get restockPlan_loadError => 'রিস্টক তালিকা লোড করা যায়নি।';
+
+  @override
   String get expiry_formAddTitle => 'মেয়াদের তারিখ যোগ করুন';
 
   @override

@@ -8,6 +8,7 @@ import '../../../core/config/feature_flags.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/l10n/l10n_ext.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/widgets/entrance.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/rounded_icon_tile.dart';
@@ -154,6 +155,12 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                     ),
                     const SizedBox(width: 8),
                   ],
+                  IconButton.filled(
+                    onPressed: () => context.push(AppRoutes.restock),
+                    icon: const Icon(Icons.shopping_basket_outlined),
+                    tooltip: l10n.restockPlan_title,
+                  ),
+                  const SizedBox(width: 8),
                   IconButton.filled(
                     onPressed: () => context.push('/inventory/new'),
                     icon: const Icon(Icons.add),

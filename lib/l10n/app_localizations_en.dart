@@ -1388,6 +1388,45 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get restockPlan_title => 'Restock list';
+
+  @override
+  String get restockPlan_buyNow => 'Buy now';
+
+  @override
+  String restockPlan_enough(String count) {
+    return 'Enough for now ($count)';
+  }
+
+  @override
+  String get restockPlan_runsOutToday => 'Runs out today';
+
+  @override
+  String restockPlan_runsOutIn(String days) {
+    return 'Runs out in $days days';
+  }
+
+  @override
+  String get restockPlan_today => 'today';
+
+  @override
+  String restockPlan_buyAbout(String qty, String unit) {
+    return 'Buy about $qty $unit';
+  }
+
+  @override
+  String restockPlan_inStock(String qty, String unit) {
+    return '$qty $unit in stock';
+  }
+
+  @override
+  String get restockPlan_empty =>
+      'Nothing to restock yet. Suggestions appear after a few days of sales.';
+
+  @override
+  String get restockPlan_loadError => 'Could not load the restock list.';
+
+  @override
   String get expiry_formAddTitle => 'Add expiry date';
 
   @override

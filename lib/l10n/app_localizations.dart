@@ -2408,6 +2408,66 @@ abstract class AppLocalizations {
   /// **'{days} days'**
   String restockPlan_daysShort(String days);
 
+  /// No description provided for @restockPlan_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock list'**
+  String get restockPlan_title;
+
+  /// No description provided for @restockPlan_buyNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy now'**
+  String get restockPlan_buyNow;
+
+  /// No description provided for @restockPlan_enough.
+  ///
+  /// In en, this message translates to:
+  /// **'Enough for now ({count})'**
+  String restockPlan_enough(String count);
+
+  /// No description provided for @restockPlan_runsOutToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs out today'**
+  String get restockPlan_runsOutToday;
+
+  /// No description provided for @restockPlan_runsOutIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs out in {days} days'**
+  String restockPlan_runsOutIn(String days);
+
+  /// No description provided for @restockPlan_today.
+  ///
+  /// In en, this message translates to:
+  /// **'today'**
+  String get restockPlan_today;
+
+  /// No description provided for @restockPlan_buyAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy about {qty} {unit}'**
+  String restockPlan_buyAbout(String qty, String unit);
+
+  /// No description provided for @restockPlan_inStock.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} {unit} in stock'**
+  String restockPlan_inStock(String qty, String unit);
+
+  /// No description provided for @restockPlan_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to restock yet. Suggestions appear after a few days of sales.'**
+  String get restockPlan_empty;
+
+  /// No description provided for @restockPlan_loadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the restock list.'**
+  String get restockPlan_loadError;
+
   /// No description provided for @expiry_formAddTitle.
   ///
   /// In en, this message translates to:
