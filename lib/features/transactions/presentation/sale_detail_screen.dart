@@ -144,6 +144,9 @@ class SaleDetailScreen extends ConsumerWidget {
                   label: l10n.saleDetail_enteredBy,
                   value: saleSourceLabel(l10n, t.source),
                 ),
+                // Hidden for sales made before the method was recorded.
+                if (paymentMethodLabel(l10n, t.paymentMethod) case final paid?)
+                  _DetailRow(label: l10n.saleDetail_paidBy, value: paid),
               ],
             ),
           ),

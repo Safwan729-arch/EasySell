@@ -45,8 +45,9 @@ class CartCheckoutController extends AsyncNotifier<void> {
   /// can commit and the reply can be lost. The cart is kept so the user can
   /// retry, and the retry re-sends this id, which the server records only once
   /// (migration 0010). The id is reused ONLY for an identical request. A
-  /// changed cart, discount or customer is a different sale, and reusing the id
-  /// would make the server hand back the old one and drop the change.
+  /// changed cart, discount, customer or cash/digital choice is a different
+  /// sale, and reusing the id would make the server hand back the old one and
+  /// drop the change.
   String? _pendingSaleId;
   String? _pendingRequest;
 
@@ -85,7 +86,13 @@ class CartCheckoutController extends AsyncNotifier<void> {
   bool hasUnacknowledgedSale(List<CartLine> lines) =>
       _pendingUnacknowledged && _pendingLines == _linesKey(lines);
 
-  Future<bool> checkout({String source = 'manual', String? customerId}) async {
+  /// [digital] records a paid-now sale as digital instead of cash. It has no
+  /// effect on a credit sale ([customerId] set): that is always credit.
+  Future<bool> checkout({
+    String source = 'manual',
+    String? customerId,
+    bool digital = false,
+  }) async {
     if (_inFlight) return false;
 
     final shopId = ref.read(myShopProvider).value?.id;
@@ -106,6 +113,7 @@ class CartCheckoutController extends AsyncNotifier<void> {
       'source': source,
       'customer': customerId,
       'discount': discount,
+      'digital': digital,
     });
     // An identical retry of a sale that may already be saved: the server will
     // replay it, so neither the expiry block nor a fresh split into
@@ -190,6 +198,7 @@ class CartCheckoutController extends AsyncNotifier<void> {
             source: source,
             customerId: customerId,
             discount: discount,
+            digital: digital,
           );
     } finally {
       // Released in a finally so a throw from the repository cannot wedge

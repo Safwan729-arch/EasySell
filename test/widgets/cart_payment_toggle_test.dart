@@ -69,11 +69,14 @@ void main() {
     (tester) async {
       usePhoneSize(tester);
       await tester.pumpWidget(
-        _harness([CartLine(product: _p('a', name: 'Pepsi 500ml'), quantity: 1)]),
+        _harness([
+          CartLine(product: _p('a', name: 'Pepsi 500ml'), quantity: 1),
+        ]),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Cash'), findsOneWidget);
+      expect(find.text('Digital'), findsOneWidget);
       expect(find.text('Credit'), findsOneWidget);
 
       final checkoutButton = tester.widget<FilledButton>(
@@ -86,13 +89,34 @@ void main() {
     },
   );
 
+  testWidgets('Digital keeps checkout enabled and asks for no customer', (
+    tester,
+  ) async {
+    usePhoneSize(tester);
+    await tester.pumpWidget(
+      _harness([CartLine(product: _p('a', name: 'Pepsi 500ml'), quantity: 1)]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Digital'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select customer'), findsNothing);
+    final checkoutButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Checkout'),
+    );
+    expect(checkoutButton.onPressed, isNotNull);
+  });
+
   testWidgets(
     'tapping Credit disables checkout until a customer is chosen, and shows '
     'the select-customer affordance',
     (tester) async {
       usePhoneSize(tester);
       await tester.pumpWidget(
-        _harness([CartLine(product: _p('a', name: 'Pepsi 500ml'), quantity: 1)]),
+        _harness([
+          CartLine(product: _p('a', name: 'Pepsi 500ml'), quantity: 1),
+        ]),
       );
       await tester.pumpAndSettle();
 

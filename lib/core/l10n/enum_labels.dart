@@ -57,3 +57,14 @@ String saleSourceLabel(AppLocalizations l10n, String? source) =>
       'manual' => l10n.saleDetail_sourceManual,
       _ => '—',
     };
+
+/// The checkout word for a sale's `payment_method` ('cash' | 'digital' |
+/// 'credit'), so History reads the same as the Cart toggle. Null for sales
+/// made before 0018 recorded it: callers hide the label instead of guessing.
+String? paymentMethodLabel(AppLocalizations l10n, String? method) =>
+    switch (method) {
+      'cash' => l10n.cart_paymentCash,
+      'digital' => l10n.cart_paymentDigital,
+      'credit' => l10n.cart_paymentCredit,
+      _ => null,
+    };

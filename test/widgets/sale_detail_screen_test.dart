@@ -28,6 +28,7 @@ Transaction _sale({
   double buying = 700,
   double selling = 850,
   DateTime? batchExpiry,
+  String? paid,
 }) => Transaction(
   id: 't1',
   shopId: 's',
@@ -39,6 +40,7 @@ Transaction _sale({
   source: 'manual',
   createdAt: DateTime(2026, 7, 21, 20, 44),
   batchExpiry: batchExpiry,
+  paymentMethod: paid,
 );
 
 Widget _harness(
@@ -109,6 +111,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Expiry date'), findsNothing);
+  });
+
+  testWidgets('shows how the sale was paid', (tester) async {
+    await tester.pumpWidget(_harness(_sale(paid: 'digital')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Paid by'), findsOneWidget);
+    expect(find.text('Digital'), findsOneWidget);
+  });
+
+  testWidgets('no payment row for a sale from before payments were recorded', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_harness(_sale()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Paid by'), findsNothing);
   });
 
   testWidgets('null sale shows the not-found state', (tester) async {

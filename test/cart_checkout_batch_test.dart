@@ -68,6 +68,7 @@ class _LosingRepo extends CapturingTransactionRepository {
     String source = 'manual',
     String? customerId,
     double discount = 0,
+    bool digital = false,
   }) async {
     await super.recordSaleCart(
       shopId: shopId,

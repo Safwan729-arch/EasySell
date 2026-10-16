@@ -49,7 +49,10 @@ class CartScreen extends ConsumerWidget {
 
     final ok = await ref
         .read(cartCheckoutControllerProvider.notifier)
-        .checkout(customerId: selection.customer?.id);
+        .checkout(
+          customerId: selection.customer?.id,
+          digital: selection.method == PaymentMethod.digital,
+        );
     if (!context.mounted || !ok) return;
 
     AppHaptics.success();
@@ -763,8 +766,8 @@ class _StepButton extends StatelessWidget {
 /// Bounded-height checkout bar. Uses `MainAxisSize.min` so it hugs its content
 /// instead of expanding to fill the loose height Scaffold grants a
 /// bottomNavigationBar (the bug that previously collapsed the item list).
-/// A `ConsumerWidget` (rather than plain values) so it can own the Cash/Credit
-/// toggle and the chosen-customer row, which live in
+/// A `ConsumerWidget` (rather than plain values) so it can own the
+/// Cash/Digital/Credit toggle and the chosen-customer row, which live in
 /// [paymentMethodControllerProvider].
 class _CheckoutBar extends ConsumerWidget {
   const _CheckoutBar({
@@ -830,22 +833,22 @@ class _CheckoutBar extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 260),
-                  child: TwoOptionSegment<PaymentMethod>(
-                    values: PaymentMethod.values,
-                    selected: selection.method,
-                    enabled: !isLoading,
-                    labelOf: (m) => m == PaymentMethod.cash
-                        ? l10n.cart_paymentCash
-                        : l10n.cart_paymentCredit,
-                    onChanged: (m) => m == PaymentMethod.cash
-                        ? notifier.setCash()
-                        : notifier.setCredit(),
-                  ),
-                ),
+              // Full width: three options no longer fit the old 260 dp cap
+              // without shrinking the labels.
+              TwoOptionSegment<PaymentMethod>(
+                values: PaymentMethod.values,
+                selected: selection.method,
+                enabled: !isLoading,
+                labelOf: (m) => switch (m) {
+                  PaymentMethod.cash => l10n.cart_paymentCash,
+                  PaymentMethod.digital => l10n.cart_paymentDigital,
+                  PaymentMethod.credit => l10n.cart_paymentCredit,
+                },
+                onChanged: (m) => switch (m) {
+                  PaymentMethod.cash => notifier.setCash(),
+                  PaymentMethod.digital => notifier.setDigital(),
+                  PaymentMethod.credit => notifier.setCredit(),
+                },
               ),
               if (isCredit) ...[
                 const SizedBox(height: 10),

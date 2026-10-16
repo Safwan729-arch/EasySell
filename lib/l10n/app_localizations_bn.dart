@@ -851,6 +851,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get saleDetail_enteredBy => 'যেভাবে এন্ট্রি হয়েছে';
 
   @override
+  String get saleDetail_paidBy => 'যেভাবে পরিশোধ';
+
+  @override
   String get saleDetail_frozenNote => 'দাম বিক্রির মুহূর্তেই স্থির হয়ে যায়।';
 
   @override
@@ -1154,6 +1157,9 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get cart_paymentCredit => 'বাকি';
+
+  @override
+  String get cart_paymentDigital => 'ডিজিটাল';
 
   @override
   String get cart_selectCustomer => 'গ্রাহক বেছে নিন';

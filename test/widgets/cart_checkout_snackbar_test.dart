@@ -88,6 +88,27 @@ void main() {
     );
   });
 
+  testWidgets('choosing Digital at checkout sends the sale as digital', (
+    tester,
+  ) async {
+    final repo = CapturingTransactionRepository();
+    final c = await cartContainer(repo: repo);
+    c.read(cartControllerProvider.notifier).addOrIncrement(kOil, 1);
+
+    await tester.pumpWidget(_routedCart(c));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('to cart'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Digital'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Checkout'));
+    await tester.pumpAndSettle();
+
+    expect(repo.sentDigital, isTrue);
+    expect(repo.sentCustomerId, isNull);
+  });
+
   testWidgets('an undiscounted checkout still reports the full total', (
     tester,
   ) async {

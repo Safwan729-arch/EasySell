@@ -21,6 +21,7 @@ Transaction _sale(
   double qty = 1,
   double price = 35,
   DateTime? at,
+  String? paid,
 }) => Transaction(
   id: id,
   shopId: 's',
@@ -29,10 +30,12 @@ Transaction _sale(
   quantity: qty,
   sellingPrice: price,
   saleGroupId: group,
+  paymentMethod: paid,
   createdAt: at ?? DateTime.now(),
 );
 
-Product _prod(String id, String name) => Product(id: id, shopId: 's', name: name);
+Product _prod(String id, String name) =>
+    Product(id: id, shopId: 's', name: name);
 
 /// The Item label is a RichText (so the "+N" badge can be styled), which
 /// find.text can't see — this matches its flattened plain text instead.
@@ -81,7 +84,58 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
-  testWidgets('a cart receipt reads as its items ("Loose rice +1"), not "2 items"', (
+  testWidgets(
+    'a cart receipt reads as its items ("Loose rice +1"), not "2 items"',
+    (tester) async {
+      usePhone(tester);
+      final now = DateTime.now();
+      await tester.pumpWidget(
+        harness(
+          [
+            _sale(
+              'a',
+              'rice',
+              group: 'g1',
+              qty: 1.5,
+              price: 80,
+              at: now,
+            ), // $120
+            _sale(
+              'b',
+              'soap',
+              group: 'g1',
+              qty: 4,
+              price: 35,
+              at: now,
+            ), //   $140
+            _sale(
+              'c',
+              'soap',
+              qty: 1,
+              price: 35,
+              at: now,
+            ), // single         $35
+          ],
+          [_prod('rice', 'Loose rice'), _prod('soap', 'Lifebuoy soap')],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Receipt shows its lead product + a "+1" badge, never the opaque count.
+      expect(_richTextHas('Loose rice'), isTrue);
+      expect(_richTextHas('+1'), isTrue);
+      expect(find.text('2 items'), findsNothing);
+
+      // Mixed-unit receipt shows a dash for Qty; the single sale shows a real 1.
+      expect(find.text('—'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
+
+      // The single sale renders its full name (no truncation of the model value).
+      expect(_richTextHas('Lifebuoy soap'), isTrue);
+    },
+  );
+
+  testWidgets('each receipt says how it was paid; older sales say nothing', (
     tester,
   ) async {
     usePhone(tester);
@@ -89,26 +143,21 @@ void main() {
     await tester.pumpWidget(
       harness(
         [
-          _sale('a', 'rice', group: 'g1', qty: 1.5, price: 80, at: now), // $120
-          _sale('b', 'soap', group: 'g1', qty: 4, price: 35, at: now), //   $140
-          _sale('c', 'soap', qty: 1, price: 35, at: now), // single         $35
+          _sale('a', 'rice', group: 'g1', paid: 'digital', at: now),
+          _sale('b', 'soap', group: 'g1', paid: 'digital', at: now),
+          _sale('c', 'soap', paid: 'cash', at: now),
+          _sale('d', 'rice', paid: 'credit', at: now),
+          _sale('e', 'soap', at: now), // before 0018: unknown
         ],
         [_prod('rice', 'Loose rice'), _prod('soap', 'Lifebuoy soap')],
       ),
     );
     await tester.pumpAndSettle();
 
-    // Receipt shows its lead product + a "+1" badge, never the opaque count.
-    expect(_richTextHas('Loose rice'), isTrue);
-    expect(_richTextHas('+1'), isTrue);
-    expect(find.text('2 items'), findsNothing);
-
-    // Mixed-unit receipt shows a dash for Qty; the single sale shows a real 1.
-    expect(find.text('—'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
-
-    // The single sale renders its full name (no truncation of the model value).
-    expect(_richTextHas('Lifebuoy soap'), isTrue);
+    // One label per receipt, not per line: the two-line cart shows one.
+    expect(find.text('Digital'), findsOneWidget);
+    expect(find.text('Cash'), findsOneWidget);
+    expect(find.text('Credit'), findsOneWidget);
   });
 
   testWidgets('tapping a receipt expands to its per-product lines', (

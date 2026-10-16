@@ -69,6 +69,11 @@ class TransactionRepository {
   /// [saleGroupId] is minted by the caller, not the server. The server records
   /// a given id once and returns the existing rows on a repeat, so re-sending
   /// the same id after a lost reply cannot record the sale twice.
+  ///
+  /// [digital] marks a paid-now sale as digital rather than cash (0018). Only
+  /// digital is ever sent: cash is the server's default and credit follows
+  /// from [customerId]. Leaving the parameter out for those keeps cash and
+  /// credit checkouts working against a database that has not had 0018 yet.
   Future<Result<List<Transaction>>> recordSaleCart({
     required String shopId,
     required List<Map<String, dynamic>> items,
@@ -76,6 +81,7 @@ class TransactionRepository {
     String source = 'manual',
     String? customerId,
     double discount = 0,
+    bool digital = false,
   }) async {
     try {
       final result = await _client.rpc(
@@ -87,6 +93,7 @@ class TransactionRepository {
           'p_customer_id': ?customerId,
           'p_discount': discount,
           'p_sale_group_id': saleGroupId,
+          if (digital) 'p_payment_method': 'digital',
         },
       );
       final rows = result as List;

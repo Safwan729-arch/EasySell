@@ -38,6 +38,7 @@ class _PendingTxRepo implements TransactionRepository {
     String source = 'manual',
     String? customerId,
     double discount = 0,
+    bool digital = false,
   }) {
     cartCalls++;
     return completer.future;

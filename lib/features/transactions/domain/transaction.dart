@@ -36,6 +36,11 @@ abstract class Transaction with _$Transaction {
     /// never written back, since it is not a column of `transactions`.
     @JsonKey(readValue: _readBatchExpiry, includeToJson: false)
     DateTime? batchExpiry,
+
+    /// How the customer paid: 'cash' | 'digital' | 'credit' (0018). Null for
+    /// sales made before it was recorded -- History shows nothing for those
+    /// rather than guessing.
+    String? paymentMethod,
     DateTime? createdAt,
   }) = _Transaction;
 

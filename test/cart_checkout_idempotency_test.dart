@@ -22,6 +22,7 @@ class _FlakyRepo extends CapturingTransactionRepository {
     String source = 'manual',
     String? customerId,
     double discount = 0,
+    bool digital = false,
   }) async {
     sentIds.add(saleGroupId);
     if (fail) return const Result.failure(NetworkFailure('timed out'));

@@ -23,6 +23,7 @@ class _ScriptedRepo extends CapturingTransactionRepository {
     String source = 'manual',
     String? customerId,
     double discount = 0,
+    bool digital = false,
   }) async {
     sentIds.add(saleGroupId);
     return results[(sentIds.length - 1).clamp(0, results.length - 1)];

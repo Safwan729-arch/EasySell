@@ -1484,6 +1484,12 @@ abstract class AppLocalizations {
   /// **'Entered by'**
   String get saleDetail_enteredBy;
 
+  /// No description provided for @saleDetail_paidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get saleDetail_paidBy;
+
   /// No description provided for @saleDetail_frozenNote.
   ///
   /// In en, this message translates to:
@@ -2017,6 +2023,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Credit'**
   String get cart_paymentCredit;
+
+  /// No description provided for @cart_paymentDigital.
+  ///
+  /// In en, this message translates to:
+  /// **'Digital'**
+  String get cart_paymentDigital;
 
   /// No description provided for @cart_selectCustomer.
   ///

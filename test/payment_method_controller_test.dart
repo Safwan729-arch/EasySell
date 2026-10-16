@@ -42,6 +42,21 @@ void main() {
     expect(read().isReady, isTrue);
   });
 
+  test('digital is ready and needs no customer', () {
+    notifier().setDigital();
+    expect(read().method, PaymentMethod.digital);
+    expect(read().customer, isNull);
+    expect(read().isReady, isTrue);
+  });
+
+  test('switching from credit to digital clears the customer', () {
+    notifier().setCredit();
+    notifier().chooseCustomer(_rahim);
+    notifier().setDigital();
+    expect(read().method, PaymentMethod.digital);
+    expect(read().customer, isNull);
+  });
+
   test('reset returns to cash', () {
     notifier().setCredit();
     notifier().chooseCustomer(_rahim);

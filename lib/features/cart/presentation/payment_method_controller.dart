@@ -2,8 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../customers/domain/customer.dart';
 
-/// How the current cart will be paid for.
-enum PaymentMethod { cash, credit }
+/// How the current cart will be paid for. Cash and digital are paid now;
+/// credit goes on a customer's khata.
+enum PaymentMethod { cash, digital, credit }
 
 /// The cart's payment selection: the method and, for credit, the chosen
 /// customer. A credit sale is only [isReady] once a customer is chosen.
@@ -14,8 +15,7 @@ class PaymentSelection {
   final PaymentMethod method;
   final Customer? customer;
 
-  bool get isReady =>
-      method == PaymentMethod.cash || customer != null;
+  bool get isReady => method != PaymentMethod.credit || customer != null;
 }
 
 class PaymentMethodController extends Notifier<PaymentSelection> {
@@ -24,11 +24,16 @@ class PaymentMethodController extends Notifier<PaymentSelection> {
 
   void setCash() => state = const PaymentSelection.cash();
 
+  void setDigital() =>
+      state = const PaymentSelection(method: PaymentMethod.digital);
+
   void setCredit() =>
       state = const PaymentSelection(method: PaymentMethod.credit);
 
-  void chooseCustomer(Customer customer) => state =
-      PaymentSelection(method: PaymentMethod.credit, customer: customer);
+  void chooseCustomer(Customer customer) => state = PaymentSelection(
+    method: PaymentMethod.credit,
+    customer: customer,
+  );
 
   void reset() => state = const PaymentSelection.cash();
 }

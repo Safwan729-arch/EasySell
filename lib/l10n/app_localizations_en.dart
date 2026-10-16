@@ -856,6 +856,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleDetail_enteredBy => 'Entered by';
 
   @override
+  String get saleDetail_paidBy => 'Paid by';
+
+  @override
   String get saleDetail_frozenNote =>
       'Prices are locked in from the moment of sale.';
 
@@ -1160,6 +1163,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cart_paymentCredit => 'Credit';
+
+  @override
+  String get cart_paymentDigital => 'Digital';
 
   @override
   String get cart_selectCustomer => 'Select customer';

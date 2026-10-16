@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../core/config/theme.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/l10n/enum_labels.dart';
 import '../../../core/l10n/l10n_ext.dart';
 import '../../../core/widgets/calendar_day_button.dart';
 import '../../../core/widgets/skeleton.dart';
@@ -50,6 +51,10 @@ class SaleReceipt {
 
   /// What the receipt came to before the discount.
   double get grossRevenue => totalRevenue + discountTotal;
+
+  /// How the receipt was paid. `record_sale_cart` stamps every line of one
+  /// checkout with the same method, so the first line speaks for all of them.
+  String? get paymentMethod => lines.first.paymentMethod;
 }
 
 /// Groups [sales] into receipts by `saleGroupId`, preserving each receipt's
@@ -666,44 +671,63 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Flexible(
-                          child: RichText(
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            text: TextSpan(
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: scheme.onSurface,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: row.leadName.isEmpty
-                                      ? l10n.history_saleFallback
-                                      : row.leadName,
-                                ),
-                                if (row.extraCount > 0)
-                                  TextSpan(
-                                    text: '  +${row.extraCount}',
-                                    style: TextStyle(
-                                      color: scheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: RichText(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: scheme.onSurface,
                                   ),
-                              ],
+                                  children: [
+                                    TextSpan(
+                                      text: row.leadName.isEmpty
+                                          ? l10n.history_saleFallback
+                                          : row.leadName,
+                                    ),
+                                    if (row.extraCount > 0)
+                                      TextSpan(
+                                        text: '  +${row.extraCount}',
+                                        style: TextStyle(
+                                          color: scheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (canExpand) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                _expanded
+                                    ? Icons.expand_less
+                                    : Icons.expand_more,
+                                size: 16,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ],
+                        ),
+                        // How it was paid. Absent for sales made before 0018
+                        // recorded it, so older rows keep their old height.
+                        if (paymentMethodLabel(l10n, row.receipt.paymentMethod)
+                            case final paid?)
+                          Text(
+                            paid,
+                            maxLines: 1,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
                             ),
                           ),
-                        ),
-                        if (canExpand) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            _expanded ? Icons.expand_less : Icons.expand_more,
-                            size: 16,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ],
                       ],
                     ),
                   ),
