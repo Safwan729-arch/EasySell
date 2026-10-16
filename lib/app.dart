@@ -32,7 +32,7 @@ class App extends ConsumerWidget {
     ref.listen(reminderTapRouterProvider, (_, _) {});
 
     return MaterialApp.router(
-      title: 'AI Shopkeeper',
+      title: 'EasySell',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

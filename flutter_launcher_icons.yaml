@@ -1,0 +1,17 @@
+# EasySell app icon. Regenerate after changing the images:
+#   dart run flutter_launcher_icons
+#
+# Both PNGs were cut out of assets/branding/Gemini_Generated_Image_*.jpg, whose
+# "transparent" background is a checkerboard painted into the JPG. The mark is
+# shown without the "EasySell" word: the launcher prints the name under it.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  # Legacy Android icon and iOS: white square, mark ~80% tall.
+  image_path: "assets/branding/icon.png"
+  remove_alpha_ios: true
+  # Android 8+ adaptive icon: the mark sits ~59% tall on a transparent layer
+  # (the user found 49% too small). Samsung's rounded square shows it whole; a
+  # launcher with strict circle icons may trim the phone outline's corners.
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/branding/icon_foreground.png"
