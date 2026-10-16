@@ -59,3 +59,7 @@ app.*.map.json
 
 # Supabase CLI scratch files
 supabase/.temp/
+
+# UI screenshots for design work (large, regenerable)
+app_ui_screenshots/
+app_ui_screenshots.zip
