@@ -186,7 +186,35 @@ function json(body: unknown, status = 200) {
   });
 }
 
+// Supabase checks the token's signature before a request reaches this code
+// (JWT verification is on by default: never deploy with --no-verify-jwt). But
+// the public anon key passes that check too, and it ships inside every APK, so
+// anyone could unpack the app and spend the Gemini quota with no account.
+// Only a signed-in user's token carries role "authenticated"; a guest
+// (anonymous) session is refused too, since anyone can create one with the
+// anon key.
+function isSignedInUser(req: Request): boolean {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const payload = token.split(".")[1];
+  if (!payload) return false;
+  try {
+    const claims = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return claims?.role === "authenticated" && claims?.is_anonymous !== true;
+  } catch (_e) {
+    return false;
+  }
+}
+
+// Far above anything the app sends (a medium-resolution JPEG is a few hundred
+// KB; a big shop has a few thousand products), so these only stop requests
+// that did not come from the app and would buy a dearer prompt.
+const MAX_IMAGE_B64_CHARS = 8_000_000;
+const MAX_CANDIDATES = 5000;
+
 Deno.serve(async (req) => {
+  if (!isSignedInUser(req)) {
+    return json({ error: "sign in required" }, 401);
+  }
   let imageB64: unknown;
   let candidates: unknown;
   try {
@@ -198,6 +226,9 @@ Deno.serve(async (req) => {
   }
   if (typeof imageB64 !== "string" || imageB64.trim().length === 0 || !Array.isArray(candidates)) {
     return json({ error: "image_base64 and candidates are required" }, 400);
+  }
+  if (imageB64.length > MAX_IMAGE_B64_CHARS || candidates.length > MAX_CANDIDATES) {
+    return json({ error: "request too large" }, 413);
   }
   // Fast-fail with a clear message rather than letting an unset key surface as a
   // downstream Gemini 401/403 (which would read as a generic 502).

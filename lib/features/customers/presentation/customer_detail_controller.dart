@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/failure.dart';
 import '../../../shared/providers/refresh_provider.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/customer_repository.dart';
@@ -29,15 +30,29 @@ class CustomerDetailController extends AsyncNotifier<List<LedgerEntry>> {
     return result.when(success: (v) => v, failure: (f) => throw f);
   }
 
-  Future<bool> recordPayment({required double amount, String? note}) async {
+  /// Null on success, else why it failed. The failure goes back to the
+  /// payment sheet, which is still open: setting it as this controller's
+  /// state replaced the whole ledger with an error, and its snackbar showed
+  /// behind the sheet where nobody saw it.
+  ///
+  /// [paymentId] must be re-sent unchanged when the same payment is retried
+  /// (see [CustomerRepository.recordPayment]).
+  Future<Failure?> recordPayment({
+    required double amount,
+    required String paymentId,
+    String? note,
+  }) async {
     final shopId = ref.read(myShopProvider).value?.id;
-    if (shopId == null) return false;
+    if (shopId == null) {
+      return const AuthFailure('No shop found for this account.');
+    }
     final result = await ref
         .read(customerRepositoryProvider)
         .recordPayment(
           shopId: shopId,
           customerId: customerId,
           amount: amount,
+          paymentId: paymentId,
           note: note,
         );
     return result.when(
@@ -46,18 +61,16 @@ class CustomerDetailController extends AsyncNotifier<List<LedgerEntry>> {
         ref.invalidate(customersControllerProvider);
         ref.invalidate(receivablesControllerProvider);
         ref.read(dataRefreshProvider.notifier).bump();
-        return true;
+        return null;
       },
-      failure: (f) {
-        state = AsyncError(f, StackTrace.current);
-        return false;
-      },
+      failure: (f) => f,
     );
   }
 }
 
-final customerDetailControllerProvider = AsyncNotifierProvider.family<
-  CustomerDetailController,
-  List<LedgerEntry>,
-  String
->(CustomerDetailController.new);
+final customerDetailControllerProvider =
+    AsyncNotifierProvider.family<
+      CustomerDetailController,
+      List<LedgerEntry>,
+      String
+    >(CustomerDetailController.new);

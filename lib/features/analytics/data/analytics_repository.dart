@@ -10,6 +10,10 @@ import '../domain/analytics.dart';
 
 /// Reads aggregated analytics from Postgres RPCs. The heavy lifting stays in the
 /// database; this just maps rows into typed models.
+///
+/// [utcOffsetMinutes] is the phone's offset: the server's clock is UTC, so
+/// without it "today" and each chart day would start at UTC midnight instead
+/// of the shop's (migration 0020).
 class AnalyticsRepository {
   AnalyticsRepository(this._client);
 
@@ -19,6 +23,7 @@ class AnalyticsRepository {
     String shopId,
     AnalyticsPeriod period, {
     DateTime? day,
+    required int utcOffsetMinutes,
   }) async {
     try {
       final result = await _client.rpc(
@@ -27,6 +32,7 @@ class AnalyticsRepository {
           'p_shop_id': shopId,
           'p_period': period.value,
           if (day != null) 'p_day': dayParam(day),
+          'p_utc_offset_minutes': utcOffsetMinutes,
         },
       );
       // `returns table(...)` → a list of rows; take the single row.
@@ -43,8 +49,9 @@ class AnalyticsRepository {
 
   Future<Result<List<SalesPoint>>> getSeries(
     String shopId,
-    ChartBucket bucket,
-  ) async {
+    ChartBucket bucket, {
+    required int utcOffsetMinutes,
+  }) async {
     try {
       final result = await _client.rpc(
         'get_sales_series',
@@ -52,6 +59,7 @@ class AnalyticsRepository {
           'p_shop_id': shopId,
           'p_bucket': bucket.value,
           'p_points': bucket.points,
+          'p_utc_offset_minutes': utcOffsetMinutes,
         },
       );
       final rows = (result as List)

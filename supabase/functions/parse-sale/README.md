@@ -119,9 +119,11 @@ configured) return **400**. An unexpected Gemini response shape (missing/empty
 is also a **502** (retry) — it is never treated as a silent empty result.
 
 ## Smoke test — text (no audio needed — it takes text)
+`USER_TOKEN` is a signed-in user's access token; the anon key gets **401**
+(see `../../README.md`, "Calling the AI functions by hand").
 ```
 curl -s -X POST "$SUPABASE_URL/functions/v1/parse-sale" \
-  -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+  -H "Authorization: Bearer $USER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"transcript":"sold 2 pepsi","candidates":[{"id":"p1","name":"Pepsi 1L","variant":"1L"},{"id":"p2","name":"Pepsi 500ml","variant":"500ml"}]}'
 ```
@@ -142,7 +144,7 @@ python3 -c "import base64,json; print(json.dumps({
 }))" > body.json
 
 curl -s -X POST "$SUPABASE_URL/functions/v1/parse-sale" \
-  -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+  -H "Authorization: Bearer $USER_TOKEN" \
   -H "Content-Type: application/json" \
   -d @body.json
 ```

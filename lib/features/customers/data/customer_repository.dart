@@ -132,10 +132,14 @@ class CustomerRepository {
     }
   }
 
+  /// [paymentId] is minted by the phone and re-sent on a retry: the server
+  /// records a given id once (migration 0020), so a lost reply and a second
+  /// tap cannot take the payment off the balance twice.
   Future<Result<LedgerEntry>> recordPayment({
     required String shopId,
     required String customerId,
     required double amount,
+    required String paymentId,
     String? note,
   }) async {
     try {
@@ -146,6 +150,7 @@ class CustomerRepository {
           'p_customer_id': customerId,
           'p_amount': amount,
           if (note != null && note.isNotEmpty) 'p_note': note,
+          'p_payment_id': paymentId,
         },
       );
       final row = result is List ? result.first : result;

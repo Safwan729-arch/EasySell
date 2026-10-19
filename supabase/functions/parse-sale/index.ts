@@ -313,7 +313,36 @@ function json(body: unknown, status = 200) {
   });
 }
 
+// Supabase checks the token's signature before a request reaches this code
+// (JWT verification is on by default: never deploy with --no-verify-jwt). But
+// the public anon key passes that check too, and it ships inside every APK, so
+// anyone could unpack the app and spend the Gemini quota with no account.
+// Only a signed-in user's token carries role "authenticated"; a guest
+// (anonymous) session is refused too, since anyone can create one with the
+// anon key.
+function isSignedInUser(req: Request): boolean {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const payload = token.split(".")[1];
+  if (!payload) return false;
+  try {
+    const claims = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return claims?.role === "authenticated" && claims?.is_anonymous !== true;
+  } catch (_e) {
+    return false;
+  }
+}
+
+// Far above anything the app sends (15 s of 32 kbps audio is ~80 KB of
+// base64; a big shop has a few thousand products), so these only stop
+// requests that did not come from the app and would buy a dearer prompt.
+const MAX_AUDIO_B64_CHARS = 2_000_000;
+const MAX_TRANSCRIPT_CHARS = 2000;
+const MAX_CANDIDATES = 5000;
+
 Deno.serve(async (req) => {
+  if (!isSignedInUser(req)) {
+    return json({ error: "sign in required" }, 401);
+  }
   // Hoisted above body parsing (not just above the Gemini call) so a slow/large
   // request body -- the exact thing the payload-size hypothesis is about --
   // is inside the measured window instead of invisible before the clock starts.
@@ -359,6 +388,13 @@ Deno.serve(async (req) => {
   }
   if (!hasTranscript && !hasAudio) {
     return json({ error: "transcript (non-empty string) or audio_base64 is required" }, 400);
+  }
+  if (
+    candidates.length > MAX_CANDIDATES ||
+    (hasAudio && (audioBase64 as string).length > MAX_AUDIO_B64_CHARS) ||
+    (hasTranscript && (transcript as string).length > MAX_TRANSCRIPT_CHARS)
+  ) {
+    return json({ error: "request too large" }, 413);
   }
   // Both paths now go to Gemini, so the key is always required.
   if (!GEMINI_API_KEY) {

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/refresh_provider.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../expiry/presentation/today_provider.dart';
 import '../../inventory/domain/product.dart';
 import '../../inventory/presentation/category_controller.dart';
 import '../../inventory/presentation/inventory_controller.dart';
@@ -10,6 +11,9 @@ import '../../transactions/domain/transaction.dart';
 import '../../transactions/presentation/history_screen.dart';
 import '../data/analytics_repository.dart';
 import '../domain/analytics.dart';
+
+/// The phone's UTC offset, so the server cuts days at the shop's midnight.
+int _utcOffset(Ref ref) => ref.read(nowProvider)().timeZoneOffset.inMinutes;
 
 /// Aggregated totals for a period (RPC-backed). Refetches when a sale/restock
 /// bumps [dataRefreshProvider].
@@ -20,7 +24,7 @@ final summaryProvider = FutureProvider.autoDispose
       if (shop == null) return DashboardSummary.empty;
       final result = await ref
           .watch(analyticsRepositoryProvider)
-          .getSummary(shop.id, period);
+          .getSummary(shop.id, period, utcOffsetMinutes: _utcOffset(ref));
       return result.when(success: (s) => s, failure: (f) => throw f);
     });
 
@@ -33,10 +37,9 @@ class SelectedDayController extends Notifier<DateTime?> {
   void set(DateTime? day) => state = day;
 }
 
-final selectedDayProvider =
-    NotifierProvider<SelectedDayController, DateTime?>(
-      SelectedDayController.new,
-    );
+final selectedDayProvider = NotifierProvider<SelectedDayController, DateTime?>(
+  SelectedDayController.new,
+);
 
 /// One calendar day's summary, RPC-backed so aggregation happens server-side and
 /// the payload stays small regardless of that day's transaction count (CLAUDE.md
@@ -49,7 +52,12 @@ final daySummaryProvider = FutureProvider.autoDispose
       if (shop == null) return DashboardSummary.empty;
       final result = await ref
           .watch(analyticsRepositoryProvider)
-          .getSummary(shop.id, AnalyticsPeriod.all, day: day);
+          .getSummary(
+            shop.id,
+            AnalyticsPeriod.all,
+            day: day,
+            utcOffsetMinutes: _utcOffset(ref),
+          );
       return result.when(success: (s) => s, failure: (f) => throw f);
     });
 
@@ -61,7 +69,7 @@ final seriesProvider = FutureProvider.autoDispose
       if (shop == null) return const <SalesPoint>[];
       final result = await ref
           .watch(analyticsRepositoryProvider)
-          .getSeries(shop.id, bucket);
+          .getSeries(shop.id, bucket, utcOffsetMinutes: _utcOffset(ref));
       return result.when(success: (s) => s, failure: (f) => throw f);
     });
 

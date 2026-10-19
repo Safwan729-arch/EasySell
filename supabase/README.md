@@ -406,6 +406,29 @@ EVERY sale, not just discounted ones.
    rounded to 0.00 on insert, tripping `customer_ledger`'s
    `check (amount > 0)` and rolling back the whole checkout.)
 
+## Calling the AI functions by hand (sign-in required)
+
+`parse-sale`, `recognize-product` and `money-tips` answer only a signed-in
+user's token (0020 review). The anon key is refused with **401 "sign in
+required"**, because it ships inside every APK and would let anyone spend the
+Gemini quota without an account. Guest (anonymous) sessions are refused too.
+Keep JWT verification on when deploying: never pass `--no-verify-jwt`, since
+the functions trust the token's claims only because Supabase has already
+checked its signature.
+
+To probe a function by hand, sign in as a real user of the app first.
+PowerShell, from the repo root:
+```powershell
+$defines = Get-Content .\dart_defines.json | ConvertFrom-Json
+$login = Invoke-RestMethod -Method Post `
+  -Uri "$($defines.SUPABASE_URL)/auth/v1/token?grant_type=password" `
+  -Headers @{ apikey = $defines.SUPABASE_ANON_KEY; "Content-Type" = "application/json" } `
+  -Body (@{ email = "you@example.com"; password = "your-password" } | ConvertTo-Json)
+$token = $login.access_token
+```
+Then send `Authorization: Bearer $token` instead of the anon key. The token
+lasts about an hour.
+
 ## Fast scan session — deploy order and probes
 
 **Deploy the Edge Function BEFORE installing an app build from
@@ -423,6 +446,8 @@ accepts BOTH shapes, so deploying it early is always safe.
    [`supabase/functions/recognize-product/README.md`](functions/recognize-product/README.md#smoke-test-direct-probe) —
    PowerShell, run from the repo root, with the URL and anon key read out of
    `dart_defines.json` rather than pasted into the script:
+   It needs a signed-in user's token, not the anon key: get `$token` first
+   with [Calling the AI functions by hand](#calling-the-ai-functions-by-hand-sign-in-required).
    ```powershell
    $defines = Get-Content .\dart_defines.json | ConvertFrom-Json
    $img = [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\a\real\product\photo.jpg"))
@@ -432,7 +457,7 @@ accepts BOTH shapes, so deploying it early is always safe.
    } | ConvertTo-Json -Depth 5
    Invoke-RestMethod -Method Post `
      -Uri "$($defines.SUPABASE_URL)/functions/v1/recognize-product" `
-     -Headers @{ Authorization = "Bearer $($defines.SUPABASE_ANON_KEY)"; "Content-Type" = "application/json" } `
+     -Headers @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" } `
      -Body $body
    ```
    The photo must be a real JPEG of a product that exists in your shop, and

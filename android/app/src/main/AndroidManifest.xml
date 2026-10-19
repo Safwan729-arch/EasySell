@@ -22,10 +22,17 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
+    <!-- Backups off: the signed-in session is stored on the phone, and a
+         backup would copy it off the device. A finance app should not let a
+         restore elsewhere carry a live login. allowBackup covers cloud backup
+         up to Android 11; dataExtractionRules covers cloud backup and
+         phone-to-phone transfer on Android 12+. -->
     <application
         android:label="EasySell"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"

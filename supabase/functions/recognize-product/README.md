@@ -88,10 +88,11 @@ $body = @{
 } | ConvertTo-Json -Depth 5
 Set-Content -Path "$env:TEMP\scan-probe.json" -Value $body -Encoding utf8
 
-$anon = (Get-Content .\dart_defines.json | ConvertFrom-Json).SUPABASE_ANON_KEY
+# $token: a signed-in user's access token, NOT the anon key (which gets 401).
+# How to get one: ../../README.md, "Calling the AI functions by hand".
 Invoke-RestMethod -Method Post `
   -Uri "$env:SUPABASE_URL/functions/v1/recognize-product" `
-  -Headers @{ Authorization = "Bearer $anon"; "Content-Type" = "application/json" } `
+  -Headers @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" } `
   -InFile "$env:TEMP\scan-probe.json"
 ```
 A clear photo of a listed product returns `status:"match"` (or `"multiple"` when
