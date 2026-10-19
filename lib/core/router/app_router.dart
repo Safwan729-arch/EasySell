@@ -13,6 +13,7 @@ import '../../features/customers/presentation/customer_detail_screen.dart';
 import '../../features/customers/presentation/customers_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/expiry/presentation/expiry_alerts_screen.dart';
+import '../../features/finance/presentation/finance_screen.dart';
 import '../../features/insights/presentation/insights_screen.dart';
 import '../../features/inventory/domain/product.dart';
 import '../../features/inventory/presentation/archived_products_screen.dart';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String alerts = '/alerts';
   static const String restock = '/restock';
+  static const String finance = '/finance';
   static const String categories = '/categories';
   static const String archivedProducts = '/archived-products';
   static const String customers = '/customers';
@@ -254,6 +256,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.restock,
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, _) => _transitionPage(const RestockScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.finance,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (_, _) => _transitionPage(const FinanceScreen()),
       ),
       GoRoute(
         path: AppRoutes.categories,

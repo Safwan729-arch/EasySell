@@ -468,10 +468,14 @@ class _SalesTable extends StatelessWidget {
 
 // Shared column widths so the header and every data row line up exactly.
 // Trimmed from the original 58/40/88 to give the Item column more room so
-// product names stop truncating to "Lifebuo…".
-const double _timeW = 54;
-const double _qtyW = 34;
-const double _amtW = 78;
+// product names stop truncating to "Lifebuo…". The time now stacks AM/PM
+// under the clock and gets a [_gap] before the name: on one line "২:২৩PM"
+// filled its 54 dp and touched the product name. Qty widened from 34 so its
+// header reads "পরিমাণ" instead of "প…"; the name wraps to two lines instead.
+const double _timeW = 48;
+const double _gap = 10;
+const double _qtyW = 44;
+const double _amtW = 74;
 
 class _HeaderRow extends StatelessWidget {
   const _HeaderRow({
@@ -499,6 +503,7 @@ class _HeaderRow extends StatelessWidget {
             ascending: ascending,
             onTap: () => onSort(_SortKey.time),
           ),
+          const SizedBox(width: _gap),
           _HeaderCell(
             label: l10n.history_colItem,
             active: sortKey == _SortKey.item,
@@ -572,15 +577,20 @@ class _HeaderCell extends StatelessWidget {
               ? MainAxisAlignment.center
               : MainAxisAlignment.start,
           children: [
+            // Shrinks a long label (Bangla "পরিমাণ") to fit its column
+            // rather than cutting it to "প…".
             Flexible(
-              child: Text(
-                label,
-                textAlign: align,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontSize: 15,
-                  color: color,
-                  fontWeight: FontWeight.w600,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  textAlign: align,
+                  maxLines: 1,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontSize: 15,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -616,15 +626,14 @@ class _ReceiptTile extends StatefulWidget {
 class _ReceiptTileState extends State<_ReceiptTile> {
   bool _expanded = false;
 
-  String _time(DateTime? d) {
-    final t = (d ?? DateTime.now()).toLocal();
-    // DateFormat localizes the digits via Intl.defaultLocale, so the time
-    // renders in Bengali digits (৯:০৫) when the app is in Bengali. AM/PM stays
-    // in Latin — universally read on Bangladeshi shop signage and tills.
-    final hm = DateFormat('h:mm').format(t);
-    final ampm = t.hour < 12 ? 'AM' : 'PM';
-    return '$hm$ampm';
-  }
+  // DateFormat localizes the digits via Intl.defaultLocale, so the time
+  // renders in Bengali digits (৯:০৫) when the app is in Bengali. AM/PM stays
+  // in Latin — universally read on Bangladeshi shop signage and tills.
+  String _clock(DateTime? d) =>
+      DateFormat('h:mm').format((d ?? DateTime.now()).toLocal());
+
+  String _ampm(DateTime? d) =>
+      (d ?? DateTime.now()).toLocal().hour < 12 ? 'AM' : 'PM';
 
   String _lineQty(double v) => Qty.format(v);
 
@@ -654,20 +663,32 @@ class _ReceiptTileState extends State<_ReceiptTile> {
               children: [
                 SizedBox(
                   width: _timeW,
-                  // Scales down rather than clipping: the column is 54 dp.
+                  // Clock over AM/PM; scales down rather than clipping.
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      _time(row.receipt.createdAt),
-                      maxLines: 1,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        fontFeatures: tnum,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _clock(row.receipt.createdAt),
+                          maxLines: 1,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontFeatures: tnum,
+                          ),
+                        ),
+                        Text(
+                          _ampm(row.receipt.createdAt),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+                const SizedBox(width: _gap),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -679,7 +700,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                           children: [
                             Flexible(
                               child: RichText(
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 text: TextSpan(
                                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -721,11 +742,14 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                         // recorded it, so older rows keep their old height.
                         if (paymentMethodLabel(l10n, row.receipt.paymentMethod)
                             case final paid?)
-                          Text(
-                            paid,
-                            maxLines: 1,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
+                          Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Text(
+                              paid,
+                              maxLines: 1,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                       ],
@@ -798,6 +822,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                               ),
                             ),
                           ),
+                          const SizedBox(width: _gap),
                           Expanded(
                             child: Text(
                               (row.names[line.productId]?.isNotEmpty ?? false)
@@ -848,7 +873,7 @@ class _ReceiptTileState extends State<_ReceiptTile> {
                     padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
                     child: Row(
                       children: [
-                        SizedBox(width: _timeW),
+                        const SizedBox(width: _timeW + _gap),
                         Expanded(
                           child: Text(
                             l10n.saleDetail_discount,

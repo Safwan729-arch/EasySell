@@ -9,7 +9,14 @@ import '../../../l10n/app_localizations.dart';
 import '../data/last_email_store.dart';
 import 'auth_controller.dart';
 
-/// Email/password sign in + sign up, plus Google OAuth.
+/// Hides "Continue with Google" until the Google provider is enabled in
+/// Supabase Auth and the Android deep-link redirect is wired up. Until then the
+/// button only showed "provider is not enabled" (hidden 2026-10-18 for the
+/// hackathon demo). The sign-in code is kept; flip this to bring it back.
+const _googleSignInEnabled = false;
+
+/// Email/password sign in + sign up (Google OAuth behind
+/// [_googleSignInEnabled]).
 ///
 /// The router handles where to go after a successful session (dashboard, or
 /// profile setup if no shop exists yet), so this screen only triggers actions.
@@ -206,19 +213,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Text(_isSignUp ? l10n.auth_signUp : l10n.auth_signIn),
+                            : Text(
+                                _isSignUp ? l10n.auth_signUp : l10n.auth_signIn,
+                              ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: isLoading
-                          ? null
-                          : () => ref
-                                .read(authControllerProvider.notifier)
-                                .signInWithGoogle(),
-                      icon: const Icon(Icons.login),
-                      label: Text(l10n.auth_continueGoogle),
-                    ),
+                    if (_googleSignInEnabled) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: isLoading
+                            ? null
+                            : () => ref
+                                  .read(authControllerProvider.notifier)
+                                  .signInWithGoogle(),
+                        icon: const Icon(Icons.login),
+                        label: Text(l10n.auth_continueGoogle),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: isLoading

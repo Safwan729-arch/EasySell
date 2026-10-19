@@ -1659,4 +1659,224 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get settings_expiryReminderBlocked =>
       'বন্ধ — ফোনের সেটিংসে নোটিফিকেশন চালু করুন';
+
+  @override
+  String get finance_title => 'টাকার অবস্থা';
+
+  @override
+  String get finance_last7Days => 'গত ৭ দিন';
+
+  @override
+  String get finance_in => 'এসেছে';
+
+  @override
+  String get finance_out => 'গেছে';
+
+  @override
+  String get finance_net => 'নিট';
+
+  @override
+  String get finance_allGood => 'এই সপ্তাহে টাকা নিয়ে কোনো সতর্কতা নেই';
+
+  @override
+  String finance_alertOverdue(String name, String amount, String days) {
+    return '$name-এর কাছে $amount বাকি, $days দিন ধরে';
+  }
+
+  @override
+  String finance_alertOverdueMore(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'আরও $countString জন গ্রাহকের বাকি দেরি হয়েছে',
+      one: 'আরও ১ জন গ্রাহকের বাকি দেরি হয়েছে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String finance_alertCashShort(String amount) {
+    return 'রিস্টকের খরচ আসা টাকার চেয়ে $amount বেশি';
+  }
+
+  @override
+  String finance_alertCreditGrowing(String rise, String total) {
+    return 'এই সপ্তাহে বাকি বেড়েছে $rise (এখন $total)';
+  }
+
+  @override
+  String finance_alertSalesDrop(String percent) {
+    return 'আগের সপ্তাহের চেয়ে বিক্রি $percent কমেছে';
+  }
+
+  @override
+  String finance_financingFooter(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি ঋণের বিকল্প আপনার দোকানের সাথে মেলে',
+      one: '১টি ঋণের বিকল্প আপনার দোকানের সাথে মেলে',
+      zero: 'আপনার দোকানের ঋণের বিকল্প দেখুন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get finance_rowCashSales => 'নগদ বিক্রি';
+
+  @override
+  String get finance_rowDigitalSales => 'ডিজিটাল বিক্রি';
+
+  @override
+  String get finance_rowCollected => 'বাকি আদায়';
+
+  @override
+  String get finance_rowMoneyIn => 'মোট এসেছে';
+
+  @override
+  String get finance_rowRestocks => 'রিস্টক';
+
+  @override
+  String get finance_rowMoneyOut => 'মোট গেছে';
+
+  @override
+  String get finance_rowCreditGiven => 'বাকিতে বিক্রি (এখনো পাওয়া যায়নি)';
+
+  @override
+  String get finance_outNote => 'খরচে শুধু রিস্টক ধরা হয়েছে।';
+
+  @override
+  String get finance_alertsTitle => 'সতর্কতা';
+
+  @override
+  String get finance_financingTitle => 'আপনার দোকানের জন্য ঋণ';
+
+  @override
+  String get finance_financingIntro => 'গত ৯০ দিনের বিক্রি দেখে মেলানো হয়েছে।';
+
+  @override
+  String get finance_fits => 'মেলে';
+
+  @override
+  String get finance_notYet => 'এখনো না';
+
+  @override
+  String finance_upTo(String amount) {
+    return 'সর্বোচ্চ প্রায় $amount';
+  }
+
+  @override
+  String get finance_kindSupplier => 'সাপ্লায়ারের কাছে বাকি';
+
+  @override
+  String get finance_kindSupplierSub =>
+      'এখন মাল নিন, ৩০ দিনে সাপ্লায়ারকে টাকা দিন';
+
+  @override
+  String get finance_kindWallet => 'মোবাইল ওয়ালেটের ছোট ঋণ';
+
+  @override
+  String get finance_kindWalletSub => 'ডিজিটাল বিক্রি দেখে দ্রুত ছোট ঋণ';
+
+  @override
+  String get finance_kindMicro => 'দোকানের ক্ষুদ্রঋণ';
+
+  @override
+  String get finance_kindMicroSub =>
+      'সাপ্তাহিক কিস্তি, নিয়মিত চলা ছোট দোকানের জন্য';
+
+  @override
+  String get finance_kindSme => 'ব্যাংকের SME ঋণ';
+
+  @override
+  String get finance_kindSmeSub => 'দোকান বড় করার জন্য বড় ঋণ';
+
+  @override
+  String finance_whySupplier(String amount) {
+    return 'আপনি মাসে প্রায় $amount-এর মাল তোলেন';
+  }
+
+  @override
+  String finance_whyWallet(String percent) {
+    return 'আপনার বিক্রির $percent ডিজিটালে';
+  }
+
+  @override
+  String finance_whyMicro(String weeks) {
+    return 'গত ১২ সপ্তাহের $weeks সপ্তাহে বিক্রি হয়েছে';
+  }
+
+  @override
+  String finance_whySme(String months, String percent) {
+    return '$months মাসের ব্যবসা, লাভের হার $percent';
+  }
+
+  @override
+  String finance_gapTrade(int months) {
+    final intl.NumberFormat monthsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String monthsString = monthsNumberFormat.format(months);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'আরও $monthsString মাস ব্যবসা চালিয়ে যান',
+      one: 'আরও ১ মাস ব্যবসা চালিয়ে যান',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get finance_gapRestock => 'আগে অ্যাপে রিস্টক লিখে রাখুন';
+
+  @override
+  String finance_gapWeeks(String needed, String have) {
+    return 'প্রতি ১২ সপ্তাহের $needed সপ্তাহে বিক্রি করুন (এখন $have)';
+  }
+
+  @override
+  String finance_gapDigital(String target, String have) {
+    return 'অন্তত $target বিক্রি ডিজিটালে নিন (এখন $have)';
+  }
+
+  @override
+  String finance_gapMargin(String target, String have) {
+    return 'লাভের হার $target করুন (এখন $have)';
+  }
+
+  @override
+  String get finance_gapCredit =>
+      'বাকি আদায় করে অর্ধেক মাসের বিক্রির নিচে আনুন';
+
+  @override
+  String get finance_disclaimer =>
+      'এগুলো মেলানো কীভাবে কাজ করে তা দেখানোর উদাহরণ, ঋণের প্রস্তাব নয়। আসল শর্তের জন্য ঋণদাতার সাথে কথা বলুন।';
+
+  @override
+  String get finance_loadError =>
+      'টাকার অবস্থা আনা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get finance_tipsAsk => 'EasySell AI থেকে পরামর্শ নিন';
+
+  @override
+  String get finance_tipsThinking => 'ভাবছে…';
+
+  @override
+  String get finance_tipsTitle => 'AI পরামর্শ';
+
+  @override
+  String get finance_tipsNote =>
+      'ওপরের হিসাব দেখে বলা। কিছু করার আগে মিলিয়ে নিন।';
+
+  @override
+  String get finance_tipsError => 'এখন পরামর্শ আনা যায়নি।';
 }

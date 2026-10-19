@@ -480,23 +480,22 @@ class _ProductTile extends StatelessWidget {
                         ),
                       ),
                     ],
+                    // Under the name, not beside the price: in the right-hand
+                    // column "0 pcs in stock" set that column's width, and with
+                    // a large phone font it left the name a sliver, broken
+                    // mid-word ("Powde / r").
+                    const SizedBox(height: 4),
+                    _StockText(product: product),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    Money.format(product.sellingPrice, currencyCode: currency),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _StockText(product: product),
-                ],
+              Text(
+                Money.format(product.sellingPrice, currencyCode: currency),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
@@ -581,7 +580,10 @@ class _ListSkeleton extends StatelessWidget {
       itemCount: 7,
       itemBuilder: (context, _) => const Padding(
         padding: EdgeInsets.only(bottom: 12),
-        child: Skeleton.card(height: 88),
+        // A tile with a subtitle is ~104 dp since the stock line moved under
+        // the name (name + subtitle + stock + 32 padding); 88 made the list
+        // jump when real rows replaced these.
+        child: Skeleton.card(height: 104),
       ),
     );
   }

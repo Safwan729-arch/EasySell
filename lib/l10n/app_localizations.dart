@@ -2779,6 +2779,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Blocked — turn on notifications in phone settings'**
   String get settings_expiryReminderBlocked;
+
+  /// No description provided for @finance_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Money health'**
+  String get finance_title;
+
+  /// No description provided for @finance_last7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get finance_last7Days;
+
+  /// No description provided for @finance_in.
+  ///
+  /// In en, this message translates to:
+  /// **'In'**
+  String get finance_in;
+
+  /// No description provided for @finance_out.
+  ///
+  /// In en, this message translates to:
+  /// **'Out'**
+  String get finance_out;
+
+  /// No description provided for @finance_net.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get finance_net;
+
+  /// No description provided for @finance_allGood.
+  ///
+  /// In en, this message translates to:
+  /// **'No money warnings this week'**
+  String get finance_allGood;
+
+  /// No description provided for @finance_alertOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} owes {amount} for {days} days'**
+  String finance_alertOverdue(String name, String amount, String days);
+
+  /// No description provided for @finance_alertOverdueMore.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{and 1 more customer is late} other{and {count} more customers are late}}'**
+  String finance_alertOverdueMore(int count);
+
+  /// No description provided for @finance_alertCashShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Restocks cost {amount} more than the money that came in'**
+  String finance_alertCashShort(String amount);
+
+  /// No description provided for @finance_alertCreditGrowing.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit owed went up {rise} this week (now {total})'**
+  String finance_alertCreditGrowing(String rise, String total);
+
+  /// No description provided for @finance_alertSalesDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales fell {percent} from the week before'**
+  String finance_alertSalesDrop(String percent);
+
+  /// No description provided for @finance_financingFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{See financing options for your shop} =1{1 financing option fits your shop} other{{count} financing options fit your shop}}'**
+  String finance_financingFooter(int count);
+
+  /// No description provided for @finance_rowCashSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash sales'**
+  String get finance_rowCashSales;
+
+  /// No description provided for @finance_rowDigitalSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Digital sales'**
+  String get finance_rowDigitalSales;
+
+  /// No description provided for @finance_rowCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit collected'**
+  String get finance_rowCollected;
+
+  /// No description provided for @finance_rowMoneyIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Money in'**
+  String get finance_rowMoneyIn;
+
+  /// No description provided for @finance_rowRestocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Restocks'**
+  String get finance_rowRestocks;
+
+  /// No description provided for @finance_rowMoneyOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Money out'**
+  String get finance_rowMoneyOut;
+
+  /// No description provided for @finance_rowCreditGiven.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold on credit (not paid yet)'**
+  String get finance_rowCreditGiven;
+
+  /// No description provided for @finance_outNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Money out counts restocks only.'**
+  String get finance_outNote;
+
+  /// No description provided for @finance_alertsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get finance_alertsTitle;
+
+  /// No description provided for @finance_financingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Financing for your shop'**
+  String get finance_financingTitle;
+
+  /// No description provided for @finance_financingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched from your last 90 days of sales.'**
+  String get finance_financingIntro;
+
+  /// No description provided for @finance_fits.
+  ///
+  /// In en, this message translates to:
+  /// **'Fits you'**
+  String get finance_fits;
+
+  /// No description provided for @finance_notYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get finance_notYet;
+
+  /// No description provided for @finance_upTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to about {amount}'**
+  String finance_upTo(String amount);
+
+  /// No description provided for @finance_kindSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier credit'**
+  String get finance_kindSupplier;
+
+  /// No description provided for @finance_kindSupplierSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Get stock now, pay the supplier in 30 days'**
+  String get finance_kindSupplierSub;
+
+  /// No description provided for @finance_kindWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile-wallet small loan'**
+  String get finance_kindWallet;
+
+  /// No description provided for @finance_kindWalletSub.
+  ///
+  /// In en, this message translates to:
+  /// **'A quick small loan based on your digital sales'**
+  String get finance_kindWalletSub;
+
+  /// No description provided for @finance_kindMicro.
+  ///
+  /// In en, this message translates to:
+  /// **'Microfinance shop loan'**
+  String get finance_kindMicro;
+
+  /// No description provided for @finance_kindMicroSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly repayments, for steady small shops'**
+  String get finance_kindMicroSub;
+
+  /// No description provided for @finance_kindSme.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank SME loan'**
+  String get finance_kindSme;
+
+  /// No description provided for @finance_kindSmeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'A bigger loan to grow the shop'**
+  String get finance_kindSmeSub;
+
+  /// No description provided for @finance_whySupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'You restock about {amount} a month'**
+  String finance_whySupplier(String amount);
+
+  /// No description provided for @finance_whyWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} of your sales are digital'**
+  String finance_whyWallet(String percent);
+
+  /// No description provided for @finance_whyMicro.
+  ///
+  /// In en, this message translates to:
+  /// **'You sold in {weeks} of the last 12 weeks'**
+  String finance_whyMicro(String weeks);
+
+  /// No description provided for @finance_whySme.
+  ///
+  /// In en, this message translates to:
+  /// **'{months} months of trading and a {percent} profit margin'**
+  String finance_whySme(String months, String percent);
+
+  /// No description provided for @finance_gapTrade.
+  ///
+  /// In en, this message translates to:
+  /// **'{months, plural, =1{Keep trading 1 more month} other{Keep trading {months} more months}}'**
+  String finance_gapTrade(int months);
+
+  /// No description provided for @finance_gapRestock.
+  ///
+  /// In en, this message translates to:
+  /// **'Record your restocks in the app first'**
+  String get finance_gapRestock;
+
+  /// No description provided for @finance_gapWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell in {needed} of every 12 weeks (now {have})'**
+  String finance_gapWeeks(String needed, String have);
+
+  /// No description provided for @finance_gapDigital.
+  ///
+  /// In en, this message translates to:
+  /// **'Take at least {target} of sales digitally (now {have})'**
+  String finance_gapDigital(String target, String have);
+
+  /// No description provided for @finance_gapMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach a {target} profit margin (now {have})'**
+  String finance_gapMargin(String target, String have);
+
+  /// No description provided for @finance_gapCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect credit until less than half a month\'s sales is owed'**
+  String get finance_gapCredit;
+
+  /// No description provided for @finance_disclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'These are examples that show how matching works, not loan offers. Ask a lender for real terms.'**
+  String get finance_disclaimer;
+
+  /// No description provided for @finance_loadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load money health. Check your connection and try again.'**
+  String get finance_loadError;
+
+  /// No description provided for @finance_tipsAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Get advice from EasySell AI'**
+  String get finance_tipsAsk;
+
+  /// No description provided for @finance_tipsThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking…'**
+  String get finance_tipsThinking;
+
+  /// No description provided for @finance_tipsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI advice'**
+  String get finance_tipsTitle;
+
+  /// No description provided for @finance_tipsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on the numbers above. Check them before you act.'**
+  String get finance_tipsNote;
+
+  /// No description provided for @finance_tipsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get advice right now.'**
+  String get finance_tipsError;
 }
 
 class _AppLocalizationsDelegate

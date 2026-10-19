@@ -23,6 +23,7 @@ import '../../analytics/domain/analytics.dart';
 import '../../analytics/presentation/analytics_controller.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../expiry/presentation/expiry_alerts_card.dart';
+import '../../finance/presentation/money_health_card.dart';
 import '../../restock/presentation/restock_card.dart';
 import '../../transactions/presentation/sales_providers.dart';
 import 'receivables_card.dart';
@@ -218,9 +219,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              const Entrance(index: 3, child: ReceivablesCard()),
+              const Entrance(index: 3, child: MoneyHealthCard()),
+              const Entrance(index: 4, child: ReceivablesCard()),
               Entrance(
-                index: 4,
+                index: 5,
                 child: _WeeklySalesCard(
                   seriesAsync: seriesAsync,
                   currency: currency,
@@ -231,13 +233,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               // section label rather than a Card, so without this it sits flush
               // on the chart card's border above it.
               const SizedBox(height: 20),
-              Entrance(index: 5, child: _TopPerformer(currency: currency)),
+              Entrance(index: 6, child: _TopPerformer(currency: currency)),
               const SizedBox(height: 16),
               // Restock soon also covers products at their reorder level: the
               // separate Low stock card said "fully stocked" right under
               // "4 items to restock" (merged 2026-10-15, restock spec §10).
-              const Entrance(index: 6, child: RestockSoonCard()),
-              const Entrance(index: 7, child: ExpiryAlertsCard()),
+              const Entrance(index: 7, child: RestockSoonCard()),
+              const Entrance(index: 8, child: ExpiryAlertsCard()),
             ],
           ),
         ),

@@ -1667,4 +1667,226 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settings_expiryReminderBlocked =>
       'Blocked — turn on notifications in phone settings';
+
+  @override
+  String get finance_title => 'Money health';
+
+  @override
+  String get finance_last7Days => 'Last 7 days';
+
+  @override
+  String get finance_in => 'In';
+
+  @override
+  String get finance_out => 'Out';
+
+  @override
+  String get finance_net => 'Net';
+
+  @override
+  String get finance_allGood => 'No money warnings this week';
+
+  @override
+  String finance_alertOverdue(String name, String amount, String days) {
+    return '$name owes $amount for $days days';
+  }
+
+  @override
+  String finance_alertOverdueMore(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'and $countString more customers are late',
+      one: 'and 1 more customer is late',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String finance_alertCashShort(String amount) {
+    return 'Restocks cost $amount more than the money that came in';
+  }
+
+  @override
+  String finance_alertCreditGrowing(String rise, String total) {
+    return 'Credit owed went up $rise this week (now $total)';
+  }
+
+  @override
+  String finance_alertSalesDrop(String percent) {
+    return 'Sales fell $percent from the week before';
+  }
+
+  @override
+  String finance_financingFooter(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString financing options fit your shop',
+      one: '1 financing option fits your shop',
+      zero: 'See financing options for your shop',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get finance_rowCashSales => 'Cash sales';
+
+  @override
+  String get finance_rowDigitalSales => 'Digital sales';
+
+  @override
+  String get finance_rowCollected => 'Credit collected';
+
+  @override
+  String get finance_rowMoneyIn => 'Money in';
+
+  @override
+  String get finance_rowRestocks => 'Restocks';
+
+  @override
+  String get finance_rowMoneyOut => 'Money out';
+
+  @override
+  String get finance_rowCreditGiven => 'Sold on credit (not paid yet)';
+
+  @override
+  String get finance_outNote => 'Money out counts restocks only.';
+
+  @override
+  String get finance_alertsTitle => 'Warnings';
+
+  @override
+  String get finance_financingTitle => 'Financing for your shop';
+
+  @override
+  String get finance_financingIntro =>
+      'Matched from your last 90 days of sales.';
+
+  @override
+  String get finance_fits => 'Fits you';
+
+  @override
+  String get finance_notYet => 'Not yet';
+
+  @override
+  String finance_upTo(String amount) {
+    return 'Up to about $amount';
+  }
+
+  @override
+  String get finance_kindSupplier => 'Supplier credit';
+
+  @override
+  String get finance_kindSupplierSub =>
+      'Get stock now, pay the supplier in 30 days';
+
+  @override
+  String get finance_kindWallet => 'Mobile-wallet small loan';
+
+  @override
+  String get finance_kindWalletSub =>
+      'A quick small loan based on your digital sales';
+
+  @override
+  String get finance_kindMicro => 'Microfinance shop loan';
+
+  @override
+  String get finance_kindMicroSub =>
+      'Weekly repayments, for steady small shops';
+
+  @override
+  String get finance_kindSme => 'Bank SME loan';
+
+  @override
+  String get finance_kindSmeSub => 'A bigger loan to grow the shop';
+
+  @override
+  String finance_whySupplier(String amount) {
+    return 'You restock about $amount a month';
+  }
+
+  @override
+  String finance_whyWallet(String percent) {
+    return '$percent of your sales are digital';
+  }
+
+  @override
+  String finance_whyMicro(String weeks) {
+    return 'You sold in $weeks of the last 12 weeks';
+  }
+
+  @override
+  String finance_whySme(String months, String percent) {
+    return '$months months of trading and a $percent profit margin';
+  }
+
+  @override
+  String finance_gapTrade(int months) {
+    final intl.NumberFormat monthsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String monthsString = monthsNumberFormat.format(months);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'Keep trading $monthsString more months',
+      one: 'Keep trading 1 more month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get finance_gapRestock => 'Record your restocks in the app first';
+
+  @override
+  String finance_gapWeeks(String needed, String have) {
+    return 'Sell in $needed of every 12 weeks (now $have)';
+  }
+
+  @override
+  String finance_gapDigital(String target, String have) {
+    return 'Take at least $target of sales digitally (now $have)';
+  }
+
+  @override
+  String finance_gapMargin(String target, String have) {
+    return 'Reach a $target profit margin (now $have)';
+  }
+
+  @override
+  String get finance_gapCredit =>
+      'Collect credit until less than half a month\'s sales is owed';
+
+  @override
+  String get finance_disclaimer =>
+      'These are examples that show how matching works, not loan offers. Ask a lender for real terms.';
+
+  @override
+  String get finance_loadError =>
+      'Couldn\'t load money health. Check your connection and try again.';
+
+  @override
+  String get finance_tipsAsk => 'Get advice from EasySell AI';
+
+  @override
+  String get finance_tipsThinking => 'Thinking…';
+
+  @override
+  String get finance_tipsTitle => 'AI advice';
+
+  @override
+  String get finance_tipsNote =>
+      'Based on the numbers above. Check them before you act.';
+
+  @override
+  String get finance_tipsError => 'Couldn\'t get advice right now.';
 }
