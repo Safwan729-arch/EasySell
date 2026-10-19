@@ -130,6 +130,41 @@ excludes everything from cloud backup and phone-to-phone transfer (on Android
 - New widget tests: a failed payment shows its error in the sheet; an unchanged
   retry re-sends the same id; a changed amount sends a new one.
 
+## Second pass (same day, after deploy)
+
+This pass probed the **live** project from outside with only the public anon
+key, which is what anyone who unpacks the APK can do. The probes were
+read-only: `probe.mjs`/`probe2.mjs` in that session's scratchpad.
+
+- **Every table returns 0 rows to the anon key**, even with demo data present,
+  so live RLS matches the migrations. RPCs called with a foreign shop id return
+  zeros or empty. The schema listing (`/rest/v1/`) is refused, and there are no
+  storage buckets.
+- **The three AI functions answer 401 to the anon key** in production.
+- **Anonymous (guest) sign-ins are ON in the live Auth settings.** The guest
+  button is debug-only, but the setting is server-side, so anyone with the anon
+  key can mint a guest session and write rows to a shop of their own. That is
+  not a leak, since RLS still isolates it, but it is an open door. The AI
+  functions already refuse `is_anonymous`. **Action for the owner:** turn it
+  off under Authentication → Sign In / Providers → Anonymous sign-ins.
+- **The `insights` and `trend_data` tables do not exist** (Member B never
+  shipped them). Settings → "AI insights" / "Trends" handle the missing table
+  and show "No insights yet" / "No trends yet", not an error. These are empty
+  screens a judge could open.
+- **Fixed:** money-tips validated `lang` with `in`, which also matches
+  inherited names (`"toString"` passed and put a function's source in the
+  prompt). Now `Object.hasOwn`.
+- Also checked and clean:
+  - no dynamic SQL (`execute`/`format`) and no string-built PostgREST filters
+  - the only `debugPrint` is guarded by `kDebugMode`
+  - voice and scan results only fill the cart, so saving still needs the
+    checkout tap
+  - the cart, discount and expiry reminders reset when the signed-in shop
+    changes
+  - the product form refuses negative prices and amounts
+  - restock is retry-safe
+  - no key, keystore or `.env` anywhere in git history
+
 ## Deploy order
 
 1. Paste `0020_local_day_and_payment_retry.sql` into the SQL editor **before**
