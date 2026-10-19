@@ -21,7 +21,7 @@ reasoning.
 
 ## Core project docs
 - [[CLAUDE.md]] — ownership, DB schema, `record_sale` RPC contract, RLS, working agreements
-- [[README]] — Flutter boilerplate pointers
+- [[README]] — the public front page: pitch, APK download, features in click-to-open sections, Mermaid architecture, evidence, setup, roadmap. [[2026-10-20-public-readme-design|Why it is built that way]] (2026-10-20): **no demo password in the public README; every number copied from the evidence pack; diagrams test-rendered before pushing**
 - [[RUN]] — run the app against Supabase (`dart_defines.json`, build commands)
 - [[hackathon/easysell-project-brief|Hackathon project brief]] (2026-10-18) — everything the 10-slide Topic E deck needs, pitched **internationally** (Bangladesh = first market); the business plan restated in US$ at ৳123 = $1, with sourced global market figures
 - [[hackathon/easysell-project-overview|Hackathon project overview]] + [[hackathon/easysell-demo-video-script|5-min demo video script]] (2026-10-18) — feature-by-feature overview to hand to Claude Chat, and a 10-scene timed script (problem → voice/camera selling → analysis → Money health → AI advice → financing → tools). **Record with `supabase/seed/demo_data.sql` loaded; its 5 weeks of sales make every loan "Not yet" (supplier credit needs 3 months), so the script says so on purpose**
