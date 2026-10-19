@@ -92,6 +92,7 @@ reasoning.
 - [[2026-07-11-bengali-localization-design|Design]] / [[2026-07-11-bengali-localization|Plan]] — Bengali translation + in-app language switcher
 
 ## Settings
+- [[2026-10-20-dark-mode-default-design|Design]] (no plan) — a fresh install opens in **dark** mode; only an explicit stored `light` gives Light, so existing Light users keep it. **The Android launch screen was white and is now dark navy `#07112E`**, otherwise every cold start flashed white
 - [[2026-10-20-remove-insights-trends-design|Design]] (no plan) — the Settings "Assistant" section ("AI Insights", "Trends") and both screens removed: their `insights` / `trend_data` tables never existed, so the screens were always empty. **Records why not to hide them behind a flag instead**, and that `CLAUDE.md` still mentions them on purpose
 
 ## Reliability
