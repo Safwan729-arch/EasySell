@@ -289,7 +289,7 @@ shop's ID returned nothing.
 
 ## 9. Testing and proof
 
-- **710 automated tests in 125 test files, all passing**; the Dart analyzer
+- **715 automated tests in 126 test files, all passing**; the Dart analyzer
   reports no issues.
 - Logic tests (money rules, warnings, financing, discount split, restock,
   expiry), screen tests (checkout, cart, voice review, scan tray, history,

@@ -34,6 +34,10 @@ raw results that produced every number are in `docs/hackathon/evidence/`.
   images up to 1,120 tokens), clearly labelled as such.
 - **No Deno on this machine**, so the parse-sale Deno unit test was not re-run.
   Its Bangla fraction fix (আড়াই → 2.5, দেড় → 1.5) was shown live instead.
+- **The rtk shell wrapper shortens `git log` output**, which made the first
+  version of the doc claim "50 commits from 14 Oct". The real history is 277
+  commits from 9 Jul 2026. Count commits with `git rev-list --count HEAD`, or
+  run `git log` through `rtk proxy`.
 
 ## Results worth remembering (19 Oct 2026)
 
@@ -43,4 +47,8 @@ raw results that produced every number are in `docs/hackathon/evidence/`.
   which hints the vision prompt under-weights brand-only matches.
 - Median 2.0 s voice, 2.1 s camera. Estimated US$0.0013 per voice sale and
   US$0.0023 per photo (US$0.0046 after Gemini 3.6 Flash's 1 Jan 2027 price rise).
-- Money safety 7/7 (10/10 races), security 13/13, deployment 8/8, tests 710/710.
+- Money safety 7/7 (10/10 races), security 13/13, deployment 8/8, tests 710/710
+  (re-run on 20 Oct after the dark-mode default: 715/715, 126 test files).
+- Before the repo went public (20 Oct) the whole git history was scanned: no
+  keys, tokens or passwords. The owner's email appears in old SQL comments and
+  as the commit author address.
