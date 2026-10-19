@@ -1,0 +1,145 @@
+{
+  "ranAt": "2026-10-19T17:45:28.964Z",
+  "passed": 7,
+  "total": 7,
+  "results": [
+    {
+      "name": "Two sales race for the last unit (10 rounds)",
+      "pass": true,
+      "roundsWithExactlyOneSale": 10,
+      "lowestStock": 0,
+      "saleRowsSaved": 10,
+      "refusalMessage": "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+    },
+    {
+      "name": "A retried sale is saved once",
+      "pass": true,
+      "firstCall": 200,
+      "retryCall": 200,
+      "rowsForThatSale": 1,
+      "stockAfter": 3,
+      "stockBefore": 5
+    },
+    {
+      "name": "A cart is all or nothing",
+      "pass": true,
+      "callStatus": 400,
+      "message": "Insufficient stock for Evidence Cola 500ml: have 3.000, need 99",
+      "chipsStockBefore": 10,
+      "chipsStockAfter": 10,
+      "chipsSaleRows": 0
+    },
+    {
+      "name": "Stock can never go below zero",
+      "pass": true,
+      "directWriteStatus": 400,
+      "message": "new row for relation \"products\" violates check constraint \"products_quantity_check\"",
+      "stockAfter": 10
+    },
+    {
+      "name": "A price change never rewrites past sales",
+      "pass": true,
+      "priceWhenSold": 40,
+      "priceNow": 99
+    },
+    {
+      "name": "A retried credit payment is saved once",
+      "pass": true,
+      "creditSale": 40,
+      "paymentCalls": [
+        200,
+        200
+      ],
+      "paymentRows": 1,
+      "stillOwed": 15
+    },
+    {
+      "name": "A payment larger than the debt is refused",
+      "pass": true,
+      "callStatus": 400,
+      "message": "Payment exceeds balance: owes 15.00"
+    }
+  ],
+  "raceRounds": [
+    {
+      "round": 1,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 2,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 3,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 4,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 5,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 6,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 7,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 8,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 9,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    },
+    {
+      "round": 10,
+      "succeeded": 1,
+      "refused": [
+        "Insufficient stock for Evidence Cola 500ml: have 0.000, need 1"
+      ],
+      "stockAfter": 0
+    }
+  ]
+}

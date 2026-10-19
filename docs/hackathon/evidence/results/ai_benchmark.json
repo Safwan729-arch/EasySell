@@ -1,0 +1,807 @@
+{
+  "summary": {
+    "ranAt": "2026-10-19T17:43:54.856Z",
+    "voice": {
+      "sentences": 20,
+      "allRight": 19,
+      "items": 33,
+      "productRight": 33,
+      "quantityRight": 32,
+      "english": "9/10",
+      "bangla": "10/10",
+      "medianMs": 1968,
+      "maxMs": 2618
+    },
+    "scan": {
+      "photos": 13,
+      "right": 12,
+      "products": "10/11",
+      "notSold": "2/2",
+      "medianMs": 2093,
+      "maxMs": 4797
+    },
+    "cost": {
+      "voicePerSale": 0.001280644,
+      "scanPerPhotoNow": 0.002284125,
+      "scanPerPhoto2027": 0.00456825,
+      "assumptions": "text ≈ chars/4; audio 32 tokens/s; image ≤1,120 tokens; ~250 output tokens (voice), ~200 (scan); Flash-Lite US$0.30/2.50 per M; 3.6 Flash US$0.75/3.75 per M (US$1.50/7.50 from 1 Jan 2027)"
+    }
+  },
+  "voice": [
+    {
+      "n": 1,
+      "lang": "en",
+      "said": "Two Pepsi and one kilo of onion",
+      "seconds": 2.8,
+      "status": 200,
+      "ms": 2449,
+      "heard": "2 pepsi and 1 kg of onion",
+      "checks": [
+        {
+          "want": "Pepsi",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Onion",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Pepsi",
+          "quantity": 2
+        },
+        {
+          "product": "Onion",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "lang": "en",
+      "said": "Three Lux soap",
+      "seconds": 1.5,
+      "status": 200,
+      "ms": 1860,
+      "heard": "3 lux soap",
+      "checks": [
+        {
+          "want": "Lux Soap",
+          "qty": 3,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Lux Soap",
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "lang": "en",
+      "said": "Give me five eggs and one bread",
+      "seconds": 2.5,
+      "status": 200,
+      "ms": 2298,
+      "heard": "Give me five eggs and one bread",
+      "checks": [
+        {
+          "want": "Farm Eggs",
+          "qty": 5,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Sandwich Bread",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Farm Eggs",
+          "quantity": 5
+        },
+        {
+          "product": "Sandwich Bread",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "lang": "en",
+      "said": "One litre Teer soyabean oil",
+      "seconds": 2.6,
+      "status": 200,
+      "ms": 1878,
+      "heard": "1 liter Teer soyabean oil",
+      "checks": [
+        {
+          "want": "Soyabean Oil",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Soyabean Oil",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "lang": "en",
+      "said": "Half kg garlic and two kg potato",
+      "seconds": 3.8,
+      "status": 200,
+      "ms": 1973,
+      "heard": "Half kilogram garlic and two kilograms potato",
+      "checks": [
+        {
+          "want": "Garlic",
+          "qty": 0.5,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Potato",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Garlic",
+          "quantity": 0.5
+        },
+        {
+          "product": "Potato",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "lang": "en",
+      "said": "Two packets Mr Noodles and one Dairy Milk",
+      "seconds": 3.5,
+      "status": 200,
+      "ms": 1921,
+      "heard": "two packets Mr. Noodles and one Dairy Milk",
+      "checks": [
+        {
+          "want": "Mr. Noodles",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Dairy Milk",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Mr. Noodles",
+          "quantity": 2
+        },
+        {
+          "product": "Dairy Milk",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "lang": "en",
+      "said": "One Harpic and two Vim bar",
+      "seconds": 2.3,
+      "status": 200,
+      "ms": 2618,
+      "heard": "One Harpic and two Vim Bar",
+      "checks": [
+        {
+          "want": "Harpic",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Vim Bar",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Harpic",
+          "quantity": 1
+        },
+        {
+          "product": "Vim Bar",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "lang": "en",
+      "said": "Four Mum water",
+      "seconds": 1.5,
+      "status": 200,
+      "ms": 1899,
+      "heard": "Mum Water",
+      "checks": [
+        {
+          "want": "Mum Water",
+          "qty": 4,
+          "productOk": true,
+          "quantityOk": false
+        }
+      ],
+      "extraItems": 0,
+      "allRight": false,
+      "returned": [
+        {
+          "product": "Mum Water",
+          "quantity": null
+        }
+      ]
+    },
+    {
+      "n": 9,
+      "lang": "en",
+      "said": "One kg sugar, one salt and one tea",
+      "seconds": 3.7,
+      "status": 200,
+      "ms": 2111,
+      "heard": "1 kilogram sugar, 1 salt and 1 tea",
+      "checks": [
+        {
+          "want": "Sugar",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Salt",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Tea",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Sugar",
+          "quantity": 1
+        },
+        {
+          "product": "Salt",
+          "quantity": 1
+        },
+        {
+          "product": "Tea",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 10,
+      "lang": "en",
+      "said": "Two Coca-Cola and three Sprite",
+      "seconds": 2.7,
+      "status": 200,
+      "ms": 1838,
+      "heard": "2 Coca-Cola and 3 Sprite",
+      "checks": [
+        {
+          "want": "Coca-Cola",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Sprite",
+          "qty": 3,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Coca-Cola",
+          "quantity": 2
+        },
+        {
+          "product": "Sprite",
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "n": 11,
+      "lang": "bn",
+      "said": "দুইটা পেপসি আর এক কেজি পেঁয়াজ",
+      "seconds": 3.3,
+      "status": 200,
+      "ms": 1914,
+      "heard": "দুইটা পেপসি আর এক কেজি পেঁয়াজ",
+      "checks": [
+        {
+          "want": "Pepsi",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Onion",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Pepsi",
+          "quantity": 2
+        },
+        {
+          "product": "Onion",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 12,
+      "lang": "bn",
+      "said": "তিনটা লাক্স সাবান",
+      "seconds": 2,
+      "status": 200,
+      "ms": 1893,
+      "heard": "তিনটা লাক্স সাবান",
+      "checks": [
+        {
+          "want": "Lux Soap",
+          "qty": 3,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Lux Soap",
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "n": 13,
+      "lang": "bn",
+      "said": "পাঁচটা ডিম আর একটা পাউরুটি",
+      "seconds": 2.9,
+      "status": 200,
+      "ms": 1925,
+      "heard": "পাঁচটা ডিম আর একটা পাউরুটি",
+      "checks": [
+        {
+          "want": "Farm Eggs",
+          "qty": 5,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Sandwich Bread",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Farm Eggs",
+          "quantity": 5
+        },
+        {
+          "product": "Sandwich Bread",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 14,
+      "lang": "bn",
+      "said": "আড়াই কেজি আলু",
+      "seconds": 1.8,
+      "status": 200,
+      "ms": 2184,
+      "heard": "আড়াই কেজি আলু",
+      "checks": [
+        {
+          "want": "Potato",
+          "qty": 2.5,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Potato",
+          "quantity": 2.5
+        }
+      ]
+    },
+    {
+      "n": 15,
+      "lang": "bn",
+      "said": "দেড় কেজি মসুর ডাল",
+      "seconds": 2.3,
+      "status": 200,
+      "ms": 1952,
+      "heard": "দেড় কেজি মসুর ডাল",
+      "checks": [
+        {
+          "want": "Masoor Dal",
+          "qty": 1.5,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Masoor Dal",
+          "quantity": 1.5
+        }
+      ]
+    },
+    {
+      "n": 16,
+      "lang": "bn",
+      "said": "একটা হারপিক আর দুইটা ভিম বার",
+      "seconds": 3.1,
+      "status": 200,
+      "ms": 2137,
+      "heard": "একটা হারপিক আর দুইটা ভিম বার",
+      "checks": [
+        {
+          "want": "Harpic",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Vim Bar",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Harpic",
+          "quantity": 1
+        },
+        {
+          "product": "Vim Bar",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "n": 17,
+      "lang": "bn",
+      "said": "দুই প্যাকেট চানাচুর",
+      "seconds": 2.1,
+      "status": 200,
+      "ms": 2074,
+      "heard": "দুই প্যাকেট ছানাচুর",
+      "checks": [
+        {
+          "want": "Chanachur",
+          "qty": 2,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Chanachur",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "n": 18,
+      "lang": "bn",
+      "said": "এক কেজি চিনি আর এক প্যাকেট লবণ",
+      "seconds": 3.4,
+      "status": 200,
+      "ms": 2001,
+      "heard": "এক কেজি চিনি আর এক প্যাকেট লবণ",
+      "checks": [
+        {
+          "want": "Sugar",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Salt",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Sugar",
+          "quantity": 1
+        },
+        {
+          "product": "Salt",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "n": 19,
+      "lang": "bn",
+      "said": "চারটা মজো",
+      "seconds": 1.5,
+      "status": 200,
+      "ms": 1952,
+      "heard": "চারটা মojo",
+      "checks": [
+        {
+          "want": "Mojo",
+          "qty": 4,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Mojo",
+          "quantity": 4
+        }
+      ]
+    },
+    {
+      "n": 20,
+      "lang": "bn",
+      "said": "আধা কেজি রসুন আর এক কেজি টমেটো",
+      "seconds": 3.5,
+      "status": 200,
+      "ms": 1968,
+      "heard": "আধা কেজি রসুন আর এক কেজি টমেটো",
+      "checks": [
+        {
+          "want": "Garlic",
+          "qty": 0.5,
+          "productOk": true,
+          "quantityOk": true
+        },
+        {
+          "want": "Tomato",
+          "qty": 1,
+          "productOk": true,
+          "quantityOk": true
+        }
+      ],
+      "extraItems": 0,
+      "allRight": true,
+      "returned": [
+        {
+          "product": "Garlic",
+          "quantity": 0.5
+        },
+        {
+          "product": "Tomato",
+          "quantity": 1
+        }
+      ]
+    }
+  ],
+  "scan": [
+    {
+      "photo": "coca_cola",
+      "expected": "Coca-Cola",
+      "status": 200,
+      "ms": 1856,
+      "result": "match",
+      "top": "Coca-Cola",
+      "read": "Coca-Cola Coca-Cola 0,2L",
+      "ok": true,
+      "kb": 54
+    },
+    {
+      "photo": "pepsi",
+      "expected": "Pepsi",
+      "status": 200,
+      "ms": 2184,
+      "result": "match",
+      "top": "Pepsi",
+      "read": "PEPSI Pepsi",
+      "ok": true,
+      "kb": 96
+    },
+    {
+      "photo": "lifebuoy",
+      "expected": "Lifebuoy Soap",
+      "status": 200,
+      "ms": 2271,
+      "result": "match",
+      "top": "Lifebuoy Soap",
+      "read": "LIFEBUOY ROYAL DISINFECTANT SOAP",
+      "ok": true,
+      "kb": 248
+    },
+    {
+      "photo": "lux",
+      "expected": "Lux Soap",
+      "status": 200,
+      "ms": 2093,
+      "result": "match",
+      "top": "Lux Soap",
+      "read": "Lux Soap",
+      "ok": true,
+      "kb": 41
+    },
+    {
+      "photo": "dairy_milk",
+      "expected": "Dairy Milk",
+      "status": 200,
+      "ms": 2218,
+      "result": "match",
+      "top": "Dairy Milk",
+      "read": "Cadbury Dairy Milk",
+      "ok": true,
+      "kb": 134
+    },
+    {
+      "photo": "pepsodent",
+      "expected": "Toothpaste",
+      "status": 200,
+      "ms": 1957,
+      "result": "none",
+      "top": null,
+      "read": "Pepsodent Toothpaste",
+      "ok": false,
+      "kb": 115
+    },
+    {
+      "photo": "parachute",
+      "expected": "Coconut Oil",
+      "status": 200,
+      "ms": 4797,
+      "result": "match",
+      "top": "Coconut Oil",
+      "read": "Parachute 100% Pure Coconut Oil",
+      "ok": true,
+      "kb": 122
+    },
+    {
+      "photo": "eggs",
+      "expected": "Farm Eggs",
+      "status": 200,
+      "ms": 2051,
+      "result": "match",
+      "top": "Farm Eggs",
+      "read": "",
+      "ok": true,
+      "kb": 334
+    },
+    {
+      "photo": "onion",
+      "expected": "Onion",
+      "status": 200,
+      "ms": 2026,
+      "result": "match",
+      "top": "Onion",
+      "read": "Onion",
+      "ok": true,
+      "kb": 235
+    },
+    {
+      "photo": "tomato",
+      "expected": "Tomato",
+      "status": 200,
+      "ms": 2139,
+      "result": "match",
+      "top": "Tomato",
+      "read": "Tomato",
+      "ok": true,
+      "kb": 90
+    },
+    {
+      "photo": "garlic",
+      "expected": "Garlic",
+      "status": 200,
+      "ms": 2351,
+      "result": "match",
+      "top": "Garlic",
+      "read": "",
+      "ok": true,
+      "kb": 104
+    },
+    {
+      "photo": "banana_none",
+      "expected": null,
+      "status": 200,
+      "ms": 2015,
+      "result": "none",
+      "top": null,
+      "read": "",
+      "ok": true,
+      "kb": 158
+    },
+    {
+      "photo": "babyruth_none",
+      "expected": null,
+      "status": 200,
+      "ms": 2008,
+      "result": "none",
+      "top": null,
+      "read": "Nestle Baby Ruth 2.1 OZ",
+      "ok": true,
+      "kb": 85
+    }
+  ]
+}

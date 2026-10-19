@@ -1,0 +1,14 @@
+# key | Wikimedia Commons file (https://commons.wikimedia.org/wiki/File:<name>)
+coca_cola | 15-09-26-RalfR-WLC-0098 - Coca-Cola glass bottle (Germany).jpg
+pepsi | A bottle of Pepsi 2024-11-29.jpg
+lifebuoy | Lifebuoy Royal Disinfectant Soap.jpg
+lux | Lux soap.jpg
+dairy_milk | Cadbury Dairy Milk -Mini Bar- (3951105262).jpg
+pepsodent | Pepsodent tube rear 2016.jpg
+parachute | Parachute coconut oil 25ml.jpg
+eggs | Eggs in basket 2020 G1.jpg
+onion | Red Onions.jpg
+tomato | Tomato je.jpg
+garlic | Garlic bulbs and cloves.jpg
+banana_none | Bunch of bananas on sale.jpg
+babyruth_none | Baby Ruth candy bar.jpg

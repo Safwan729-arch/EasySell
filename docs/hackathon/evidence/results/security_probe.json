@@ -1,0 +1,182 @@
+{
+  "ranAt": "2026-10-19T17:46:15.003Z",
+  "passed": 13,
+  "total": 13,
+  "results": [
+    {
+      "part": 1,
+      "name": "Every table returns 0 rows to the public key",
+      "pass": true,
+      "tables": 10,
+      "rowsVisible": 0
+    },
+    {
+      "part": 1,
+      "name": "The database schema listing is not public",
+      "pass": true,
+      "status": 401
+    },
+    {
+      "part": 1,
+      "name": "parse-sale: refused without sign-in",
+      "pass": true,
+      "noToken": 401,
+      "publicKey": 401
+    },
+    {
+      "part": 1,
+      "name": "recognize-product: refused without sign-in",
+      "pass": true,
+      "noToken": 401,
+      "publicKey": 401
+    },
+    {
+      "part": 1,
+      "name": "money-tips: refused without sign-in",
+      "pass": true,
+      "noToken": 401,
+      "publicKey": 401
+    },
+    {
+      "part": 1,
+      "name": "Guest (anonymous) sign-in is off",
+      "pass": true,
+      "status": 422,
+      "message": "Anonymous sign-ins are disabled"
+    },
+    {
+      "part": 1,
+      "name": "No file storage is open to the public",
+      "pass": true,
+      "status": 200,
+      "buckets": 0
+    },
+    {
+      "part": 2,
+      "name": "Shop B reads shop A's tables: 0 rows",
+      "pass": true,
+      "aOwnRows": 2,
+      "bSees": [
+        {
+          "table": "shops",
+          "rows": 0
+        },
+        {
+          "table": "products",
+          "rows": 0
+        },
+        {
+          "table": "transactions",
+          "rows": 0
+        },
+        {
+          "table": "customers",
+          "rows": 0
+        },
+        {
+          "table": "customer_ledger",
+          "rows": 0
+        }
+      ]
+    },
+    {
+      "part": 2,
+      "name": "Shop B asks for shop A's dashboard: all zeros",
+      "pass": true,
+      "status": 200,
+      "revenueSeen": 0
+    },
+    {
+      "part": 2,
+      "name": "Shop B tries to record a sale in shop A: refused",
+      "pass": true,
+      "status": 400,
+      "message": "Product not found",
+      "aStockBefore": 3,
+      "aStockAfter": 3
+    },
+    {
+      "part": 2,
+      "name": "Shop B tries to change shop A's price: nothing changes",
+      "pass": true,
+      "status": 200,
+      "rowsChanged": 0,
+      "aPriceAfter": 99
+    },
+    {
+      "part": 2,
+      "name": "Shop B tries to add a product to shop A: refused",
+      "pass": true,
+      "status": 403,
+      "message": "new row violates row-level security policy for table \"products\""
+    },
+    {
+      "part": 2,
+      "name": "Oversized AI request refused before reaching Gemini",
+      "pass": true,
+      "status": 413
+    }
+  ],
+  "tableReads": [
+    {
+      "table": "users",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "shops",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "products",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "transactions",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "customers",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "customer_ledger",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "product_batches",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "categories",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "analytics_daily",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    },
+    {
+      "table": "notifications",
+      "status": 200,
+      "rows": 0,
+      "total": "*/0"
+    }
+  ]
+}

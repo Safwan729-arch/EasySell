@@ -1,0 +1,60 @@
+{
+  "ranAt": "2026-10-19T17:49:25.920Z",
+  "passed": 8,
+  "total": 8,
+  "results": [
+    {
+      "area": "auth",
+      "name": "Sign-in service is up, email sign-in on, guest sign-in off",
+      "pass": true,
+      "status": 200,
+      "email": true,
+      "guest": false
+    },
+    {
+      "area": "database",
+      "name": "Migration 0020: get_dashboard_summary answers with its newest parameters",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "area": "database",
+      "name": "Migration 0020: get_sales_series answers with its newest parameters",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "area": "database",
+      "name": "Migration 0019: get_finance_health answers with its newest parameters",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "area": "database",
+      "name": "Migration 0017: get_restock_speeds answers with its newest parameters",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "area": "ai",
+      "name": "parse-sale is deployed and answers a signed-in user",
+      "pass": true,
+      "status": 200,
+      "ms": 163
+    },
+    {
+      "area": "ai",
+      "name": "recognize-product is deployed and checks its input",
+      "pass": true,
+      "status": 400,
+      "message": "image_base64 and candidates are required"
+    },
+    {
+      "area": "ai",
+      "name": "money-tips is deployed with the 19 Oct language fix",
+      "pass": true,
+      "status": 400,
+      "message": "lang must be 'en' or 'bn'"
+    }
+  ]
+}
