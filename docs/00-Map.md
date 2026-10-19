@@ -25,6 +25,7 @@ reasoning.
 - [[RUN]] — run the app against Supabase (`dart_defines.json`, build commands)
 - [[hackathon/easysell-project-brief|Hackathon project brief]] (2026-10-18) — everything the 10-slide Topic E deck needs, pitched **internationally** (Bangladesh = first market); the business plan restated in US$ at ৳123 = $1, with sourced global market figures
 - [[hackathon/easysell-project-overview|Hackathon project overview]] + [[hackathon/easysell-demo-video-script|5-min demo video script]] (2026-10-18) — feature-by-feature overview to hand to Claude Chat, and a 10-scene timed script (problem → voice/camera selling → analysis → Money health → AI advice → financing → tools). **Record with `supabase/seed/demo_data.sql` loaded; its 5 weeks of sales make every loan "Not yet" (supplier credit needs 3 months), so the script says so on purpose**
+- [[2026-10-19-execution-evidence-design|Execution evidence]] (2026-10-19) — the optional hackathon deliverable: live AI benchmark (voice 19/20, Bangla 10/10; camera 12/13), money-safety races, outside security probe, fresh test run and deployment checks, all re-runnable from `docs/hackathon/evidence/`. **Records why throwaway test accounts were used (demo shop untouched; 2 test logins remain in Auth), that cost is estimated (the AI functions return no token counts), and the TTS/Commons gotchas** (Google `translate_tts` is the only Bangla voice that worked)
 - [[claude_code_kickoff_prompt]] — the original project-kickoff prompt (historical, rarely needed)
 - Supabase
   - [[supabase/README|Supabase project setup]] — hosted project + applying `migrations/0001_init.sql`
@@ -89,6 +90,9 @@ reasoning.
 
 ## Localization
 - [[2026-07-11-bengali-localization-design|Design]] / [[2026-07-11-bengali-localization|Plan]] — Bengali translation + in-app language switcher
+
+## Settings
+- [[2026-10-20-remove-insights-trends-design|Design]] (no plan) — the Settings "Assistant" section ("AI Insights", "Trends") and both screens removed: their `insights` / `trend_data` tables never existed, so the screens were always empty. **Records why not to hide them behind a flag instead**, and that `CLAUDE.md` still mentions them on purpose
 
 ## Reliability
 - [[2026-10-13-offline-selling-sync-design|Design]] (**parked — not built, no plan**) — offline selling with Supabase as backup/sync. **Records why phone-only storage was rejected** (a lost phone wipes the khata; AI pins a server anyway), that stage 1 = selling only (user's choice), and three server-side traps found in `record_sale_cart`: it mints the sale id itself (**retries can double-record a sale even today**), rejects low stock (wrong for a sale that already happened offline), and reads prices at sync time instead of sale time. Phone storage measured at ~10 MB/year. Resume at its "Open questions"

@@ -98,25 +98,6 @@ class SettingsScreen extends ConsumerWidget {
               children: const [_LanguageSelector()],
             ),
             _Section(
-              title: l10n.settings_sectionAssistant,
-              children: [
-                ListTile(
-                  leading: const SettingsIconTile(Icons.lightbulb_outline),
-                  title: Text(l10n.settings_aiInsights),
-                  subtitle: Text(l10n.settings_aiInsightsSub),
-                  trailing: const _Chevron(),
-                  onTap: () => context.push(AppRoutes.insights),
-                ),
-                ListTile(
-                  leading: const SettingsIconTile(Icons.insights_outlined),
-                  title: Text(l10n.settings_trends),
-                  subtitle: Text(l10n.settings_trendsSub),
-                  trailing: const _Chevron(),
-                  onTap: () => context.push(AppRoutes.trends),
-                ),
-              ],
-            ),
-            _Section(
               title: l10n.settings_sectionAppearance,
               children: const [_ThemeModeSelector()],
             ),

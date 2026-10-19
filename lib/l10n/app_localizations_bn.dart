@@ -21,9 +21,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get settings_sectionShop => 'দোকান';
 
   @override
-  String get settings_sectionAssistant => 'অ্যাসিস্ট্যান্ট';
-
-  @override
   String get settings_sectionAppearance => 'চেহারা';
 
   @override
@@ -55,18 +52,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settings_currency => 'মুদ্রা';
-
-  @override
-  String get settings_aiInsights => 'এআই ইনসাইট';
-
-  @override
-  String get settings_aiInsightsSub => 'অ্যাসিস্ট্যান্টের পরামর্শ';
-
-  @override
-  String get settings_trends => 'ট্রেন্ড';
-
-  @override
-  String get settings_trendsSub => 'বিক্রির ট্রেন্ড';
 
   @override
   String get settings_themeLight => 'লাইট';
@@ -912,29 +897,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String analytics_units(String qty) {
     return '$qty একক';
   }
-
-  @override
-  String get insights_title => 'এআই ইনসাইট';
-
-  @override
-  String get insights_couldNotLoad => 'ইনসাইট লোড করা যায়নি।';
-
-  @override
-  String get insights_empty =>
-      'এখনো কোনো ইনসাইট নেই।\nঅ্যাসিস্ট্যান্ট আপনার বিক্রি বিশ্লেষণ করলে এখানে ইনসাইট দেখাবে।';
-
-  @override
-  String get trends_title => 'ট্রেন্ড';
-
-  @override
-  String get trends_couldNotLoad => 'ট্রেন্ড লোড করা যায়নি।';
-
-  @override
-  String get trends_empty =>
-      'এখনো কোনো ট্রেন্ড নেই।\nঅ্যাসিস্ট্যান্ট আপনার বিক্রি বিশ্লেষণ করলে এখানে ট্রেন্ড দেখাবে।';
-
-  @override
-  String get trends_noData => 'কোনো ডেটা নেই।';
 
   @override
   String get auth_createAccount => 'আপনার অ্যাকাউন্ট তৈরি করুন';

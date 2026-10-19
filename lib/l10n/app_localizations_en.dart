@@ -21,9 +21,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_sectionShop => 'Shop';
 
   @override
-  String get settings_sectionAssistant => 'Assistant';
-
-  @override
   String get settings_sectionAppearance => 'Appearance';
 
   @override
@@ -56,18 +53,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_currency => 'Currency';
-
-  @override
-  String get settings_aiInsights => 'AI Insights';
-
-  @override
-  String get settings_aiInsightsSub => 'Suggestions from the assistant';
-
-  @override
-  String get settings_trends => 'Trends';
-
-  @override
-  String get settings_trendsSub => 'Sales trend dashboards';
 
   @override
   String get settings_themeLight => 'Light';
@@ -918,29 +903,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String analytics_units(String qty) {
     return '$qty units';
   }
-
-  @override
-  String get insights_title => 'AI Insights';
-
-  @override
-  String get insights_couldNotLoad => 'Could not load insights.';
-
-  @override
-  String get insights_empty =>
-      'No insights yet.\nAI insights will appear here once the assistant has analyzed your sales.';
-
-  @override
-  String get trends_title => 'Trends';
-
-  @override
-  String get trends_couldNotLoad => 'Could not load trends.';
-
-  @override
-  String get trends_empty =>
-      'No trends yet.\nTrend dashboards will appear here once the assistant has analyzed your sales.';
-
-  @override
-  String get trends_noData => 'No data points.';
 
   @override
   String get auth_createAccount => 'Create your account';

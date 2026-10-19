@@ -14,7 +14,6 @@ import '../../features/customers/presentation/customers_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/expiry/presentation/expiry_alerts_screen.dart';
 import '../../features/finance/presentation/finance_screen.dart';
-import '../../features/insights/presentation/insights_screen.dart';
 import '../../features/inventory/domain/product.dart';
 import '../../features/inventory/presentation/archived_products_screen.dart';
 import '../../features/inventory/presentation/inventory_list_screen.dart';
@@ -30,7 +29,6 @@ import '../../features/shell/presentation/main_shell.dart';
 import '../../features/transactions/domain/transaction.dart';
 import '../../features/transactions/presentation/history_screen.dart';
 import '../../features/transactions/presentation/sale_detail_screen.dart';
-import '../../features/trends/presentation/trend_screen.dart';
 import '../../shared/providers/onboarding_provider.dart';
 import '../../shared/providers/supabase_provider.dart';
 
@@ -45,8 +43,6 @@ class AppRoutes {
   static const String inventory = '/inventory';
   static const String analytics = '/analytics';
   static const String history = '/history';
-  static const String insights = '/insights';
-  static const String trends = '/trends';
   static const String settings = '/settings';
   static const String alerts = '/alerts';
   static const String restock = '/restock';
@@ -231,16 +227,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, state) => _transitionPage(
           ProductFormScreen(product: state.extra as Product?),
         ),
-      ),
-      GoRoute(
-        path: AppRoutes.insights,
-        parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (_, _) => _transitionPage(const InsightsScreen()),
-      ),
-      GoRoute(
-        path: AppRoutes.trends,
-        parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (_, _) => _transitionPage(const TrendScreen()),
       ),
       GoRoute(
         path: AppRoutes.settings,

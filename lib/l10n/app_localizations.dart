@@ -122,12 +122,6 @@ abstract class AppLocalizations {
   /// **'Shop'**
   String get settings_sectionShop;
 
-  /// No description provided for @settings_sectionAssistant.
-  ///
-  /// In en, this message translates to:
-  /// **'Assistant'**
-  String get settings_sectionAssistant;
-
   /// No description provided for @settings_sectionAppearance.
   ///
   /// In en, this message translates to:
@@ -193,30 +187,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Currency'**
   String get settings_currency;
-
-  /// No description provided for @settings_aiInsights.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Insights'**
-  String get settings_aiInsights;
-
-  /// No description provided for @settings_aiInsightsSub.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggestions from the assistant'**
-  String get settings_aiInsightsSub;
-
-  /// No description provided for @settings_trends.
-  ///
-  /// In en, this message translates to:
-  /// **'Trends'**
-  String get settings_trends;
-
-  /// No description provided for @settings_trendsSub.
-  ///
-  /// In en, this message translates to:
-  /// **'Sales trend dashboards'**
-  String get settings_trendsSub;
 
   /// No description provided for @settings_themeLight.
   ///
@@ -1597,48 +1567,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{qty} units'**
   String analytics_units(String qty);
-
-  /// No description provided for @insights_title.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Insights'**
-  String get insights_title;
-
-  /// No description provided for @insights_couldNotLoad.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load insights.'**
-  String get insights_couldNotLoad;
-
-  /// No description provided for @insights_empty.
-  ///
-  /// In en, this message translates to:
-  /// **'No insights yet.\nAI insights will appear here once the assistant has analyzed your sales.'**
-  String get insights_empty;
-
-  /// No description provided for @trends_title.
-  ///
-  /// In en, this message translates to:
-  /// **'Trends'**
-  String get trends_title;
-
-  /// No description provided for @trends_couldNotLoad.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load trends.'**
-  String get trends_couldNotLoad;
-
-  /// No description provided for @trends_empty.
-  ///
-  /// In en, this message translates to:
-  /// **'No trends yet.\nTrend dashboards will appear here once the assistant has analyzed your sales.'**
-  String get trends_empty;
-
-  /// No description provided for @trends_noData.
-  ///
-  /// In en, this message translates to:
-  /// **'No data points.'**
-  String get trends_noData;
 
   /// No description provided for @auth_createAccount.
   ///
