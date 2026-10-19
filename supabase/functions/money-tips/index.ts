@@ -139,7 +139,9 @@ Deno.serve(async (req) => {
   } catch (_e) {
     return json({ error: "invalid JSON body" }, 400);
   }
-  if (typeof lang !== "string" || !(lang in LANGUAGES)) {
+  // Object.hasOwn, not `in`: `in` also matches inherited names, so
+  // lang "toString" would pass and put a function's source in the prompt.
+  if (typeof lang !== "string" || !Object.hasOwn(LANGUAGES, lang)) {
     return json({ error: "lang must be 'en' or 'bn'" }, 400);
   }
   if (facts === null || typeof facts !== "object") {
