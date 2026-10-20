@@ -41,7 +41,13 @@ Doc ("EasySell: Security Self-Assessment"); its scripts and raw results are in
   - **Rejected: making the tables write-only through RPCs now.** That is the
     M2 fix and also closes L1, but it touches every write path the app has;
     the composite keys close L1 with no app change.
-  - Verified on PGlite, 22 checks (`docs/hackathon/security/test_0021_pglite.mjs`).
+  - Verified on PGlite, 22 checks (`docs/hackathon/security/test_0021_pglite.mjs`),
+    then live after the owner ran 0021: both cross-shop writes now get 409
+    from `transactions_product_same_shop` / `customer_ledger_customer_same_shop`;
+    the re-run blocked 25 of 26 (the 26th is M2, by design of the check).
+  - **Gotcha:** the M2 check first edited the L1 probe row, so once L1 was
+    fixed shop B had no sale to edit. The probe now gives B its own product
+    and a real checkout sale before the edit.
 - **Gotcha (before 0021): clean the L1 probe rows before `cleanup.mjs`**, or
   deleting test shop A fails on the product link.
 - **Gemini data terms** (checked at ai.google.dev/gemini-api/terms): paid

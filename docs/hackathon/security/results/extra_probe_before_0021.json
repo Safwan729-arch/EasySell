@@ -1,0 +1,104 @@
+{
+  "ranAt": "2026-10-19T20:54:05.505Z",
+  "checks": [
+    {
+      "name": "B re-assigns shop A to itself",
+      "pass": true,
+      "detail": {
+        "status": 200,
+        "rows": 0
+      }
+    },
+    {
+      "name": "B hands its own shop to A's account",
+      "pass": true,
+      "detail": {
+        "status": 403,
+        "msg": "new row violates row-level security policy for table \"shops\""
+      }
+    },
+    {
+      "name": "B reads A's profile (email, name)",
+      "pass": true,
+      "detail": {
+        "rows": 0
+      }
+    },
+    {
+      "name": "B records a payment in shop A",
+      "pass": true,
+      "detail": {
+        "status": 400,
+        "msg": "Customer not found"
+      }
+    },
+    {
+      "name": "B records a payment for A's customer from shop B",
+      "pass": true,
+      "detail": {
+        "status": 400,
+        "msg": "Customer not found"
+      }
+    },
+    {
+      "name": "B saves a sale row in its own shop that names A's product (direct write)",
+      "pass": false,
+      "detail": {
+        "status": 201,
+        "msg": "9e2eaa7e-ed3b-4476-ae82-b0278de7265d"
+      }
+    },
+    {
+      "name": "…and shop A's stock is unchanged",
+      "pass": true,
+      "detail": {
+        "before": 3,
+        "after": 3
+      }
+    },
+    {
+      "name": "B saves a ledger row in its own shop that names A's customer (direct write)",
+      "pass": false,
+      "detail": {
+        "status": 201,
+        "msg": "8c026449-1083-469f-8c96-9d5e83b51fa6"
+      }
+    },
+    {
+      "name": "…and A cannot see that row in its own ledger",
+      "pass": true,
+      "detail": {
+        "rowsVisibleToA": 2
+      }
+    },
+    {
+      "name": "Owner edits its own past sale directly (expected to succeed today: open item)",
+      "pass": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "name": "A sale of -5 units through the checkout function",
+      "pass": true,
+      "detail": {
+        "status": 400,
+        "msg": "Quantity must be greater than zero"
+      }
+    },
+    {
+      "name": "parse-sale with a junk token",
+      "pass": true,
+      "detail": {
+        "status": 401
+      }
+    },
+    {
+      "name": "parse-sale with a forged unsigned token",
+      "pass": true,
+      "detail": {
+        "status": 401
+      }
+    }
+  ]
+}

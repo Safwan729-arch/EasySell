@@ -13,7 +13,9 @@ const record = (name, pass, detail) => { out.checks.push({ name, pass, detail })
 
 const aProd = (await rest(`products?shop_id=eq.${a.shopId}&select=id,quantity&limit=1`, { token: A.token })).data[0];
 const aCust = (await rest(`customers?shop_id=eq.${a.shopId}&select=id&limit=1`, { token: A.token })).data[0];
-const bProd = (await rest(`products?shop_id=eq.${b.shopId}&select=id&limit=1`, { token: B.token })).data[0];
+// Shop B gets one product of its own, so it can make real sales below.
+const bProd = (await rest("products", { token: B.token, method: "POST", prefer: "return=representation",
+  body: { shop_id: b.shopId, name: "Probe item", quantity: 10, buying_price: 1, selling_price: 2 } })).data[0];
 
 // 1. Take over shop A by pointing it at B's account (owner_id), or move B's shop onto A.
 const steal = await rest(`shops?id=eq.${a.shopId}`, { token: B.token, method: "PATCH", prefer: "return=representation", body: { owner_id: B.userId } });
@@ -47,13 +49,14 @@ const aLedgerAll = (await rest(`customer_ledger?customer_id=eq.${aCust?.id}&sele
 record("…and A cannot see that row in its own ledger", aLedgerAll.every((r) => r.shop_id === a.shopId), { rowsVisibleToA: aLedger });
 
 // 5. An owner rewriting its OWN sale history directly (the known open item).
-const own = (await rest(`transactions?shop_id=eq.${b.shopId}&type=eq.sale&select=id,selling_price&limit=1`, { token: B.token })).data[0];
-if (own) {
-  const edit = await rest(`transactions?id=eq.${own.id}`, { token: B.token, method: "PATCH", prefer: "return=representation", body: { selling_price: 999 } });
-  record("Owner edits its own past sale directly (expected to succeed today: open item)", edit.data?.length === 1, { status: edit.status });
-} else {
-  record("Owner edits its own past sale directly", null, { note: "shop B has no sale rows" });
-}
+// A real sale through checkout first, then a direct edit of its saved price.
+const sale = await rpc("record_sale_cart", { p_shop_id: b.shopId, p_items: [{ product_id: bProd.id, quantity: 1 }], p_source: "manual" }, B.token);
+const own = Array.isArray(sale.data) ? sale.data[0] : null;
+const edit = own
+  ? await rest(`transactions?id=eq.${own.id}`, { token: B.token, method: "PATCH", prefer: "return=representation", body: { selling_price: 999 } })
+  : { status: sale.status, data: [] };
+record("Owner edits its own past sale directly (succeeds today: open item M2)", edit.data?.length === 1,
+  { saleStatus: sale.status, editStatus: edit.status, priceAfter: edit.data?.[0]?.selling_price });
 
 // 6. Negative or zero quantities through the sale function.
 const neg = await rpc("record_sale_cart", { p_shop_id: b.shopId, p_items: [{ product_id: bProd?.id, quantity: -5 }], p_source: "manual" }, B.token);

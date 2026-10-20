@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-10-19T20:54:05.505Z",
+  "ranAt": "2026-10-20T05:58:46.287Z",
   "checks": [
     {
       "name": "B re-assigns shop A to itself",
@@ -42,26 +42,26 @@
     },
     {
       "name": "B saves a sale row in its own shop that names A's product (direct write)",
-      "pass": false,
+      "pass": true,
       "detail": {
-        "status": 201,
-        "msg": "9e2eaa7e-ed3b-4476-ae82-b0278de7265d"
+        "status": 409,
+        "msg": "insert or update on table \"transactions\" violates foreign key constraint \"transactions_product_same_shop\""
       }
     },
     {
       "name": "…and shop A's stock is unchanged",
       "pass": true,
       "detail": {
-        "before": 3,
-        "after": 3
+        "before": 6,
+        "after": 6
       }
     },
     {
       "name": "B saves a ledger row in its own shop that names A's customer (direct write)",
-      "pass": false,
+      "pass": true,
       "detail": {
-        "status": 201,
-        "msg": "8c026449-1083-469f-8c96-9d5e83b51fa6"
+        "status": 409,
+        "msg": "insert or update on table \"customer_ledger\" violates foreign key constraint \"customer_ledger_customer_same_shop\""
       }
     },
     {
@@ -72,10 +72,12 @@
       }
     },
     {
-      "name": "Owner edits its own past sale directly (expected to succeed today: open item)",
+      "name": "Owner edits its own past sale directly (succeeds today: open item M2)",
       "pass": true,
       "detail": {
-        "status": 200
+        "saleStatus": 200,
+        "editStatus": 200,
+        "priceAfter": 999
       }
     },
     {

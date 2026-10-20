@@ -7,7 +7,7 @@ These files back the "EasySell: Security Self-Assessment" report (20 October
 |---|---|---|
 | `../evidence/security_probe.mjs` | The public key and another shop's owner against the live system (13 attacks) | `results/security_probe_20oct.json` |
 | `../evidence/money_safety.mjs` | Races, retries, all-or-nothing carts, frozen prices (7 checks) | `results/money_safety_20oct.json` |
-| `extra_probe.mjs` | 13 more attacks: taking over a shop, payments across shops, rows that name another shop's IDs, editing one's own history, negative quantities, forged tokens | `results/extra_probe.json` |
+| `extra_probe.mjs` | 13 more attacks: taking over a shop, payments across shops, rows that name another shop's IDs, editing one's own history, negative quantities, forged tokens | `results/extra_probe.json` (after migration `0021`: both cross-shop rows refused); `results/extra_probe_before_0021.json` (the first run, which found L1) |
 | `osv.mjs` | Every package in `pubspec.lock` against the OSV vulnerability database | `results/osv_scan.txt` |
 | `apk_tokens.mjs` | Every token inside an unpacked APK (prints only its role) | `results/apk_tokens.txt` |
 | `appscan.mjs` | App code: logging, plain-HTTP URLs, local storage, password rules | `results/app_scan.txt` |
