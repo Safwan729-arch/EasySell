@@ -59,4 +59,9 @@ become per-plan limits. Not built; no design yet beyond this.
   `test_0023_pglite.mjs` now uses 2-day-old accounts so its 50-call checks
   still hold.
 - Live: `new_account_probe.mjs` (a fresh sign-up is refused after 10 calls,
-  then `parse-sale` answers 429) and `signin_rate_probe.mjs`.
+  then `parse-sale` answers 429) and `signin_rate_probe.mjs`. **20 Oct:
+  4/4** (the first run caught the SQL going live mid-run: its early calls
+  still had the 50 limit, so it was re-run with a fresh account), and the
+  sign-in limit answered 429 on attempt 35. That is above the 15 the user
+  set: either the setting did not save or the limiter allows a burst;
+  re-check the value in the dashboard before quoting "15".
