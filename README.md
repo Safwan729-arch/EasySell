@@ -531,12 +531,4 @@ gantt
 - The AI was tested with computer voices and web photos. A noisy shop counter may score lower.
 - Every sale needs internet. Offline mode is designed but not built.
 - Android only (the code is ready for iOS, but it is not built or tested there).
-- Before a public launch: a private release signing key, email confirmation, and a daily AI limit per user.
-
-<div align="center">
-
-<br/>
-
-Built for the **SME Finance Copilot** track (Topic E) of a fintech hackathon, 2026.
-
-</div>
+- Before a public launch: a private release signing key, email confirmation and automatic database backups.

@@ -37,3 +37,7 @@ features, architecture, evidence, setup and roadmap.
   demo login through the hackathon submission (Drive folder, execution
   evidence), not the public README. The top-bar "Try it" link went with it, and
   the Android badge now points to "Run it yourself".
+- **The closing "Built for the SME Finance Copilot track" line was removed**,
+  also at the user's request. The "Honest limits" bullet that still listed a
+  daily AI limit as missing was corrected (built in migrations 0023/0024); it
+  now names backups instead, matching the security report.
