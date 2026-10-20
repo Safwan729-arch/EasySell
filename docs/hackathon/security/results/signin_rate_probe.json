@@ -1,0 +1,16 @@
+{
+  "ranAt": "2026-10-20T07:25:09.683Z",
+  "checks": [
+    {
+      "name": "Repeated sign-in attempts from one connection are rate limited",
+      "pass": true,
+      "detail": {
+        "attemptsBeforeLimit": 34,
+        "limitedOnAttempt": 35,
+        "otherStatuses": [
+          400
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "ranAt": "2026-10-20T07:24:51.863Z",
+  "checks": [
+    {
+      "name": "sign up a brand-new account",
+      "pass": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "name": "a brand-new account is marked new, with a limit of 10",
+      "pass": true,
+      "detail": {
+        "first": {
+          "used": 1,
+          "limit": 10,
+          "reason": null,
+          "allowed": true,
+          "new_account": true
+        }
+      }
+    },
+    {
+      "name": "a brand-new account is refused after 10 calls",
+      "pass": true,
+      "detail": {
+        "callsUntilRefused": 11,
+        "reply": {
+          "used": 10,
+          "limit": 10,
+          "reason": "user",
+          "allowed": false,
+          "new_account": true
+        }
+      }
+    },
+    {
+      "name": "…and its AI request then answers 429, before Gemini",
+      "pass": true,
+      "detail": {
+        "status": 429,
+        "body": {
+          "error": "You have reached today's AI limit. Try again tomorrow.",
+          "limit_scope": "user",
+          "limit": 10
+        },
+        "ms": 260
+      }
+    }
+  ]
+}
