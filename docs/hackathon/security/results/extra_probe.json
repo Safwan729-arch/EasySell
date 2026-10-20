@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-10-20T05:58:46.287Z",
+  "ranAt": "2026-10-20T07:04:20.553Z",
   "checks": [
     {
       "name": "B re-assigns shop A to itself",
@@ -44,8 +44,8 @@
       "name": "B saves a sale row in its own shop that names A's product (direct write)",
       "pass": true,
       "detail": {
-        "status": 409,
-        "msg": "insert or update on table \"transactions\" violates foreign key constraint \"transactions_product_same_shop\""
+        "status": 403,
+        "msg": "Sales and credit records can only be changed by the app's checkout, restock, stock removal and payment steps"
       }
     },
     {
@@ -60,8 +60,8 @@
       "name": "B saves a ledger row in its own shop that names A's customer (direct write)",
       "pass": true,
       "detail": {
-        "status": 409,
-        "msg": "insert or update on table \"customer_ledger\" violates foreign key constraint \"customer_ledger_customer_same_shop\""
+        "status": 403,
+        "msg": "Sales and credit records can only be changed by the app's checkout, restock, stock removal and payment steps"
       }
     },
     {
@@ -72,12 +72,21 @@
       }
     },
     {
-      "name": "Owner edits its own past sale directly (succeeds today: open item M2)",
+      "name": "Owner edits its own past sale directly: refused (M2, fixed by 0022)",
       "pass": true,
       "detail": {
         "saleStatus": 200,
-        "editStatus": 200,
-        "priceAfter": 999
+        "editStatus": 403,
+        "msg": "Sales and credit records can only be changed by the app's checkout, restock, stock removal and payment steps",
+        "priceAfter": 2
+      }
+    },
+    {
+      "name": "Owner deletes its own past sale directly: refused",
+      "pass": true,
+      "detail": {
+        "status": 403,
+        "msg": "Sales and credit records can only be changed by the app's checkout, restock, stock removal and payment steps"
       }
     },
     {

@@ -100,7 +100,7 @@ function cardinal(token: string): number | null {
 function tokenize(text: string): string[] {
   return text
     .normalize("NFC")
-    .replace(/[‌‍]/g, "") // zero-width joiners carry no meaning here
+    .replace(/[\u200c\u200d]/g, "") // zero-width joiners carry no meaning here
     .toLowerCase()
     .split(/[^\p{L}\p{N}\p{M}]+/u)
     .filter((t) => t !== "");

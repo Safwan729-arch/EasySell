@@ -1,0 +1,102 @@
+{
+  "ranAt": "2026-10-20T07:04:33.528Z",
+  "checks": [
+    {
+      "name": "a user reads ai_usage: refused",
+      "pass": true,
+      "detail": {
+        "status": 403,
+        "msg": "permission denied for table ai_usage"
+      }
+    },
+    {
+      "name": "a user reads ai_usage_total: refused",
+      "pass": true,
+      "detail": {
+        "status": 403,
+        "msg": "permission denied for table ai_usage_total"
+      }
+    },
+    {
+      "name": "a user reads ai_limits: refused",
+      "pass": true,
+      "detail": {
+        "status": 403,
+        "msg": "permission denied for table ai_limits"
+      }
+    },
+    {
+      "name": "a user raises the limit: refused",
+      "pass": true,
+      "detail": {
+        "status": 403,
+        "msg": "permission denied for table ai_limits"
+      }
+    },
+    {
+      "name": "the public key alone runs claim_ai_call: refused",
+      "pass": true,
+      "detail": {
+        "status": 401,
+        "msg": "permission denied for function claim_ai_call"
+      }
+    },
+    {
+      "name": "a signed-in user is counted",
+      "pass": true,
+      "detail": {
+        "first": {
+          "used": 1,
+          "limit": 50,
+          "reason": null,
+          "allowed": true
+        }
+      }
+    },
+    {
+      "name": "the user is refused once today's limit is reached",
+      "pass": true,
+      "detail": {
+        "callsUntilRefused": 51,
+        "reply": {
+          "used": 50,
+          "limit": 50,
+          "reason": "user",
+          "allowed": false
+        }
+      }
+    },
+    {
+      "name": "parse-sale over the limit answers 429",
+      "pass": true,
+      "detail": {
+        "status": 429,
+        "body": {
+          "error": "You have reached today's AI limit. Try again tomorrow.",
+          "limit_scope": "user",
+          "limit": 50
+        },
+        "ms": 399
+      }
+    },
+    {
+      "name": "money-tips over the limit answers 429",
+      "pass": true,
+      "detail": {
+        "status": 429,
+        "body": {
+          "error": "You have reached today's AI limit. Try again tomorrow.",
+          "limit_scope": "user",
+          "limit": 50
+        }
+      }
+    },
+    {
+      "name": "a ping still answers 200",
+      "pass": true,
+      "detail": {
+        "status": 200
+      }
+    }
+  ]
+}

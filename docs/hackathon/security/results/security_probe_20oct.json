@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-10-19T20:54:04.932Z",
+  "ranAt": "2026-10-20T07:04:12.543Z",
   "passed": 13,
   "total": 13,
   "results": [
@@ -92,8 +92,8 @@
       "pass": true,
       "status": 400,
       "message": "Product not found",
-      "aStockBefore": 3,
-      "aStockAfter": 3
+      "aStockBefore": 6,
+      "aStockAfter": 6
     },
     {
       "part": 2,
@@ -101,7 +101,7 @@
       "pass": true,
       "status": 200,
       "rowsChanged": 0,
-      "aPriceAfter": 99
+      "aPriceAfter": 10
     },
     {
       "part": 2,

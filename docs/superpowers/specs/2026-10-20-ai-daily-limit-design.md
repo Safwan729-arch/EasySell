@@ -67,4 +67,16 @@ plus a check in each function (`ai_limit.ts`).
   identical, the check placed before each Gemini call and after the ping).
 - `ai_limit_probe.mjs`: live, after deploy; fills test account B's count via
   the RPC (no Gemini spend), then expects 429 from `parse-sale` and
-  `money-tips`.
+  `money-tips`. **Live, 20 Oct: 10/10** (refused on call 51; 429 in 0.4 s),
+  and one real voice and one tips call still answered 200.
+
+## Deploying
+
+A dashboard deploy of the new `index.ts` failed with "Module not found
+…/ai_limit.ts": the editor bundles on deploy, so `ai_limit.ts` must be added
+to the function before (or with) the new `index.ts`. The three functions were
+then deployed through the Supabase MCP (`deploy_edge_function`,
+`verify_jwt: true`) at the user's request. To send `quantity_words.ts`
+through a tool call reliably, its two invisible zero-width characters (U+200C,
+U+200D) in the tokenizer regex are now written as `‌‍` escapes;
+behaviour is unchanged.
