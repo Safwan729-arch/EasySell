@@ -17,9 +17,11 @@ const claim = async (user, claims) => {
   const r = await tryAsUser(db, user, "select claim_ai_call() r", [], claims);
   return r.error ? { error: r.error } : r.rows[0].r;
 };
+// Accounts two days old, so migration 0024's stricter first-day limit does not
+// apply here (test_0024_pglite.mjs covers that).
 const newUser = async () => {
   const id = randomUUID();
-  await db.query("insert into auth.users (id, email) values ($1, $2)", [id, `${id}@t.dev`]);
+  await db.query("insert into auth.users (id, email, created_at) values ($1, $2, now() - interval '2 days')", [id, `${id}@t.dev`]);
   return id;
 };
 

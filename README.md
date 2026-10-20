@@ -288,7 +288,7 @@ sequenceDiagram
 
 <br/>
 
-10 business tables (plus 3 hidden ones that count AI calls), built by 23 migration files. Every business row belongs to one shop: Row Level Security lets a signed-in user see only their own shop's rows, and every link between rows must stay inside the same shop. One receipt is several `transactions` rows sharing a `sale_group_id`.
+10 business tables (plus 3 hidden ones that count AI calls), built by 24 migration files. Every business row belongs to one shop: Row Level Security lets a signed-in user see only their own shop's rows, and every link between rows must stay inside the same shop. One receipt is several `transactions` rows sharing a `sale_group_id`.
 
 ```mermaid
 erDiagram
@@ -433,7 +433,7 @@ The live checks (`ai_benchmark.mjs`, `money_safety.mjs`, `security_probe.mjs`, `
 <br/>
 
 1. Create a project at [supabase.com](https://supabase.com/dashboard).
-2. In the **SQL Editor**, run every file in [`supabase/migrations/`](supabase/migrations/) **in filename order** (`0001` to `0023`).
+2. In the **SQL Editor**, run every file in [`supabase/migrations/`](supabase/migrations/) **in filename order** (`0001` to `0024`).
 3. Add your Gemini key as an Edge Function secret, then deploy the three functions:
 
 ```bash
@@ -496,7 +496,7 @@ lib/
   l10n/         English and Bangla text
   shared/       providers used across features
 supabase/
-  migrations/   23 SQL files: tables, security rules, database functions
+  migrations/   24 SQL files: tables, security rules, database functions
   functions/    parse-sale, recognize-product, money-tips (Deno)
   seed/         demo data
 test/           715 tests: logic and screen tests
@@ -524,6 +524,7 @@ docs/
 
 **Next**
 
+- [ ] **Subscriptions:** a proper sign-up and login, with the AI features only for shops on the monthly plan
 - [ ] **Real lender partners:** turn "Fits you" into an application, with the owner's consent
 - [ ] **Export data:** sales, stock and credit as CSV (Excel), plus a monthly PDF report for lenders
 - [ ] **Offline mode:** save sales on the phone first, then sync to Supabase when back online

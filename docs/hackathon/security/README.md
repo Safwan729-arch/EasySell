@@ -11,6 +11,8 @@ These files back the "EasySell: Security Self-Assessment" report (20 October
 | `osv.mjs` | Every package in `pubspec.lock` against the OSV vulnerability database | `results/osv_scan.txt` |
 | `apk_tokens.mjs` | Every token inside an unpacked APK (prints only its role) | `results/apk_tokens.txt` |
 | `appscan.mjs` | App code: logging, plain-HTTP URLs, local storage, password rules | `results/app_scan.txt` |
+| `new_account_probe.mjs` | Migration `0024`: signs up one throwaway account and expects it to be refused after 10 AI calls on its first day, then `parse-sale` to answer 429. Spends no Gemini quota | `results/new_account_probe.json` |
+| `signin_rate_probe.mjs` | Supabase Auth's per-connection rate limit: failed sign-ins (no account created) until Auth answers 429. Run it last: this connection can't sign in for up to 5 minutes afterwards | `results/signin_rate_probe.json` |
 | `ai_limit_probe.mjs` | The daily AI limit (migration `0023` + redeployed functions): counters hidden, test account B refused after 50 calls, then `parse-sale` and `money-tips` answer 429. Spends no Gemini quota | `results/ai_limit_probe.json` |
 
 ## Running them
@@ -26,7 +28,9 @@ node ../evidence/money_safety.mjs
 node ../evidence/security_probe.mjs
 node extra_probe.mjs
 node ai_limit_probe.mjs   # uses up test account B's 50 AI calls for today
+node new_account_probe.mjs   # leaves one more throwaway login in Auth
 node ../evidence/cleanup.mjs
+node signin_rate_probe.mjs   # last: blocks sign-ins from this connection for up to 5 min
 ```
 
 Before migration `0021`, `extra_probe.mjs` left one sale row and one ledger row
@@ -42,7 +46,8 @@ behaviour, re-running, and refusing to start if a cross-shop row already exists.
 PGlite (Supabase stubs in `fullschema.mjs`) and runs 28 checks on migration
 `0022`: every app write path still works, and every direct change to a sale or
 credit row is refused (finding M2). `test_0023_pglite.mjs` runs 21 checks on
-the daily AI limit (finding M1); `test_ai_limit_helper.mjs` checks the AI
+the daily AI limit (finding M1), and `test_0024_pglite.mjs` 16 on the stricter
+limit for accounts in their first 24 hours; `test_ai_limit_helper.mjs` checks the AI
 functions' side of it against a fake database.
 
 ```bash
@@ -50,6 +55,7 @@ npm i @electric-sql/pglite
 node test_0021_pglite.mjs ../../../supabase/migrations/0021_same_shop_links.sql
 node test_0022_pglite.mjs ../../../supabase/migrations
 node test_0023_pglite.mjs ../../../supabase/migrations
+node test_0024_pglite.mjs ../../../supabase/migrations
 node test_ai_limit_helper.mjs ../../../supabase/functions   # Node 23.6+
 ```
 
