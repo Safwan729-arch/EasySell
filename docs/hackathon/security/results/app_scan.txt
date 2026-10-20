@@ -1,0 +1,45 @@
+## print 0
+## debugPrint 1
+  lib/features/voice/presentation/voice_controller.dart:480: debugPrint(
+## httpUrl 0
+## devLog 1
+  lib/features/finance/domain/financing_match.dart:160: final step = math.pow(10, (math.log(x) / math.ln10).floor() - 1).toDouble();
+## secureScreen 0
+## prefs 16
+  lib/features/auth/data/last_email_store.dart:16: final prefs = await SharedPreferences.getInstance();
+  lib/features/auth/data/last_email_store.dart:21: final prefs = await SharedPreferences.getInstance();
+  lib/features/expiry/presentation/expiry_prefs.dart:50: final prefs = await SharedPreferences.getInstance();
+  lib/features/expiry/presentation/expiry_prefs.dart:56: final prefs = await SharedPreferences.getInstance();
+  lib/features/expiry/presentation/expiry_prefs.dart:62: final prefs = await SharedPreferences.getInstance();
+  lib/features/expiry/presentation/expiry_prefs.dart:84: final prefs = await SharedPreferences.getInstance();
+  lib/features/finance/presentation/money_tips_controller.dart:56: final prefs = await SharedPreferences.getInstance();
+  lib/features/finance/presentation/money_tips_controller.dart:90: final prefs = await SharedPreferences.getInstance();
+  lib/features/restock/presentation/restock_prefs.dart:18: final prefs = await SharedPreferences.getInstance();
+  lib/features/restock/presentation/restock_prefs.dart:28: final prefs = await SharedPreferences.getInstance();
+## password 31
+  lib/features/auth/data/auth_repository.dart:54: /// Email + password sign in.
+  lib/features/auth/data/auth_repository.dart:55: Future<Result<void>> signInWithEmail(String email, String password) async {
+  lib/features/auth/data/auth_repository.dart:58: .signInWithPassword(email: email, password: password)
+  lib/features/auth/data/auth_repository.dart:66: /// Email + password sign up. `fullName` is stored in user metadata and copied
+  lib/features/auth/data/auth_repository.dart:70: String password, {
+  lib/features/auth/data/auth_repository.dart:77: password: password,
+  lib/features/auth/data/auth_repository.dart:101: /// Anonymous (guest) sign in — dev convenience to bypass email/password.
+  lib/features/auth/data/last_email_store.dart:5: /// pre-fill it and they only need to type their password next time.
+  lib/features/auth/data/last_email_store.dart:8: /// password) on-device via [SharedPreferences]. Cleared on explicit sign-out is
+  lib/features/auth/presentation/auth_controller.dart:51: Future<void> signInWithEmail(String email, String password) => _run(() async {
+  lib/features/auth/presentation/auth_controller.dart:52: final result = await _repo.signInWithEmail(email.trim(), password);
+  lib/features/auth/presentation/auth_controller.dart:61: String password, {
+  lib/features/auth/presentation/auth_controller.dart:66: password,
+  lib/features/auth/presentation/login_screen.dart:18: /// Email/password sign in + sign up (Google OAuth behind
+  lib/features/auth/presentation/login_screen.dart:34: final _passwordController = TextEditingController();
+  lib/features/auth/presentation/login_screen.dart:35: final _passwordFocus = FocusNode();
+  lib/features/auth/presentation/login_screen.dart:47: /// only has to type their password. Skips if they've already started typing.
+  lib/features/auth/presentation/login_screen.dart:52: // Email is filled in for them — jump straight to the password field.
+  lib/features/auth/presentation/login_screen.dart:53: if (!_isSignUp) _passwordFocus.requestFocus();
+  lib/features/auth/presentation/login_screen.dart:60: _passwordController.dispose();
+  lib/features/auth/presentation/login_screen.dart:61: _passwordFocus.dispose();
+  lib/features/auth/presentation/login_screen.dart:69: final password = _passwordController.text;
+  lib/features/auth/presentation/login_screen.dart:73: password,
+  lib/features/auth/presentation/login_screen.dart:77: controller.signInWithEmail(email, password);
+  lib/features/auth/presentation/login_screen.dart:87: String? _validatePassword(AppLocalizations l10n, String? value) {
+## authStorage 0

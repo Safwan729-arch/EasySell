@@ -1,0 +1,2 @@
+lib/arm64-v8a/libapp.so role=anon
+tokens found: 1
