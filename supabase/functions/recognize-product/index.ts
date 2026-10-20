@@ -9,6 +9,7 @@
 // there is no brace-scraping. Only GEMINI_API_KEY is required (shared with the
 // voice function). MEMBER B owns prompt tuning.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { claimAiCall } from "./ai_limit.ts";
 
 // `id` is the legacy shape (product uuid). `i` is the current one: a list index,
 // because the catalog is re-sent in the prompt on every scan and a uuid costs
@@ -235,6 +236,10 @@ Deno.serve(async (req) => {
   if (!GEMINI_API_KEY) {
     return json({ error: "GEMINI_API_KEY is not configured" }, 400);
   }
+  // Counted only after every check above, so a bad request never uses up
+  // the user's daily AI calls.
+  const refused = await claimAiCall(req);
+  if (refused) return refused;
   try {
     const raw = await recognize(imageB64 as string, candidates as Candidate[]);
     return json(normalize(raw, candidates as Candidate[]), 200);

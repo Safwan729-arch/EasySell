@@ -15,9 +15,17 @@ export async function buildDb(migrationsDir, { upTo } = {}) {
     create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}'::jsonb);
     create function auth.uid() returns uuid language sql stable as
       $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+    create function auth.jwt() returns jsonb language sql stable as
+      $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
     grant usage on schema auth to anon, authenticated;
-    grant execute on function auth.uid() to anon, authenticated;
+    grant execute on function auth.uid(), auth.jwt() to anon, authenticated;
     create publication supabase_realtime;
+    -- Supabase grants new tables and functions to the API roles by default,
+    -- at creation time, so a migration's own revoke still takes effect.
+    grant usage on schema public to anon, authenticated;
+    alter default privileges in schema public grant all on tables to anon, authenticated;
+    alter default privileges in schema public grant all on sequences to anon, authenticated;
+    alter default privileges in schema public grant execute on functions to anon, authenticated;
   `);
   const files = fs.readdirSync(migrationsDir).filter((f) => /^\d{4}_.*\.sql$/.test(f)).sort();
   for (const f of files) {
@@ -28,25 +36,22 @@ export async function buildDb(migrationsDir, { upTo } = {}) {
       throw new Error(`${f}: ${e.message}`);
     }
   }
-  // Supabase grants table and function access to the API roles by default.
-  await db.exec(`
-    grant usage on schema public to anon, authenticated;
-    grant all on all tables in schema public to anon, authenticated;
-    grant execute on all functions in schema public to anon, authenticated;
-  `);
   return { db, files };
 }
 
 // Runs fn as a signed-in user (role authenticated, auth.uid() = userId),
-// inside its own transaction like one PostgREST request.
-export async function asUser(db, userId, sql, params) {
+// inside its own transaction like one PostgREST request. `claims` adds to the
+// token's claims (e.g. { is_anonymous: true }).
+export async function asUser(db, userId, sql, params, claims = {}) {
   return db.transaction(async (tx) => {
     await tx.query(`select set_config('request.jwt.claim.sub', $1, true)`, [userId]);
+    await tx.query(`select set_config('request.jwt.claims', $1, true)`,
+      [JSON.stringify({ sub: userId, role: "authenticated", ...claims })]);
     await tx.exec("set local role authenticated");
     return (await tx.query(sql, params)).rows;
   });
 }
 
-export async function tryAsUser(db, userId, sql, params) {
-  try { return { rows: await asUser(db, userId, sql, params) }; } catch (e) { return { error: e.message }; }
+export async function tryAsUser(db, userId, sql, params, claims) {
+  try { return { rows: await asUser(db, userId, sql, params, claims) }; } catch (e) { return { error: e.message }; }
 }

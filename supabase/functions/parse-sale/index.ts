@@ -13,6 +13,7 @@
 // prompt tuning.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { resolveItemQuantity } from "./quantity_words.ts";
+import { claimAiCall } from "./ai_limit.ts";
 
 interface Candidate {
   id?: string;
@@ -400,6 +401,10 @@ Deno.serve(async (req) => {
   if (!GEMINI_API_KEY) {
     return json({ error: "GEMINI_API_KEY is not configured" }, 400);
   }
+  // Counted only here, after every check above, so a ping or a bad request
+  // never uses up the user's daily AI calls.
+  const refused = await claimAiCall(req);
+  if (refused) return refused;
 
   // Set once the Gemini call actually starts (not just declared). Left
   // `undefined` if we fail before reaching it, so the catch block can log an

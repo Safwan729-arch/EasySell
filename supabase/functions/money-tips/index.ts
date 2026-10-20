@@ -8,6 +8,7 @@
 // output, a token cap and a server-side deadline. Only GEMINI_API_KEY is
 // required (shared with scan and voice). MEMBER B owns prompt tuning.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { claimAiCall } from "./ai_limit.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const MODEL = Deno.env.get("GEMINI_TIPS_MODEL") ?? "gemini-3.6-flash";
@@ -153,6 +154,10 @@ Deno.serve(async (req) => {
   if (!GEMINI_API_KEY) {
     return json({ error: "GEMINI_API_KEY is not configured" }, 400);
   }
+  // Counted only after every check above, so a bad request never uses up
+  // the user's daily AI calls.
+  const refused = await claimAiCall(req);
+  if (refused) return refused;
   try {
     return json({ tips: await tips(lang, facts) }, 200);
   } catch (e) {
