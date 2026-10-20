@@ -55,8 +55,11 @@ const own = Array.isArray(sale.data) ? sale.data[0] : null;
 const edit = own
   ? await rest(`transactions?id=eq.${own.id}`, { token: B.token, method: "PATCH", prefer: "return=representation", body: { selling_price: 999 } })
   : { status: sale.status, data: [] };
-record("Owner edits its own past sale directly (succeeds today: open item M2)", edit.data?.length === 1,
-  { saleStatus: sale.status, editStatus: edit.status, priceAfter: edit.data?.[0]?.selling_price });
+const priceNow = own ? (await rest(`transactions?id=eq.${own.id}&select=selling_price`, { token: B.token })).data[0]?.selling_price : null;
+record("Owner edits its own past sale directly: refused (M2, fixed by 0022)", sale.status === 200 && edit.status >= 400 && Number(priceNow) === Number(own?.selling_price),
+  { saleStatus: sale.status, editStatus: edit.status, msg: edit.data?.message, priceAfter: priceNow });
+const wipe = own ? await rest(`transactions?id=eq.${own.id}`, { token: B.token, method: "DELETE", prefer: "return=representation" }) : { status: 0 };
+record("Owner deletes its own past sale directly: refused", wipe.status >= 400, { status: wipe.status, msg: wipe.data?.message });
 
 // 6. Negative or zero quantities through the sale function.
 const neg = await rpc("record_sale_cart", { p_shop_id: b.shopId, p_items: [{ product_id: bProd?.id, quantity: -5 }], p_source: "manual" }, B.token);

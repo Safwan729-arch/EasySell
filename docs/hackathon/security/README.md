@@ -36,9 +36,15 @@ refused, so nothing is left behind.
 against a minimal copy of the schema: 22 checks on same-shop links, delete
 behaviour, re-running, and refusing to start if a cross-shop row already exists.
 
+`test_0022_pglite.mjs` builds the whole database from every migration on
+PGlite (Supabase stubs in `fullschema.mjs`) and runs 28 checks on migration
+`0022`: every app write path still works, and every direct change to a sale or
+credit row is refused (finding M2).
+
 ```bash
 npm i @electric-sql/pglite
 node test_0021_pglite.mjs ../../../supabase/migrations/0021_same_shop_links.sql
+node test_0022_pglite.mjs ../../../supabase/migrations
 ```
 
 ```bash
