@@ -12,10 +12,10 @@ and shows which loans the shop is ready for.
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge%20Functions-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Gemini](https://img.shields.io/badge/AI-Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev)
 [![Tests](https://img.shields.io/badge/tests-715%20passing-2EA043)](docs/hackathon/evidence/results/flutter_test.txt)
-[![Platform](https://img.shields.io/badge/platform-Android%207%2B-3DDC84?logo=android&logoColor=white)](#-try-it)
+[![Platform](https://img.shields.io/badge/platform-Android%207%2B-3DDC84?logo=android&logoColor=white)](#-run-it-yourself)
 [![Languages](https://img.shields.io/badge/languages-English%20%7C%20বাংলা-blue)](#-features)
 
-[**Try it**](#-try-it) · [**Features**](#-features) · [**How it works**](#-how-it-works) · [**Proof**](#-proof-it-works) · [**Run it yourself**](#-run-it-yourself) · [**Roadmap**](#-roadmap)
+[**Features**](#-features) · [**How it works**](#-how-it-works) · [**Proof**](#-proof-it-works) · [**Run it yourself**](#-run-it-yourself) · [**Roadmap**](#-roadmap)
 
 <br/>
 
@@ -37,46 +37,6 @@ Small shops in emerging markets run on memory and a paper notebook.
 | **Typing apps don't stick** | Bookkeeping apps need typing at a busy counter, and many owners are not comfortable typing. |
 
 **EasySell's answer:** make record-keeping effortless with voice and camera, then turn those records into money advice and a path to a loan.
-
----
-
-## 📲 Try it
-
-> [!TIP]
-> **Download the Android app:** [EasySell on Google Drive](https://drive.google.com/drive/folders/1h3die1T97oPDPKwlZ-UREM6sAegyUAjn?usp=sharing).
-> The folder holds the APK and a short read-me with a **demo login** for a shop that is already full of data (US dollars, English).
-
-<details>
-<summary><b>How to install the APK (3 steps)</b></summary>
-
-<br/>
-
-1. Open the link **on an Android phone** (Android 7.0 or newer) and download `EasySell-1.1.0-hackathon.apk`. If Chrome warns about the file, tap **Download anyway**.
-2. Open the file. If asked, allow your browser or Files app to **install unknown apps**.
-3. If Google Play Protect says the app is unknown, tap **More details**, then **Install anyway**. This appears only because the app is not on the Play Store yet.
-
-To check the file was not changed, its SHA-256 is:
-
-```
-0fb6daae97e97781c78dec55efb981586b2f39137c1f4fab103c65a2a64bc6bd
-```
-
-</details>
-
-<details>
-<summary><b>What to try first</b></summary>
-
-<br/>
-
-- [ ] **Home:** switch between Today, Week and Month, and tap a day on the sales chart.
-- [ ] **Sell by voice:** tap the mic and say *"two Pepsi and one Lux soap"*.
-- [ ] **Sell by camera:** tap the camera and point it at a product.
-- [ ] **Money health:** open the card and tap **Get advice from EasySell AI**.
-- [ ] **Financing:** see which loan types the shop is ready for, and what is missing.
-- [ ] **Restock list:** what to buy, and how much.
-- [ ] **Settings → Language → বাংলা:** the whole app switches to Bangla.
-
-</details>
 
 ---
 

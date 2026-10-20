@@ -29,3 +29,11 @@ features, architecture, evidence, setup and roadmap.
   fails to parse.
 - **No team names or licence.** Team details are still placeholders elsewhere,
   and choosing a licence is the owners' call.
+
+## Later change (2026-10-20)
+
+- **The "Try it" section was removed at the user's request**: the APK download
+  link, install steps and "what to try first" list. Judges get the APK and the
+  demo login through the hackathon submission (Drive folder, execution
+  evidence), not the public README. The top-bar "Try it" link went with it, and
+  the Android badge now points to "Run it yourself".
