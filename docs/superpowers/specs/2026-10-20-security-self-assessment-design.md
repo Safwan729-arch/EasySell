@@ -17,6 +17,15 @@ Doc ("EasySell: Security Self-Assessment"); its scripts and raw results are in
   35"; the real split is 26 attacks = 23 blocked + 2 that found L1 + 1 that
   confirmed M2 (an owner editing their own sale).
 
+- **Sections added after review:** an OWASP Mobile Top 10 (2024) checklist
+  (6 covered, 4 partly; it surfaced I3, no `--obfuscate`), monitoring and
+  incident response, backup and recovery, and the limits of the assessment.
+- **Backups became finding M3 (Medium)**, not just a plan: the project is on
+  Supabase's free plan, which has no automatic daily backups, keeps logs for
+  1 day and pauses after a week idle. The owners' plan to close it is the
+  paid Pro plan (7 days of daily backups, from US$25/month) plus the parked
+  CSV export ([[2026-10-19-data-export-design]]).
+
 ## Findings worth remembering
 
 - **New: L1, cross-shop references.** RLS checks only `shop_id`, and
