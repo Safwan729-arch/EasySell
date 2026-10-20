@@ -1,0 +1,35 @@
+{
+  "ranAt": "2026-10-20T07:50:35.531Z",
+  "checks": [
+    {
+      "name": "a sign-up with a too-short password is refused, so no account is made",
+      "pass": true,
+      "detail": {
+        "status": 422
+      }
+    },
+    {
+      "name": "a burst of sign-ups from one connection is cut off",
+      "pass": true,
+      "detail": {
+        "passedBeforeFirst429": 15
+      }
+    },
+    {
+      "name": "after the burst, sign-ups refill at about 15 per 5 minutes",
+      "pass": true,
+      "detail": {
+        "gotThroughAtSeconds": [
+          5,
+          26,
+          47,
+          67,
+          88,
+          108
+        ],
+        "countIn120s": 6,
+        "aboutPer5Minutes": 15
+      }
+    }
+  ]
+}

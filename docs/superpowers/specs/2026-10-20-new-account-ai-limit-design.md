@@ -62,6 +62,17 @@ become per-plan limits. Not built; no design yet beyond this.
   then `parse-sale` answers 429) and `signin_rate_probe.mjs`. **20 Oct:
   4/4** (the first run caught the SQL going live mid-run: its early calls
   still had the 50 limit, so it was re-run with a fresh account), and the
-  sign-in limit answered 429 on attempt 35. That is above the 15 the user
-  set: either the setting did not save or the limiter allows a burst;
-  re-check the value in the dashboard before quoting "15".
+  sign-in limit answered 429 on attempt 35.
+- **Gotcha: a burst test cannot show the rate limit.** Supabase Auth uses a
+  token bucket: up to 30 requests always pass in a burst, and the dashboard
+  value is only the refill rate. `signup_rate_probe.mjs` empties the bucket,
+  then sends one refused sign-up (3-character password, so no account) every
+  5 s for 120 s. Measured on 20 Oct: 13 through (30 per 5 min, the default:
+  the first save of 15 had not taken), then, after the user saved again, 6
+  through (one every ~20 s = **15 per 5 min**), twice. One run in between let
+  21 through, consistent with Auth restarting to apply the change (a restart
+  refills the bucket); re-test a minute or two after saving.
+- **The setting does not govern password sign-ins.** `/auth/v1/token` kept
+  answering one failed sign-in every 2 s after its 30-request burst (about
+  1,800 an hour, Supabase's fixed token-endpoint rate). Password guessing is
+  therefore limited mainly by password strength: finding L3.
